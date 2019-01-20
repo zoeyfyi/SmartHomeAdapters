@@ -1,0 +1,6 @@
+
+language: generic
+
+script:
+  # test robot code
+  - cd robot/test && g++ -std=c++11 -Wall testsuite.cpp -o out && ./out 
