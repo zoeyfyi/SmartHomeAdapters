@@ -1,5 +1,7 @@
 # Smart Home Adapters
 
+[![Build Status](https://travis-ci.com/mrbenshef/SmartHomeAdapters.svg?token=xzYnEDernngLJ99poRHs&branch=master)](https://travis-ci.com/mrbenshef/SmartHomeAdapters)
+
 ## Components
 
 ### [Web Server](webserver/README.md)
