@@ -4,6 +4,10 @@
 
 ## Components
 
+### [API](api/README.md)
+
+API for Smart Home Adapter clients.
+
 ### [Web Server](webserver/README.md)
 
 Receives sensor data and sends servo commands to robots. Exposes a REST API consumed by the android app (and other integrations).
