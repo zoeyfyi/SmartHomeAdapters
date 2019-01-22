@@ -3,6 +3,26 @@ info:
   description: "This is the API for smart home adapter clients."
   version: "0.1.0"
   title: "Smart Home Adapters"
-  licence:
+  license:
     name: "MIT"
     url: "https://opensource.org/licenses/MIT"
+paths:
+  /robots:
+    get:
+      description: Gets all the robots registered to the current user
+      responses:
+        '200':
+          description: List of the users robots
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Robot'
+components:
+  schemas:
+    Robot:
+      type: object
+      properties:
+        id:
+          type: string
+        nickname:
+          type: string
