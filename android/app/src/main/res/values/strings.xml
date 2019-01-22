@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">Smart Home Adapters</string>
+
+    <!-- Strings related to the Authentication Activity -->
+    <string name="username_input_hint">username…</string>
+    <string name="password_input_hint">password…</string>
+    <string name="sign_in_button">Sign in</string>
+    <string name="register_button">Register</string>
 </resources>
