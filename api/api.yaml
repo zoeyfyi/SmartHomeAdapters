@@ -17,6 +17,61 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Robot'
+  /robot/{robotId}:
+    put:
+      description: Registers a robot to the users account
+      parameters:
+      - in: query
+        name: nickname
+        description: "Nickname for the new robot"
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Robot'
+    get:
+      description: Gets a robot
+      responses:
+        '200':
+          description: The robot
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Robot'
+    patch:
+      description: Updates a robot
+      parameters:
+      - in: query
+        name: nickname
+        description: Updated robot nickname
+        schema:
+          type: string
+      responses:
+        '200':
+          description: The updated robot
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Robot'
+    delete:
+      description: Unregisters the robot from the users account
+      responses:
+        '200':
+          description: The unregisted robot
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Robot'
+    parameters:
+    - in: path
+      name: robotId
+      description: ID of robot
+      schema:
+        type: string
 components:
   schemas:
     Robot:
