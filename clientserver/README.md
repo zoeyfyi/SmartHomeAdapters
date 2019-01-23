@@ -1,4 +1,4 @@
-# Smart Home Adapters - Web Server
+# Smart Home Adapters - Client Server
 
 ## Compile & Run
 
