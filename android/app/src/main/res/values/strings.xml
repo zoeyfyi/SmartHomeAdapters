@@ -2,8 +2,15 @@
     <string name="app_name">Smart Home Adapters</string>
 
     <!-- Strings related to the Authentication Activity -->
-    <string name="username_input_hint">username…</string>
-    <string name="password_input_hint">password…</string>
+    <string name="email_input_hint">Email</string>
+    <string name="password_input_hint">Password</string>
     <string name="sign_in_button">Sign in</string>
     <string name="register_button">Register</string>
+
+    <!-- Strings related to the RegisterUser Activity -->
+    <string name="confirm_password_input_hint">Re-enter password</string>
+    <string name="send_confirmation_button_text">Confirm your email address</string>
+    <string name="email_sent_text">We have sent your activation code to your email.\nYou can press the email logo above to open your default email app.</string>
+    <string name="activation_code_input_hint">Enter your activation code here</string>
+    <string name="verify_activation_code_button_text">Verify</string>
 </resources>
