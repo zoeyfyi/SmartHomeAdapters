@@ -22,6 +22,7 @@
 
 \usepackage{subcaption}
 \usepackage{tabularx}
+\usepackage{ltablex}
 \newcolumntype{L}{>{\raggedright\arraybackslash}X}
 
 % Colored text for goals
@@ -394,5 +395,33 @@ A couple of team members have done some 3D modelling before. Wang has 3D printed
 \subsection{Gantt Chart}
 
 % TODO: insert gantt chart
+
+\section{Risks}
+
+\begin{center}
+    \begin{tabularx}{1.0\linewidth}{|L|L|L|L|L|}
+        \hline
+        \textbf{Risk} & \textbf{Impact} & \textbf{Likelihood} & \textbf{Actions to take to minimize the risk} & \textbf{Contingency plan} \\
+        \hline
+        The servos might not be powerful enough to interact with the switches and thermostats & Severe - We are unable to operate some or all devices such as switches or thermostats. & Low - Our use cases don't require a lot of force, so fairly week servos should still work. & Prototyping the first iteration of grips as early as possible to leave more time for alternative approaches. & Order more powerful servos, possibly delaying the first demonstration of light switching until demo 2. \\
+        \hline
+        It might be difficult to grip the switches and dials. & Severe - We are unable to manipulate the switches and dials. & Low - Our initial tests suggest this shouldn't be a problem. & Prototyping the first iteration of grips as early as possible to leave more time for alternative approaches. & Order/construct more powerful gripper materials, possibly delaying the first demonstration of light switching until demo 2. \\
+        \hline
+        It may end up being too costly for us to develop several adapters. & Moderate - We will not able to demonstrate the system’s true potential in the demos. & Low - The parts list we have made (see below) seems sensible. & Use the materials already available to the furthest extent possible, even if it means some inconsistency in the platform. & We will scale back the number of devices we are showcasing at once. We can reuse the controllers themselves but switch out the grips during the demo, thus we can still showcase the versatility of our product. \\
+        \hline
+        There is a risk that we don’t have the skills and/or budget to design and 3D-print parts to replace the LEGO construction. & Minor - The adapters will be larger, clunkier, and uglier, making the prototypes less impressive. & High - it is a complex task and most of the team is inexperienced in this area. & Communicate with Gary to discuss what costs are involved; allow plenty of time for the design process. & Stick with the LEGO. \\
+        \hline
+        The devices draw a lot of power and need to be recharged very frequently. & Moderate - The convenience of remote control would be overshadowed by the time spent charging the devices, making the product unattractive. & Unknown - Without the experience its hard to judge how likely that this problem will arise & By using Arduinos and offloading most of the logic onto the server we hope to reduce power draw. & We will pivot to use cases where we can assume the user has a power outlet nearby such as the thermostat. \\
+        \hline
+        A lack of skills may mean we cannot complete the project with Arduinos, which is arguably the most complex platform due to its low-level nature. & Moderate - We may only be able to build a few controllers and they would be many times larger than we had envisioned due to the size of the alternative platforms. & Low - There is not a lot of complexity in the robot code, so we should be able to work through the issues that arise. & Start building the adapters early, communicate clearly with the rest of the team on Slack and in the weekly meetings if there are issues. & We will move to the EV3 platform. \\
+        \hline
+        A lack of skill may mean we cannot complete the web server. & Moderate - We will have to offload large parts of the logic to the app (making it harder to port to other systems such as iOS in the future) and the robots (increasing power draw). & Low - Gwion and Ben both have experience developing similar systems. & We have identified that Gwion and Ben are experienced in this area and have allocated the related tasks accordingly. & We will either allocate more people to work on the web server, or offload some of the logic to the robot and/or Android app. \\
+        \hline
+        A lack of skill may mean we cannot complete the Android app. & Severe - The user will not be able to control or set up the robots from their phone. & Low - thanks to ILP most of the team have relevant experience. & We have allocated three members, all of whom took ILP, to work full or part-time on this component. & We will switch to building a web app. A web app has a number of advantages (namely that there is no installation) and disadvantages (less convenient for the user). \\
+        \hline
+        We will be using the same self-adhesive as stick-on hooks to attach our robot to the users' device. If the robot is too heavy, the self-adhesive may not be able to hold the weight. & Severe - The robots will not stay attached to the walls, making them unusable for most use cases. & Low - the components we are planning to use are quite light, and self adhesive strips can take quite a bit of weight. & Trial this early in the development process and make sure to thoroughly test it for all types of grippers. & We will increase the surface area of the robot so we can fit larger self-adhesive pads, or look into using suction cups instead if appropriate. \\
+        \hline
+    \end{tabularx}
+\end{center}
 
 \end{document}
