@@ -424,4 +424,78 @@ A couple of team members have done some 3D modelling before. Wang has 3D printed
     \end{tabularx}
 \end{center}
 
+\section{Organisational structure}
+
+\subsection{Team leaders}
+
+Both Luke Drennan and Ben Sheffield will function as team leaders. Luke has 4 years of robotics experience and will focus on the robotic component of the project. Ben has experience with managing large git repositories and also has a lot of free time. Ben is also the designated group contact.
+
+\subsection{Treasurer}
+
+Theo Olausson will be the treasurer for the project. A Google Sheet with communal access has been set up so that any member of the group can see how much of the budget remains and suggest purchases, however, these suggestions must be accepted by Theo and the team leaders before going through. This way the group will remain in control of the budget at all times.
+
+\begin{center}
+    \begin{tabularx}{\linewidth}{|l|c|c|L|}
+        \hline
+        \textbf{Item} & \textbf{Quantity} & \textbf{Total} & \textbf{Notes} \\
+        \hline
+        AWS & 1 & £20 & We should only need the free tier for the web server, however we have allocated £20 incase we have underestimated our compute needs. \\
+        \hline
+        halspals.co.uk domain & 1 & £6 &  \\
+        \hline
+        ESP8266 & 3 & £20 & Incredibly small arduino compatible board with wifi chip. Has a large community with lots of resources available. \\
+        \hline
+        Servos & 3 & £15 & Not sure exactly what servos we will need, will need to experiment with the lego servos first. \\
+        \hline
+        Light sensor & 3 & £5 &  \\
+        \hline
+        3D printing &  & £50 & We will need to go through a couple of iterations before we get the right fit, so we are allocating a lot of our budget just in case. \\
+        \hline
+        Self adhesive pad & & £10 & For attaching robots to devices \\
+        \hline
+        Light switch & 1 & £5 & \\
+        \hline
+        Basic thermostat & 1 & £10 & \\
+        \hline
+        Bolt lock & 1 & £10 & \\
+        \hline
+        Echo dot & 1 & £30 & If possible we would like to get a cheaper refurbished/used one \\
+        \hline
+    \end{tabularx}    
+\end{center}
+
+The total arrives at £181. We don't expect to spend this much, we have been generous with prices in this table in case the parts turn out to be more expensive than the ones we have found on amazonAmazon.
+
+\subsection{Components}
+
+Our system is split into 3 main components: web server, android app, and the robots. The following is a breakdown of who will be focusing on what, though we encourage all team members to make themselves useful across all the components:
+
+\begin{itemize}
+    \item Ben, Gwion, Wang (Alexa integration)
+    \item Theo, Ben (UI Design), Han
+    \item Luke, Spencer, Wang, Han, Sameer
+\end{itemize}
+
+\subsection{Git \& Github}
+
+We have decided on using Git for version control, with GitHub as our host. GitHub has a number of features such as code review and triage tools nicely integrated. Issues and pull requests can be assigned a deadline so we can easily view what needs to be done before the next demo across the 3 components, and how we are progressing. We decided against using Trello since there is nothing Trello offers that we want or Github projects don’t already offer.
+
+The repository will be a monorepo, that is all the components exist in the same repository. This makes it much easier to do multi-component refactoring such as changing a REST endpoint. In terms of workflow, we are using a simplified version of git-flow, since we don’t need the overhead of versioning (we are only creating a prototype).
+
+When creating a feature, we will branch from the relevant component branch and create a pull request back into the component branch. Before the pull request is accepted Travis (our chosen Continuous Integration system) will run the test suites to check for problems, and another team member will perform a code review. This will help to catch bugs and makes sure everyone's code is readable.
+
+At least three days before a demo we will have a group meeting where we will merge the component branches into master. As a group, we can then fix any integration issues between the 3 components on the spot.
+
+\subsection{Agile}
+
+For this project, we have decided that we will be loosely following Agile practices. Considering that we will have the team working on different components, we need to prevent one area being held back waiting for another. Thus communication practices of Agile such as the daily standup are especially helpful; team members must say what they have done, what they will do, and if they need help or are being hindered. 
+
+In order to prevent a skewed workload, feature estimation will occur prior to the first sprint. We will assign features a rating from one to three in accordance with difficulty, and split the features equally across the timeframe.
+
+Our sprints will be approximately two weeks in length, so that they may match the time between demos. Our progress will be tracked at the beginning/end of each sprint. This will allow us to review the efficiency of the team and better set our goals for the next sprint and demo.
+
+\subsection{Meetings}
+
+Meetings are scheduled on google calendar and slack so everyone knows what's happening and when. We will also be keeping a log of what was discussed at meetings. Firstly, if someone could not make it to the meeting they can check the meeting log to see what was discussed. Secondly, it will help later when writing out reports.
+
 \end{document}
