@@ -21,6 +21,13 @@
 \usepackage{hyperref}
 
 \usepackage{subcaption}
+\usepackage{tabularx}
+\newcolumntype{L}{>{\raggedright\arraybackslash}X}
+
+% Colored text for goals
+\newcommand{\easy}{{\color{green} \textbf{Easy}}}
+\newcommand{\medium}{{\color{orange} \textbf{Medium}}}
+\newcommand{\hard}{{\color{red} \textbf{Hard}}}
 
 % All your code should be in between the \begin{document} and \end{document} tags otherwise your compiler willl throw an error
 \begin{document}
@@ -98,5 +105,238 @@ The android app is the primary user interface into our system. It allows the use
     \caption{Quick mockup of the Android app.}
     \label{fig:fig}
 \end{figure}
+
+\section{Goals}
+
+Our goals are what we want to achieve in each sprint (see organisational structure -> agile). We aim at having our sprints be approximately two weeks in length, which matches the time between the demos. In each demo we aim to present a few aspects of our system:
+
+\subsection{Demo 1}
+
+\subsubsection{Demo 1.1 - Register and login via the app}
+
+\begin{center}
+    \begin{tabularx}{0.8\linewidth}{|c|L|c|}
+        \hline
+        \textbf{Component} & \textbf{Task} & \textbf{Difficulty} \\
+        \hline
+        Web server & Register user with email and password & \easy \\
+        \hline
+        Web server & Authenticate the user and return token & \medium \\
+        \hline
+        Web server & Login/register UI & \easy \\
+        \hline
+        Web server & Send auth token in REST requests & \medium \\
+        \hline
+    \end{tabularx}
+\end{center}
+
+\subsubsection{Demo 1.2 - Switch the light on/off from the Android app}
+
+\begin{center}
+    \begin{tabularx}{0.8\linewidth}{|c|L|c|}
+        \hline
+        \textbf{Component} & \textbf{Task} & \textbf{Difficulty} \\
+        \hline
+        Web server & Store the state of the switch & \easy \\
+        \hline
+        Web server & Endpoint for turning light on/off & \easy \\
+        \hline
+        Web server & Endpoint for retrieving a list of robots & \easy \\
+        \hline
+        Web server & Establish WebSocket with robot & \easy \\
+        \hline
+        Web server & Send servo commands on light on/off request & \easy \\
+        \hline
+        Android & UI to display a list of robots & \easy \\
+        \hline
+        Android & Light switch toggle UI & \medium \\
+        \hline
+        Android & Send light on/off request & \medium \\
+        \hline
+        Robot & Establish websocket with server & \easy \\
+        \hline
+        Robot & Receive servo commands & \medium \\
+        \hline
+        Robot & Construct the LEGO switch gripper & \medium \\
+        \hline
+        Robot & Connect the servo to Arduino & \easy \\
+        \hline
+        Robot & Create temporary client on DICE to forward servo commands (since the Arduino we have doesn’t have a Wifi chip) & \medium \\
+        \hline
+    \end{tabularx}
+\end{center}
+
+\subsection{Demo 2}
+
+\subsubsection{Demo 2.1 - Walkthrough the robot registration process}
+
+\begin{center}
+    \begin{tabularx}{0.8\linewidth}{|c|L|c|}
+        \hline
+        \textbf{Component} & \textbf{Task} & \textbf{Difficulty} \\
+        \hline
+        Web server & Endpoint to register a robot to the users account & \easy \\
+        \hline
+        Web server & Only return the list of robots registered to the user's account & \easy \\
+        \hline
+        Android & UI for registering a new robot & \hard \\
+        \hline
+        Robot & Assign each robot a hard-coded ID & \easy \\
+        \hline
+    \end{tabularx}
+\end{center}
+
+\subsubsection{Demo 2.2 - Demonstrate robot calibration steps on the app}
+
+\begin{center}
+    \begin{tabularx}{0.8\linewidth}{|c|L|c|}
+        \hline
+        \textbf{Component} & \textbf{Task} & \textbf{Difficulty} \\
+        \hline
+        Web server & Endpoint to send calibration parameters including a range, min and max values & \easy \\
+        \hline
+        Web server & Endpoint to receive calibration parameters & \easy \\
+        \hline
+        Android & Dynamically build UI for calibrating the robot & \hard \\
+        \hline
+        Android & Send calibration parameters back to the server & \medium \\
+        \hline
+    \end{tabularx}
+\end{center}
+
+\subsubsection{Demo 2.3 - Adjust temperature via the Android app}
+
+\begin{center}
+    \begin{tabularx}{0.8\linewidth}{|c|L|c|}
+        \hline
+        \textbf{Component} & \textbf{Task} & \textbf{Difficulty} \\
+        \hline
+        Web server & Store current temperature settings & \easy \\
+        \hline
+        Web server & Endpoint to get the current temperature & \easy \\
+        \hline
+        Web server & Endpoint to update the current temperature & \easy \\
+        \hline
+        Android & UI to choose the desired temperature & \easy \\
+        \hline
+        Android & Send the desired temperature to the server & \medium \\
+        \hline
+        Robot & Construct the LEGO dial grip & \hard \\
+        \hline
+    \end{tabularx}
+\end{center}
+
+\subsection{Demo 3}
+
+\subsubsection{Demo 3.1 - Physical demonstration of 3D printed version}
+
+\begin{center}
+    \begin{tabularx}{0.8\linewidth}{|c|L|c|}
+        \hline
+        \textbf{Component} & \textbf{Task} & \textbf{Difficulty} \\
+        \hline
+        Robot & 3D print case for controller & \hard \\
+        \hline
+        Robot & 3D print light switch grip & \hard \\
+        \hline
+    \end{tabularx}
+\end{center}
+
+\subsubsection{Demo 3.2 - Asking Alexa to turn a light switch on}
+
+\begin{center}
+    \begin{tabularx}{0.8\linewidth}{|c|L|c|}
+        \hline
+        \textbf{Component} & \textbf{Task} & \textbf{Difficulty} \\
+        \hline
+        Web server & Create Alexa skills schema & \easy \\
+        \hline
+        Web server & Add Alexa endpoints for receiving Alexa requests & \hard \\
+        \hline
+    \end{tabularx}
+\end{center}
+
+\subsubsection{Demo 3.3 - Present unlocking and locking a bolt lock via the app}
+
+\begin{center}
+    \begin{tabularx}{0.8\linewidth}{|c|L|c|}
+        \hline
+        \textbf{Component} & \textbf{Task} & \textbf{Difficulty} \\
+        \hline
+        Web server & Endpoint for unlocking/locking bolt lock & \easy \\
+        \hline
+        Android & UI for unlocking/locking bolt lock & \easy \\
+        \hline
+        Android & Send request to lock/unlock bolt lock & \medium \\
+        \hline
+        Robot & Build grip to manipulate bolt lock & \hard \\
+        \hline
+    \end{tabularx}
+\end{center}
+
+\subsection{Demo 4 (Final Demo)}
+
+\subsubsection{Demo 4.1 - Demonstrate push notification on low battery}
+
+\begin{center}
+    \begin{tabularx}{0.8\linewidth}{|c|L|c|}
+        \hline
+        \textbf{Component} & \textbf{Task} & \textbf{Difficulty} \\
+        \hline
+        Web server & Create a push notification server & \easy \\
+        \hline
+        Web server & Receive battery status from the robot and send a push notification when robots battery is low & \easy \\
+        \hline
+        Android & Register for push notifications with the Android OS & \easy \\
+        \hline
+        Robot & Send battery status over WebSocket & \easy \\
+        \hline
+    \end{tabularx}
+\end{center}
+
+\subsubsection{Demo 4.2 - Demonstrate turning a light switch on when it’s dark}
+
+\begin{center}
+    \begin{tabularx}{0.8\linewidth}{|c|L|c|}
+        \hline
+        \textbf{Component} & \textbf{Task} & \textbf{Difficulty} \\
+        \hline
+        Web server & Store sensor data sent from the robots & \medium \\
+        \hline
+        Web server & Endpoint for requesting history of the sensor data & \medium \\
+        \hline
+        Web server & Create endpoints for adding/deleting/updating triggers & \medium \\
+        \hline
+        Web server & When a triggers condition is met send the servo command & \easy \\
+        \hline
+        Android & UI for configuring a trigger & \easy \\
+        \hline
+    \end{tabularx}
+\end{center}
+
+\subsection{Extensions}
+
+If there is time remaining at the end of the project, there are a number of extensions we could add.
+
+\begin{itemize}
+    \item \textbf{Fall detection:} Using an accelerometer we could detect if the device falls off the wall and send the user a notification.
+    \item \textbf{IOS app:} An IOS app would allow us to integrate with Siri and Apple home app. It would also expand our market.
+    \item \textbf{Web app:} Allow for remote control from anywhere without installing an app.
+    \item \textbf{Android app (extensions):} Google home \& Bixbe integration would bring voice control to more devices.
+    \item \textbf{If this then that:} IFTTT is a popular tool for making smart home devices work together. Integrating with IFTTT will provide a more cohesive smart home experience.
+    \item \textbf{Machine learning:} Using sensor data we could automatically discover rules such as:
+        \begin{itemize}
+            \item Turn the heating on at 7 am
+            \item Turn the lights off at 11 pm
+            \item Etc
+        \end{itemize}
+    \item \textbf{Developer API and the marketplace:} We could provide an API so users can use the hardware in new and creative ways. The marketplace would allow developers to list their extensions and users to discover new applications for our device.
+    \item \textbf{Product website:} It would be nice to have a product website to enhance our stand at the trade fair. It would include:
+        \begin{itemize}
+            \item Developer API documentation
+            \item Shopping cart and product selection functionality
+            \item Product showcase
+        \end{itemize}
+\end{itemize}
 
 \end{document}
