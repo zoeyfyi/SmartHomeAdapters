@@ -8,6 +8,7 @@ import android.view.View
 import android.widget.Button
 import kotlinx.android.synthetic.main.activity_register_user.*
 import org.jetbrains.anko.design.snackbar
+import org.jetbrains.anko.startActivity
 import org.jetbrains.anko.toast
 
 class RegisterUserActivity : AppCompatActivity(), ButtonUpdater {
@@ -40,13 +41,17 @@ class RegisterUserActivity : AppCompatActivity(), ButtonUpdater {
             verify_code_button.isEnabled = false
             if (verifyActivationCode()) {
                 toast("Successfully registered your account")
-                startMainActivity()
+                startActivity<MainActivity>()
             } else {
                 // TODO the below should also include an error message from the server
                 snackbar_layout.snackbar("Verification failed")
                 verify_code_button.isEnabled = true
             }
         }
+
+        // Return to the AuthenticationActivity which launched this RegisterUserActivity
+        // if desired
+        login_button.setOnClickListener { _ -> finish() }
 
         // Add text watchers to enable and disable the send button according to what the user
         // has entered
@@ -78,6 +83,7 @@ class RegisterUserActivity : AppCompatActivity(), ButtonUpdater {
         password_input_layout.visibility = View.GONE
         confirm_password_input_layout.visibility = View.GONE
         send_email_button.visibility = View.GONE
+        login_button.visibility = View.GONE
         email_image_view.visibility = View.VISIBLE
         email_sent_textView.visibility = View.VISIBLE
         activation_code_input.visibility = View.VISIBLE
@@ -93,27 +99,36 @@ class RegisterUserActivity : AppCompatActivity(), ButtonUpdater {
         return true
     }
 
-    private fun startMainActivity() {
-        val intent = Intent(this, MainActivity::class.java)
-        startActivity(intent)
-    }
-
     override fun updateButton(button: Button) {
         if (button == send_email_button) {
             // Enables the button iff:
+            // * the given email address is a valid one,
             // * all input fields are non-null,
             // * all input fields are non-empty, and
             // * the passwords given match.
-            val emailEmpty = email_input.text.isNullOrEmpty()
+            val email = email_input.text
+            val emailValid = (email != null
+                    && android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches())
             val password = password_input.text
-            val passwordEmpty = password_input.text.isNullOrEmpty()
+            val passwordEmpty = password.isNullOrEmpty()
+
             val confirmedPassword = confirm_password_input.text
             val confirmedPasswordEmpty = confirmedPassword.isNullOrEmpty()
 
-            button.isEnabled = (!emailEmpty
+            val passwordsMatch = password.toString() == confirmedPassword.toString()
+
+            button.isEnabled = (emailValid
                     && !passwordEmpty
                     && !confirmedPasswordEmpty
-                    && password.toString() == confirmedPassword.toString())
+                    && passwordsMatch)
+
+            // Also show an error to the user if the passwords given do not match
+            if (!passwordsMatch) {
+                confirm_password_input.error = "Passwords don't match"
+            } else {
+                // clear any previous error message
+                confirm_password_input.error = null
+            }
         } else if (button == verify_code_button) {
             button.isEnabled = !activation_code_input.text.isNullOrEmpty()
         } else {

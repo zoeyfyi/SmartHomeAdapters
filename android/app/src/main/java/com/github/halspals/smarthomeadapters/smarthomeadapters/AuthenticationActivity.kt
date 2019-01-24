@@ -1,6 +1,5 @@
 package com.github.halspals.smarthomeadapters.smarthomeadapters
 
-import android.content.Intent
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
@@ -8,6 +7,7 @@ import android.view.View
 import android.widget.Button
 import kotlinx.android.synthetic.main.activity_authentication.*
 import org.jetbrains.anko.design.snackbar
+import org.jetbrains.anko.startActivity
 import org.jetbrains.anko.toast
 
 class AuthenticationActivity : AppCompatActivity(), ButtonUpdater {
@@ -24,7 +24,8 @@ class AuthenticationActivity : AppCompatActivity(), ButtonUpdater {
 
             if (signInUser()) {
                 toast("Signed in")
-                startMainActivity()
+                Log.d(tag, "Starting MainActivity")
+                startActivity<MainActivity>()
             } else {
                 // TODO this should use the error message received by the server
                 snackbar_layout.snackbar("Failed to sign you in!")
@@ -34,7 +35,8 @@ class AuthenticationActivity : AppCompatActivity(), ButtonUpdater {
         }
 
         register_button.setOnClickListener { _ ->
-            startRegisterUserActivity()
+            Log.d(tag, "Starting RegisterUserActivity")
+            startActivity<RegisterUserActivity>()
         }
 
         // Add text listeners to enable and disable the sign in button according to what the user
@@ -52,24 +54,14 @@ class AuthenticationActivity : AppCompatActivity(), ButtonUpdater {
         return true
     }
 
-
-    private fun startMainActivity() {
-        Log.d(tag, "Starting MainActivity")
-        val intent = Intent(this, MainActivity::class.java)
-        startActivity(intent)
-    }
-
-    private fun startRegisterUserActivity() {
-        Log.d(tag, "Starting RegisterUserActivity")
-        val intent = Intent(this, RegisterUserActivity::class.java)
-        startActivity(intent)
-    }
-
     override fun updateButton(button: Button) {
         // Enables the button iff both the email and password input are non-empty (and non-null)
+        // and the email input is a valid email address
         val passwordEmpty = password_input.text.isNullOrEmpty()
-        val emailEmpty = password_input.text.isNullOrEmpty()
+        val email = email_input.text
+        val emailValid = (email != null
+                && android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches())
 
-        button.isEnabled = !emailEmpty && !passwordEmpty
+        button.isEnabled = emailValid && !passwordEmpty
     }
 }

@@ -4,8 +4,6 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.widget.Button
 
-// TODO REFACTOR - the below requires 2x overriden but unused methods. I haven't found a way
-// around this but there probably is one
 internal class NonEmptyTextWatcher(
         private val buttonUpdater: ButtonUpdater,
         private val targetButton: Button)
