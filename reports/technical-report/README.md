@@ -1,1 +1,1 @@
-# Smart Home Adapters - Reports
+# Smart Home Adapters - Technical Report
