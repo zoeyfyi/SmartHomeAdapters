@@ -19,6 +19,7 @@
 \usepackage{algorithmic}
 \usepackage{graphicx}
 \usepackage{hyperref}
+\hypersetup {hidelinks,}
 
 \usepackage{subcaption}
 \usepackage{tabularx}
@@ -61,7 +62,7 @@ For this project we are focusing on 3 use cases:
 
 \subsection{Robot}
 
-The robot is split into 2 parts: the controller and the grips. The controller includes an Arduino, an array of sensors, servo and a battery pack. The grips attach to the controller, when the servo turns the grips manipulate whatever device they are interacting with. The robots themselves attach to the devices with self-adhesive, thus they can easily be removed.
+The robot is split into 2 parts: the controller and the grips. The controller includes an Arduino, an array of sensors, servo and a battery pack. The grips attach to the controller; when the servo turns the grips manipulate whatever device they are interacting with. The robots themselves attach to the devices with self-adhesive, so that they can easily be removed.
 
 \begin{figure}
     \begin{subfigure}{.5\textwidth}
@@ -81,16 +82,16 @@ The robot is split into 2 parts: the controller and the grips. The controller in
 The web server is actually a collection of many smaller web servers since we will be following the microservice architecture. The publicly accessible servers are:
 
 \begin{itemize}
-    \item The android app receives data and sends commands via our client API served via the client server. 
-    \item Alexa sends alexa requests to our alexa server.
-    \item The robot is connected via a web socket to the root server
+    \item The Android app receives data and sends commands via our client API served via the client server. 
+    \item Alexa sends Alexa requests to our Alexa server.
+    \item The robot is connected via a web socket to the root server.
 \end{itemize}
 
-The internal services correspond to each of the use cases. They keep track of the state the device is in, what actions can be performed, and what servo commands need to be sent. This architecture would allow us to point to user made use cases in the future.
+The internal services correspond to each of the use cases. They keep track of the state the device is in, what actions can be performed, and what servo commands need to be sent. This architecture would allow us to point to user made functionality in the future.
 
 \subsection{Android app}
 
-The android app is the primary user interface into our system. It allows the user to register, calibrate and control their robots.
+The Android app is the primary user interface into our system. It allows the user to register, calibrate and control their robots.
 
 \begin{figure}
     \begin{subfigure}{.33\textwidth}
@@ -111,7 +112,7 @@ The android app is the primary user interface into our system. It allows the use
 
 \section{Goals}
 
-Our goals are what we want to achieve in each sprint (see organisational structure -> agile). We aim at having our sprints be approximately two weeks in length, which matches the time between the demos. In each demo we aim to present a few aspects of our system:
+Our goals are what we want to achieve in each sprint (see organisational structure $\rightarrow$ agile). We aim at having our sprints be approximately two weeks in length, which matches the time between the demos. In each demo we aim to present a few aspects of our system:
 
 \subsection{Demo 1}
 
@@ -126,9 +127,9 @@ Our goals are what we want to achieve in each sprint (see organisational structu
         \hline
         Web server & Authenticate the user and return token & \medium \\
         \hline
-        Web server & Login/register UI & \easy \\
+        Android & Login/register UI & \easy \\
         \hline
-        Web server & Send auth token in REST requests & \medium \\
+        Android & Send auth token in REST requests & \medium \\
         \hline
     \end{tabularx}
 \end{center}
@@ -323,13 +324,13 @@ If there is time remaining at the end of the project, there are a number of exte
 
 \begin{itemize}
     \item \textbf{Fall detection:} Using an accelerometer we could detect if the device falls off the wall and send the user a notification.
-    \item \textbf{IOS app:} An IOS app would allow us to integrate with Siri and Apple home app. It would also expand our market.
+    \item \textbf{iOS app:} An iOS app would allow us to integrate with Siri and the Apple Home app. It would also expand our market.
     \item \textbf{Web app:} Allow for remote control from anywhere without installing an app.
-    \item \textbf{Android app (extensions):} Google home \& Bixbe integration would bring voice control to more devices.
+    \item \textbf{Android app (extensions):} Google Home \& Bixbe integration would bring voice control to more devices.
     \item \textbf{If this then that:} IFTTT is a popular tool for making smart home devices work together. Integrating with IFTTT will provide a more cohesive smart home experience.
     \item \textbf{Machine learning:} Using sensor data we could automatically discover rules such as:
         \begin{itemize}
-            \item Turn the heating on at 7 am
+            \item Turn the heating on if it's below 16 degrees celsius
             \item Turn the lights off at 11 pm
             \item Etc
         \end{itemize}
@@ -374,7 +375,7 @@ The trade fair is from 9:00 till 17:30, but we will also be allocating another 2
 
 \subsubsection{Development}
 
-The rest of our time will be working on our assigned components (see organisational structure -> components). This includes building, programming, testing, bug fixing and code reviews. There are 28 easy tasks, 13 medium tasks and 7 hard tasks. If we allocate 10 hours for easy tasks, 20 hours for medium tasks and 30 hours for hard tasks we get 750 hours in total out of the 980 man hours we have available. This leaves us with plenty of time in case we have underestimated the complexity of some goals.
+The rest of our time will be working on our assigned components (see organisational structure $\rightarrow$ components). This includes building, programming, testing, bug fixing and code reviews. There are 28 easy tasks, 13 medium tasks and 7 hard tasks. If we allocate 10 hours for easy tasks, 20 hours for medium tasks and 30 hours for hard tasks we get 750 hours in total out of the 980 man hours we have available. This leaves us with plenty of time in case we have underestimated the complexity of some goals.
 
 \subsection{Skills}
 
@@ -384,7 +385,7 @@ The web server is the largest most complex part of our system, however both Ben 
 
 \subsubsection{Android}
 
-A large majority of the team have had experience working on mobile apps through ILP, and a couple of team members have experience outside of university: Ben worked on a fully featured Github client with another person, and Luke has some experience with Swift if we decide to port the app to IOS. We are therefore confident that we already have the skills necessary to complete the easier tasks such as UI to display a list of robots (demo 1.2). Goals such as "Register for push notifications with the Android OS" (demo 4.1) will require some research, however we are familur with the Android documentation so we know were to look.
+A large majority of the team have had experience working on mobile apps through ILP, and a couple of team members have experience outside of university: Ben developed a fully featured mobile GitHub client, and Luke has some experience with Swift if we decide to port the app to iOS. We are therefore confident that we already have the skills necessary to complete the easier tasks such as \textit{UI to display a list of robots} (demo 1.2). Goals such as \textit{Register for push notifications with the Android OS} (demo 4.1) will require some research, however we are familiar with the Android documentation so we know where to look.
 
 \subsubsection{Hardware}
 
@@ -392,7 +393,7 @@ Luke has worked on FTC robots for four years; while it wasn’t LEGO he is confi
 
 \subsubsection{3D printing}
 
-A couple of team members have done some 3D modelling before. Wang has 3D printed some simple cases over the break.
+A few members of the team have done some 3D modelling before. Wang has 3D printed some simple cases over the break.
 
 \subsection{Gantt Chart}
 
@@ -405,15 +406,15 @@ A couple of team members have done some 3D modelling before. Wang has 3D printed
         \hline
         \textbf{Risk} & \textbf{Impact} & \textbf{Likelihood} & \textbf{Actions to take to minimize the risk} & \textbf{Contingency plan} \\
         \hline
-        The servos might not be powerful enough to interact with the switches and thermostats & Severe - We are unable to operate some or all devices such as switches or thermostats. & Low - Our use cases don't require a lot of force, so fairly week servos should still work. & Prototyping the first iteration of grips as early as possible to leave more time for alternative approaches. & Order more powerful servos, possibly delaying the first demonstration of light switching until demo 2. \\
+        The servos might not be powerful enough to interact with the switches and thermostats. & Severe - We are unable to operate some or all devices such as switches or thermostats. & Low - Our use cases don't require a lot of force, so fairly week servos should still work. & Prototype the first iteration of grips as early as possible to leave more time for alternative approaches. & Order more powerful servos, possibly delaying the first demonstration of light switching until demo 2. \\
         \hline
-        It might be difficult to grip the switches and dials. & Severe - We are unable to manipulate the switches and dials. & Low - Our initial tests suggest this shouldn't be a problem. & Prototyping the first iteration of grips as early as possible to leave more time for alternative approaches. & Order/construct more powerful gripper materials, possibly delaying the first demonstration of light switching until demo 2. \\
+        It might be difficult to grip the switches and dials. & Severe - We are unable to manipulate the switches and dials. & Low - Our initial tests suggest this shouldn't be a problem. & Prototype the first iteration of grips as early as possible to leave more time for alternative approaches. & Order/construct more powerful gripper materials, possibly delaying the first demonstration of light switching until demo 2. \\
         \hline
-        It may end up being too costly for us to develop several adapters. & Moderate - We will not able to demonstrate the system’s true potential in the demos. & Low - The parts list we have made (see below) seems sensible. & Use the materials already available to the furthest extent possible, even if it means some inconsistency in the platform. & We will scale back the number of devices we are showcasing at once. We can reuse the controllers themselves but switch out the grips during the demo, thus we can still showcase the versatility of our product. \\
+        It may end up being too costly for us to develop several adapters. & Moderate - We will not be able to demonstrate the system’s true potential in the demos. & Low - The parts list we have made (see below) seems sensible. & Use the materials already available to the furthest extent possible, even if it means some inconsistency in the platform. & We will scale back the number of devices we are showcasing at once. We can reuse the controllers themselves but switch out the grips during the demo, thus we can still showcase the versatility of our product. \\
         \hline
         There is a risk that we don’t have the skills and/or budget to design and 3D-print parts to replace the LEGO construction. & Minor - The adapters will be larger, clunkier, and uglier, making the prototypes less impressive. & High - it is a complex task and most of the team is inexperienced in this area. & Communicate with Gary to discuss what costs are involved; allow plenty of time for the design process. & Stick with the LEGO. \\
         \hline
-        The devices draw a lot of power and need to be recharged very frequently. & Moderate - The convenience of remote control would be overshadowed by the time spent charging the devices, making the product unattractive. & Unknown - Without the experience its hard to judge how likely that this problem will arise & By using Arduinos and offloading most of the logic onto the server we hope to reduce power draw. & We will pivot to use cases where we can assume the user has a power outlet nearby such as the thermostat. \\
+        The devices draw a lot of power and need to be recharged very frequently. & Moderate - The convenience of remote control would be overshadowed by the time spent charging the devices, making the product unattractive. & Unknown - Without previous experience it is hard to judge how likely it is that this problem will arise. & By using Arduinos and offloading most of the logic onto the server we hope to reduce power draw. & We will pivot to use cases where we can assume the user has a power outlet nearby such as the thermostat. \\
         \hline
         A lack of skills may mean we cannot complete the project with Arduinos, which is arguably the most complex platform due to its low-level nature. & Moderate - We may only be able to build a few controllers and they would be many times larger than we had envisioned due to the size of the alternative platforms. & Low - There is not a lot of complexity in the robot code, so we should be able to work through the issues that arise. & Start building the adapters early, communicate clearly with the rest of the team on Slack and in the weekly meetings if there are issues. & We will move to the EV3 platform. \\
         \hline
@@ -445,32 +446,32 @@ Theo Olausson will be the treasurer for the project. A Google Sheet with communa
         \hline
         halspals.co.uk domain & 1 & £6 &  \\
         \hline
-        ESP8266 & 3 & £20 & Incredibly small arduino compatible board with wifi chip. Has a large community with lots of resources available. \\
+        ESP8266 & 3 & £20 & Incredibly small Arduino-compatible board with WiFi chip. Has a large community with lots of resources available. \\
         \hline
-        Servos & 3 & £15 & Not sure exactly what servos we will need, will need to experiment with the lego servos first. \\
+        Servos & 3 & £15 & Rough estimate as we are not sure exactly what servos we will need; will need to experiment with the LEGO servos first. \\
         \hline
         Light sensor & 3 & £5 &  \\
         \hline
         3D printing &  & £50 & We will need to go through a couple of iterations before we get the right fit, so we are allocating a lot of our budget just in case. \\
         \hline
-        Self adhesive pad & & £10 & For attaching robots to devices \\
+        Self adhesive pad & & £10 & For attaching robots to devices.\\
         \hline
-        Light switch & 1 & £5 & \\
+        Light switch & 1 & £5 & For demonstration purposes.\\
         \hline
-        Basic thermostat & 1 & £10 & \\
+        Basic thermostat & 1 & £10 & For demonstration purposes.\\
         \hline
-        Bolt lock & 1 & £10 & \\
+        Bolt lock & 1 & £10 & For demonstration purposes.\\
         \hline
-        Echo dot & 1 & £30 & If possible we would like to get a cheaper refurbished/used one \\
+        Echo dot & 1 & £30 & If possible we would like to get a cheaper refurbished/used one. \\
         \hline
     \end{tabularx}    
 \end{center}
 
-The total arrives at £181. We don't expect to spend this much, we have been generous with prices in this table in case the parts turn out to be more expensive than the ones we have found on amazonAmazon.
+The total arrives at £181. We don't expect to spend this much; we have been generous with prices in this table in case the parts turn out to be more expensive than the ones we have found on Amazon.
 
 \subsection{Components}
 
-Our system is split into 3 main components: web server, android app, and the robots. The following is a breakdown of who will be focusing on what, though we encourage all team members to make themselves useful across all the components:
+Our system is split into 3 main components: web server, Android app, and the robots. The following is a breakdown of who will be focusing on what, though we encourage all team members to make themselves useful across all the components:
 
 \begin{itemize}
     \item Ben, Gwion, Wang (Alexa integration)
@@ -478,9 +479,9 @@ Our system is split into 3 main components: web server, android app, and the rob
     \item Luke, Spencer, Wang, Han, Sameer
 \end{itemize}
 
-\subsection{Git \& Github}
+\subsection{Git \& GitHub}
 
-We have decided on using Git for version control, with GitHub as our host. GitHub has a number of features such as code review and triage tools nicely integrated. Issues and pull requests can be assigned a deadline so we can easily view what needs to be done before the next demo across the 3 components, and how we are progressing. We decided against using Trello since there is nothing Trello offers that we want or Github projects don’t already offer.
+We have decided on using Git for version control, with GitHub as our host. GitHub has a number of features such as code review and triage tools nicely integrated. Issues and pull requests can be assigned a deadline so we can easily view what needs to be done before the next demo across the 3 components, and how we are progressing. We decided against using Trello since there is nothing Trello offers that we want or GitHub projects don’t already offer.
 
 The repository will be a monorepo, that is all the components exist in the same repository. This makes it much easier to do multi-component refactoring such as changing a REST endpoint. In terms of workflow, we are using a simplified version of git-flow, since we don’t need the overhead of versioning (we are only creating a prototype).
 
