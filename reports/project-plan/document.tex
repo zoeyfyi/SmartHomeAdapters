@@ -24,6 +24,7 @@
 \usepackage{subcaption}
 \usepackage{tabularx}
 \usepackage{ltablex}
+\usepackage{float}
 \newcolumntype{L}{>{\raggedright\arraybackslash}X}
 
 % Colored text for goals
@@ -54,7 +55,7 @@ For this project we are focusing on three use cases:
     \item \textbf{Bolt locks:} A linear sliding grip would allow a user to control a garden gate or other bolt lock mechanism. This grip could be useful for unlocking the gate for the delivery driver when you’re away from home. Again, existing solutions are not applicable to people living in rented accommodation.
 \end{itemize}
 
-\begin{figure}
+\begin{figure}[H]
     \centering
     \includegraphics[width=1.0\linewidth]{images/architecture.png}
     \caption{Architecture of our system.}
@@ -64,7 +65,7 @@ For this project we are focusing on three use cases:
 
 The robot is split into two parts: the controller and the grips. The controller includes an Arduino, an array of sensors, servo and a battery pack. The grips attach to the controller; when the servo turns, the grips manipulate whatever device they are interacting with. The robots themselves attach to the devices with self-adhesive, so that they can easily be removed.
 
-\begin{figure}
+\begin{figure}[H]
     \begin{subfigure}{.5\textwidth}
       \centering
       \includegraphics[width=.8\linewidth]{images/light-grip-1.jpg}
@@ -93,7 +94,7 @@ The internal services correspond to each of the use cases. They keep track of th
 
 The Android app is the primary user interface into our system. It allows the user to register, calibrate and control their robots.
 
-\begin{figure}
+\begin{figure}[H]
     \begin{subfigure}{.33\textwidth}
       \centering
       \includegraphics[width=.9\linewidth]{images/app-1.png}
