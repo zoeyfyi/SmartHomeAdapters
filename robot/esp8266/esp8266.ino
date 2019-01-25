@@ -2,6 +2,9 @@
 #include "wifi.h"
 
 void setup() {
+  // use pin 7 as our LED indicator
+  pinMode(D7, OUTPUT);
+
   // begin serial communications
   Serial.begin(9600);
   delay(10);
@@ -29,6 +32,8 @@ void setup() {
   
   Serial.print("IP address:\t");
   Serial.println(WiFi.localIP());         // Send the IP address of the ESP8266 to the computer
+
+  digitalWrite(D7, HIGH);
 }
 
 void loop() { 
