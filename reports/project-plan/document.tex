@@ -25,6 +25,7 @@
 \usepackage{tabularx}
 \usepackage{ltablex}
 \usepackage{float}
+\usepackage{pdfpages}
 \newcolumntype{L}{>{\raggedright\arraybackslash}X}
 
 % Colored text for goals
@@ -344,7 +345,7 @@ If there is time remaining at the end of the project, there are a number of exte
 
 \section{Time planning}
 
-\begin{figure}
+\begin{figure}[H]
     \centering
     \includegraphics[width=0.8\linewidth]{images/time.png}
     \caption{Breakdown of how many hours each of our team members will spend on various aspects of the project.}
@@ -396,7 +397,7 @@ A few members of the team have done some 3D modelling before. Wang has 3D printe
 
 \subsection{Gantt Chart}
 
-% TODO: insert gantt chart
+\includepdf[pages={1}]{gantt.pdf}
 
 \section{Risks}
 
@@ -435,6 +436,8 @@ Both Luke Drennan and Ben Sheffield will function as team leaders. Luke has 4 ye
 \subsection{Treasurer}
 
 Theo Olausson will be the treasurer for the project. A Google Sheet with communal access has been set up so that any member of the group can see how much of the budget remains and suggest purchases, however, these suggestions must be accepted by Theo and the team leaders before going through. This way the group will stay in control of the budget at all times.
+
+\subsubsection{Projected costs}
 
 \begin{center}
     \begin{tabularx}{\linewidth}{|l|c|c|L|}

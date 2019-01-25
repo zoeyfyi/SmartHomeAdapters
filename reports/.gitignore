@@ -1,5 +1,6 @@
 ## PDF output
 *.pdf
+!gantt.pdf
 
 ## Core latex/pdflatex auxiliary files:
 *.aux
