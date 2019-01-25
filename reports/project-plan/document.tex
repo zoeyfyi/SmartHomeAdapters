@@ -44,14 +44,14 @@
 \tableofcontents
 
 \section{Concept}
-Smart home adapters transform the user’s existing tech into smart devices. The adapters will come with a selection of grips which can be swapped out to perform the different actions. Users will select the type of devices our product will be interacting with, such as a dial, switch, or button, and then our adapter will switch, twist or press to perform the desired operation. Going further we plan to integrate our device with other smart home solutions such as Alexa and IFTTT (If this then that) to provide a cohesive smart home experience.
+Smart home adapters transform the user’s existing tech into smart devices. The adapters will come with a selection of grips which can be swapped out to perform the different actions. Users will select the type of devices our product will be interacting with, such as a dial, switch, or button, and then our adapter will switch, twist or press to perform the desired operation. Going further we plan to integrate our device with other smart home solutions such as Alexa and IFTTT (If this then that) to provide a cohesive, smart home experience.
 
-For this project we are focusing on 3 use cases:
+For this project we are focusing on three use cases:
 
 \begin{itemize}
     \item \textbf{Smart thermostat:} Current devices such as the Hive and Nest replace your existing thermostat, thus requiring landlord’s permission. Our device would go over your existing thermostat, reaching an audience not served by the competition.
-    \item \textbf{Switches:} Existing products such as Philips Hue bulbs allow you to turn on/off and change the colour of your lights however they only support the most common bulb types. Our product goes over the existing light switch and is therefore compatible with all bulb types. This is not just useful for lights, but any switch. Often there are switches hidden behind appliances in hard to reach places, for example, a fridge in the garage. Our adapters connect with the user’s devices wirelessly, alleviating the need to pull out the fridge just to turn it off when not in use.
-    \item \textbf{Bolt locks:} A linear sliding grip would allow a user to control a garden gate or other bolt lock mechanism. This could be useful for unlocking the gate for the delivery driver when you’re away from home. Again, existing solutions are not applicable to people living in rented homes.
+    \item \textbf{Switches:} Existing products such as Philips Hue bulbs allow you to turn on/off and change the colour of your lights however they only support the most common bulb types. Our product goes over the existing light switch and is therefore compatible with all bulb types. This grip is not just useful for lights, but any switch. Often there are switches hidden behind appliances in hard to reach places, for example, a fridge in the garage. Our adapters connect with the user’s devices wirelessly, alleviating the need to pull out the fridge just to turn it off when not in use.
+    \item \textbf{Bolt locks:} A linear sliding grip would allow a user to control a garden gate or other bolt lock mechanism. This grip could be useful for unlocking the gate for the delivery driver when you’re away from home. Again, existing solutions are not applicable to people living in rented accommodation.
 \end{itemize}
 
 \begin{figure}
@@ -62,7 +62,7 @@ For this project we are focusing on 3 use cases:
 
 \subsection{Robot}
 
-The robot is split into 2 parts: the controller and the grips. The controller includes an Arduino, an array of sensors, servo and a battery pack. The grips attach to the controller; when the servo turns the grips manipulate whatever device they are interacting with. The robots themselves attach to the devices with self-adhesive, so that they can easily be removed.
+The robot is split into two parts: the controller and the grips. The controller includes an Arduino, an array of sensors, servo and a battery pack. The grips attach to the controller; when the servo turns, the grips manipulate whatever device they are interacting with. The robots themselves attach to the devices with self-adhesive, so that they can easily be removed.
 
 \begin{figure}
     \begin{subfigure}{.5\textwidth}
@@ -323,7 +323,7 @@ Our goals are what we want to achieve in each sprint (see organisational structu
 If there is time remaining at the end of the project, there are a number of extensions we could add.
 
 \begin{itemize}
-    \item \textbf{Fall detection:} Using an accelerometer we could detect if the device falls off the wall and send the user a notification.
+    \item \textbf{Fall detection:} Using an accelerometer, we could detect if the device falls off the wall and send the user a notification.
     \item \textbf{iOS app:} An iOS app would allow us to integrate with Siri and the Apple Home app. It would also expand our market.
     \item \textbf{Web app:} Allow for remote control from anywhere without installing an app.
     \item \textbf{Android app (extensions):} Google Home \& Bixbe integration would bring voice control to more devices.
@@ -375,7 +375,7 @@ The trade fair is from 9:00 till 17:30, but we will also be allocating another 2
 
 \subsubsection{Development}
 
-The rest of our time will be working on our assigned components (see organisational structure $\rightarrow$ components). This includes building, programming, testing, bug fixing and code reviews. There are 28 easy tasks, 13 medium tasks and 7 hard tasks. If we allocate 10 hours for easy tasks, 20 hours for medium tasks and 30 hours for hard tasks we get 750 hours in total out of the 980 man hours we have available. This leaves us with plenty of time in case we have underestimated the complexity of some goals.
+The rest of our time will be working on our assigned components (see organisational structure $\rightarrow$ components). This work includes building, programming, testing, bug fixing and code reviews. There are 28 easy tasks, 13 medium tasks and 7 hard tasks. If we allocate 10 hours for easy tasks, 20 hours for medium tasks and 30 hours for hard tasks we get 750 hours in total out of the 980 working hours we have available. This leaves us with plenty of time in case we have underestimated the complexity of some goals.
 
 \subsection{Skills}
 
@@ -422,7 +422,7 @@ A few members of the team have done some 3D modelling before. Wang has 3D printe
         \hline
         A lack of skill may mean we cannot complete the Android app. & Severe - The user will not be able to control or set up the robots from their phone. & Low - thanks to ILP most of the team have relevant experience. & We have allocated three members, all of whom took ILP, to work full or part-time on this component. & We will switch to building a web app. A web app has a number of advantages (namely that there is no installation) and disadvantages (less convenient for the user). \\
         \hline
-        We will be using the same self-adhesive as stick-on hooks to attach our robot to the users' device. If the robot is too heavy, the self-adhesive may not be able to hold the weight. & Severe - The robots will not stay attached to the walls, making them unusable for most use cases. & Low - the components we are planning to use are quite light, and self adhesive strips can take quite a bit of weight. & Trial this early in the development process and make sure to thoroughly test it for all types of grippers. & We will increase the surface area of the robot so we can fit larger self-adhesive pads, or look into using suction cups instead if appropriate. \\
+        We will be using the same self-adhesive as stick-on hooks to attach our robot to the users' device. If the robot is too heavy, the self-adhesive may not be able to hold the weight. & Severe - The robots will not stay attached to the walls, making them unusable for most use cases. & Low - the components we are planning to use are quite light, and self-adhesive strips can take quite a bit of weight. & Trial this early in the development process and make sure to thoroughly test it for all types of grippers. & We will increase the surface area of the robot so we can fit larger self-adhesive pads, or look into using suction cups instead if appropriate. \\
         \hline
     \end{tabularx}
 \end{center}
@@ -435,14 +435,14 @@ Both Luke Drennan and Ben Sheffield will function as team leaders. Luke has 4 ye
 
 \subsection{Treasurer}
 
-Theo Olausson will be the treasurer for the project. A Google Sheet with communal access has been set up so that any member of the group can see how much of the budget remains and suggest purchases, however, these suggestions must be accepted by Theo and the team leaders before going through. This way the group will remain in control of the budget at all times.
+Theo Olausson will be the treasurer for the project. A Google Sheet with communal access has been set up so that any member of the group can see how much of the budget remains and suggest purchases, however, these suggestions must be accepted by Theo and the team leaders before going through. This way the group will stay in control of the budget at all times.
 
 \begin{center}
     \begin{tabularx}{\linewidth}{|l|c|c|L|}
         \hline
         \textbf{Item} & \textbf{Quantity} & \textbf{Total} & \textbf{Notes} \\
         \hline
-        AWS & 1 & £20 & We should only need the free tier for the web server, however we have allocated £20 incase we have underestimated our compute needs. \\
+        AWS & 1 & £20 & We should only need the free tier for the web server. However we have allocated £20 in case we have underestimated our compute needs. \\
         \hline
         halspals.co.uk domain & 1 & £6 &  \\
         \hline
@@ -483,9 +483,9 @@ Our system is split into 3 main components: web server, Android app, and the rob
 
 We have decided on using Git for version control, with GitHub as our host. GitHub has a number of features such as code review and triage tools nicely integrated. Issues and pull requests can be assigned a deadline so we can easily view what needs to be done before the next demo across the 3 components, and how we are progressing. We decided against using Trello since there is nothing Trello offers that we want or GitHub projects don’t already offer.
 
-The repository will be a monorepo, that is all the components exist in the same repository. This makes it much easier to do multi-component refactoring such as changing a REST endpoint. In terms of workflow, we are using a simplified version of git-flow, since we don’t need the overhead of versioning (we are only creating a prototype).
+The repository will be a monorepo (all the components exist in the same repository). It makes it much easier to do multi-component refactoring such as changing a REST endpoint. Regarding workflow, we are using a simplified version of git-flow, since we don’t need the overhead of versioning (we are only creating a prototype).
 
-When creating a feature, we will branch from the relevant component branch and create a pull request back into the component branch. Before the pull request is accepted Travis (our chosen Continuous Integration system) will run the test suites to check for problems, and another team member will perform a code review. This will help to catch bugs and makes sure everyone's code is readable.
+When creating a feature, we will branch from the relevant component branch and create a pull request back into the component branch. Before the pull request is accepted Travis (our chosen Continuous Integration system) will run the test suites to check for problems, and another team member will perform a code review. It will help to catch bugs and makes sure everyone's code is readable.
 
 At least three days before a demo we will have a group meeting where we will merge the component branches into master. As a group, we can then fix any integration issues between the 3 components on the spot.
 
@@ -493,12 +493,10 @@ At least three days before a demo we will have a group meeting where we will mer
 
 For this project, we have decided that we will be loosely following Agile practices. Considering that we will have the team working on different components, we need to prevent one area being held back waiting for another. Thus communication practices of Agile such as the daily standup are especially helpful; team members must say what they have done, what they will do, and if they need help or are being hindered. 
 
-In order to prevent a skewed workload, feature estimation will occur prior to the first sprint. We will assign features a rating from one to three in accordance with difficulty, and split the features equally across the timeframe.
-
-Our sprints will be approximately two weeks in length, so that they may match the time between demos. Our progress will be tracked at the beginning/end of each sprint. This will allow us to review the efficiency of the team and better set our goals for the next sprint and demo.
+Our sprints will be approximately two weeks in length, so that they may match the time between demos. Our progress will be tracked at the beginning/end of each sprint, allowing us to review the efficiency of the team and better set our goals for the next sprint and demo.
 
 \subsection{Meetings}
 
-Meetings are scheduled on google calendar and slack so everyone knows what's happening and when. We will also be keeping a log of what was discussed at meetings. Firstly, if someone could not make it to the meeting they can check the meeting log to see what was discussed. Secondly, it will help later when writing out reports.
+Meetings are scheduled on google calendar and slack, so everyone knows what's happening and when. We will also be keeping a log of what was discussed at meetings. Firstly, if someone could not make it to the meeting, they can check the meeting log to see what was discussed. Secondly, it will help later when writing out reports.
 
 \end{document}
