@@ -37,36 +37,29 @@ func connectHandler(w http.ResponseWriter, r *http.Request) {
 	socket = newSocket
 }
 
-func ledOnHandler(w http.ResponseWriter, r *http.Request) {
-	log.Println("Turning the LED on")
-
+func sendMessage(w http.ResponseWriter, msg string) {
 	if socket == nil {
 		log.Println("Robot not connected")
+		w.WriteHeader(http.StatusServiceUnavailable)
 		return
 	}
 
 	// send LED on message to robot
-	message := []byte("led on")
-	if err := socket.WriteMessage(websocket.TextMessage, message); err != nil {
-		log.Println("Failed to send LED on message")
+	if err := socket.WriteMessage(websocket.TextMessage, []byte(msg)); err != nil {
+		log.Println("Failed to send message")
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 }
 
+func ledOnHandler(w http.ResponseWriter, r *http.Request) {
+	log.Println("Turning the LED on")
+	sendMessage(w, "led on")
+}
+
 func ledOffHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println("Turning the LED off")
-
-	if socket == nil {
-		log.Println("Robot not connected")
-		return
-	}
-
-	// send LED off message to robot
-	message := []byte("led off")
-	if err := socket.WriteMessage(websocket.TextMessage, message); err != nil {
-		log.Println("Failed to send LED off message")
-		return
-	}
+	sendMessage(w, "led off")
 }
 
 func main() {
