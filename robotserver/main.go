@@ -50,6 +50,8 @@ func sendMessage(w http.ResponseWriter, msg string) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
+	w.WriteHeader(http.StatusOK)
 }
 
 func ledOnHandler(w http.ResponseWriter, r *http.Request) {
