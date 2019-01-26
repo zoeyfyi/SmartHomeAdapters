@@ -3,3 +3,4 @@ language: generic
 script:
   # test webserver (with go 1.11)
   - eval "$(gimme 1.11)" && cd clientserver && go get -v ./... && go test
+  - eval "$(gimme 1.11)" && cd robotserver && go get -v ./... && go test
