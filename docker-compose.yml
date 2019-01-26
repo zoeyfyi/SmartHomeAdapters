@@ -1,0 +1,13 @@
+version: '3'
+
+services:
+  db:
+    build: 
+      context: ./database
+    restart: always
+    environment:
+      - POSTGRES_PASSWORD
+  userserver:
+    build: 
+      context: ./userserver
+    restart: always
