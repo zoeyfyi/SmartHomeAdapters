@@ -11,17 +11,26 @@ WiFiClient client;
 void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
 	switch(type) {
 		case WStype_DISCONNECTED:
-      digitalWrite(D8, LOW);
+      digitalWrite(D7, LOW);
 			Serial.printf("[WSc] Disconnected!\n");
 			break;
-		case WStype_CONNECTED: {
-      digitalWrite(D8, HIGH);
+		case WStype_CONNECTED:
+      digitalWrite(D7, HIGH);
 			Serial.printf("[WSc] Connected to url: %s\n", payload);
-      socket.sendTXT("Connected");
-		}
 			break;
 		case WStype_TEXT:
 			Serial.printf("[WSc] get text: %s\n", payload);
+      
+      // led on
+      if (strcmp((char *)payload, "led on") == 0) {
+        digitalWrite(D8, HIGH);
+      } 
+      
+      // led off
+      if (strcmp((char *)payload, "led off") == 0) {
+        digitalWrite(D8, LOW);
+      }
+      
       break;
 		case WStype_BIN:
 			Serial.printf("[WSc] get binary length: %u\n", length);
@@ -61,16 +70,17 @@ void setup() {
   Serial.println("Connection established!");  
   
   Serial.print("IP address:\t");
-  Serial.println(WiFi.localIP());         // Send the IP address of the ESP8266 to the computer
+  Serial.println(WiFi.localIP());
 
   digitalWrite(D7, HIGH);
 
-  delay(5000);
+  delay(1000);
 
   // connect to websocket server
-  socket.begin("echo.websocket.org", 80, "/");
+  Serial.println("Connecting to WebSocket server");
+  socket.begin("192.168.0.2", 8080, "/connect");
   socket.onEvent(webSocketEvent);
-  socket.setReconnectInterval(5000);
+  socket.setReconnectInterval(1000);
 }
 
 void loop() { 
