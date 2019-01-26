@@ -28,10 +28,13 @@ type testServer struct {
 
 func newServer(t *testing.T) *testServer {
 	var server testServer
-	http.HandleFunc("/connect", connectHandler)
-	http.HandleFunc("/led/on", ledOnHandler)
-	http.HandleFunc("/led/off", ledOffHandler)
-	server.Handler = http.DefaultServeMux
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/connect", connectHandler)
+	mux.HandleFunc("/led/on", ledOnHandler)
+	mux.HandleFunc("/led/off", ledOffHandler)
+	server.Handler = mux
+
 	server.Server = httptest.NewServer(server.Handler)
 	server.URL = httpToWsProtocol(server.Server.URL)
 	return &server
