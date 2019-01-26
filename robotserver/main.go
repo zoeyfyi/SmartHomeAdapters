@@ -46,8 +46,15 @@ func sendMessage(w http.ResponseWriter, msg string) {
 
 	// send LED on message to robot
 	if err := socket.WriteMessage(websocket.TextMessage, []byte(msg)); err != nil {
-		log.Println("Failed to send message")
-		w.WriteHeader(http.StatusInternalServerError)
+		if _, ok := err.(*websocket.CloseError); ok {
+			// socket was closed
+			log.Println("Robot not connected (socket is closed)")
+			w.WriteHeader(http.StatusServiceUnavailable)
+		} else {
+			// unknown error
+			log.Printf("Failed to send message: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+		}
 		return
 	}
 
