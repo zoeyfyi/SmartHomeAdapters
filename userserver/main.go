@@ -1,10 +1,13 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"log"
 	"net/http"
 	"regexp"
+
+	_ "github.com/lib/pq"
 )
 
 // error messages for register route
@@ -60,6 +63,14 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	log.Println("Server starting")
+
+	db, err := sql.Open("postgres", "postgres://0.0.0.0:5432")
+	if err != nil {
+		log.Fatalf("Failed to connect to postgres: %v", err)
+	}
+	defer db.Close()
+
 	// register routes
 	http.HandleFunc("/register", registerHandler)
 
