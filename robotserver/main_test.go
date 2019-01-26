@@ -62,8 +62,12 @@ func TestSendLEDCommand(t *testing.T) {
 
 	s := newServer(t)
 	defer s.Server.Close()
+
 	ws, _, _ := websocket.DefaultDialer.Dial(s.URL+"/connect", nil)
-	defer ws.Close()
+	// NOTE: we need to clear the socket in main.go otherwise it may not close in time
+	// before the next test. Once we have add handling for multiple robots we can replace
+	// this with `ws.close()`
+	defer func() { socket = nil }()
 
 	for _, r := range requests {
 		req, err := http.NewRequest("GET", s.URL+r.path, nil)
@@ -87,6 +91,33 @@ func TestSendLEDCommand(t *testing.T) {
 		}
 		if string(msg) != r.expectedMessage {
 			t.Errorf("Expected message: \"%s\", got message: \"%s\"", r.expectedMessage, msg)
+		}
+	}
+}
+
+func TestUnavalibleWhenRobotNotConnected(t *testing.T) {
+	requests := []struct {
+		path            string
+		expectedMessage string
+	}{
+		{"/led/on", "led on"},
+		{"/led/off", "led off"},
+	}
+
+	s := newServer(t)
+	defer s.Server.Close()
+
+	for _, r := range requests {
+		req, err := http.NewRequest("GET", s.URL+r.path, nil)
+		if err != nil {
+			t.Errorf("Error with request: %v", err)
+		}
+
+		rr := httptest.NewRecorder()
+		s.Handler.ServeHTTP(rr, req)
+
+		if rr.Code != http.StatusServiceUnavailable {
+			t.Errorf("Expected service unavailble, got: %v", rr.Code)
 		}
 	}
 }
