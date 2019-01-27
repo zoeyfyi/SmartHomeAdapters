@@ -6,9 +6,8 @@ import android.util.Log
 import android.view.View
 import android.widget.Button
 import kotlinx.android.synthetic.main.activity_authentication.*
+import org.jetbrains.anko.*
 import org.jetbrains.anko.design.snackbar
-import org.jetbrains.anko.startActivity
-import org.jetbrains.anko.toast
 
 class AuthenticationActivity : AppCompatActivity() {
 
