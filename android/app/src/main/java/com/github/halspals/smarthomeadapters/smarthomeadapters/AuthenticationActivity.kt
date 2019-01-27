@@ -10,7 +10,7 @@ import org.jetbrains.anko.design.snackbar
 import org.jetbrains.anko.startActivity
 import org.jetbrains.anko.toast
 
-class AuthenticationActivity : AppCompatActivity(), ButtonUpdater {
+class AuthenticationActivity : AppCompatActivity() {
 
     private val tag = "AuthenticationActivity"
 
@@ -18,7 +18,9 @@ class AuthenticationActivity : AppCompatActivity(), ButtonUpdater {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_authentication)
 
-        // Set up appropriate listeners for button click events
+        /*
+            Set up appropriate listeners for button click events
+         */
         sign_in_button.setOnClickListener { _ ->
             sign_in_button.isEnabled = false
 
@@ -39,29 +41,73 @@ class AuthenticationActivity : AppCompatActivity(), ButtonUpdater {
             startActivity<RegisterUserActivity>()
         }
 
-        // Add text listeners to enable and disable the sign in button according to what the user
-        // has entered
-        val nonEmptyTextWatcher = NonEmptyTextWatcher(this, sign_in_button)
-        email_input.addTextChangedListener(nonEmptyTextWatcher)
-        password_input.addTextChangedListener(nonEmptyTextWatcher)
-
+        // Validate the inputs whenever they lose focus
+        email_input.setOnFocusChangeListener { _, hasFocus ->
+            if (!hasFocus) {
+                // The email input has dropped focus; check its validity.
+                checkEmailInput()
+            }
+        }
+        password_input.setOnFocusChangeListener { _, hasFocus ->
+            if (!hasFocus) {
+                // The password input has dropped focus; check its validity.
+                checkPasswordInput()
+            }
+        }
     }
 
+    /**
+     * WIP: Get the email and password given, validate them, and then
+     * try to authenticate the user.
+     *
+     * @return whether the inputs are valid and the authentication was successful
+     */
     private fun signInUser(): Boolean {
         login_progress_bar.visibility = View.VISIBLE
         // TODO make this authenticate with web server
+        val signInOK = checkEmailInput() && checkPasswordInput()
         login_progress_bar.visibility = View.GONE
-        return true
+        return signInOK
     }
 
-    override fun updateButton(button: Button) {
-        // Enables the button iff both the email and password input are non-empty (and non-null)
-        // and the email input is a valid email address
-        val passwordEmpty = password_input.text.isNullOrEmpty()
+    /**
+     * Gets the email from the [email_input] and checks that it is a valid email string.
+     * Sets errors on [email_input] as appropriate.
+     *
+     * @return whether the given email is a valid one
+     */
+    private fun checkEmailInput(): Boolean {
         val email = email_input.text
-        val emailValid = (email != null
-                && android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches())
+        val emailIsValid = !email.isNullOrEmpty()
+                           && android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
 
-        button.isEnabled = emailValid && !passwordEmpty
+        if (!emailIsValid) {
+            email_input.error = "Invalid email address"
+        } else {
+            email_input.error = null
+        }
+
+        return emailIsValid
+    }
+
+
+    /**
+     * WIP: Gets the password from [password_input] and checks that it is valid.
+     * Currently only checks that it is not null or empty.
+     * Sets errors on [password_input] as appropriate.
+     *
+     * @return whether the password is a valid one
+     */
+    private fun checkPasswordInput(): Boolean {
+        // TODO we can add more checks here like password length etc
+        val pwIsValid = !password_input.text.isNullOrEmpty()
+
+        if (!pwIsValid) {
+            password_input.error = "Invalid password"
+        } else {
+            password_input.error = null
+        }
+
+        return pwIsValid
     }
 }

@@ -11,7 +11,7 @@ import org.jetbrains.anko.design.snackbar
 import org.jetbrains.anko.startActivity
 import org.jetbrains.anko.toast
 
-class RegisterUserActivity : AppCompatActivity(), ButtonUpdater {
+class RegisterUserActivity : AppCompatActivity() {
 
     private val tag = "RegisterUserActivity"
 
@@ -19,6 +19,9 @@ class RegisterUserActivity : AppCompatActivity(), ButtonUpdater {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_register_user)
 
+        /*
+            Set up the click events for the buttons.
+         */
         email_image_view.setOnClickListener { _ ->
             // Fire up the user's default email app.
             val intent = Intent(Intent.ACTION_MAIN)
@@ -49,33 +52,57 @@ class RegisterUserActivity : AppCompatActivity(), ButtonUpdater {
             }
         }
 
-        // Return to the AuthenticationActivity which launched this RegisterUserActivity
-        // if desired
-        login_button.setOnClickListener { _ -> finish() }
+        login_button.setOnClickListener { _ ->
+            // Return to the AuthenticationActivity which launched this RegisterUserActivity
+            finish()
+        }
 
-        // Add text watchers to enable and disable the send button according to what the user
-        // has entered
-        val sendButtonTextWatcher = NonEmptyTextWatcher(this, send_email_button)
-        email_input.addTextChangedListener(sendButtonTextWatcher)
-        password_input.addTextChangedListener(sendButtonTextWatcher)
-        confirm_password_input.addTextChangedListener(sendButtonTextWatcher)
+        /*
+            Set onFocusChangeListeners for the input fields to check if their input thus far
+            is valid.
+         */
+        email_input.setOnFocusChangeListener { _, hasFocus ->
+            if (!hasFocus) {
+                checkEmailInput()
+            }
+        }
 
-        // Similarly add a text watcher to the verification code input field
-        // to enable/disable the verify button
-        val verifyButtonTextWatcher = NonEmptyTextWatcher(this, verify_code_button)
-        activation_code_input.addTextChangedListener(verifyButtonTextWatcher)
+        password_input.setOnFocusChangeListener { _, hasFocus ->
+            if (!hasFocus) {
+                checkPasswordInput()
+            }
+        }
+
+        confirm_password_input.setOnFocusChangeListener { _, hasFocus ->
+            if (!hasFocus) {
+                checkConfirmPasswordInput()
+            }
+        }
+
+
     }
 
+    /**
+     * WIP: Gets the input email and password and registers a new user with the web service.
+     * Currently just makes sure that all three inputs are valid.
+     *
+     * @return whether setting up the new user was successful
+     */
     private fun registerNewUser(): Boolean {
         progressBar.visibility = View.VISIBLE
         // TODO read data from input fields and send it to the server, moving on only when
         // receiving a success
+        val inputsOK = checkEmailInput() && checkPasswordInput() && checkConfirmPasswordInput()
         progressBar.visibility = View.GONE
 
 
-        return true
+        return inputsOK
     }
 
+    /**
+     * Hides the views corresponding to registering, instead showing those
+     * where the user is asked to verify their email before proceeding.
+     */
     private fun switchToVerificationContext() {
         // Hides the previous input fields and buttons and displays
         // new ones as appropriate to verify the user's email
@@ -90,6 +117,11 @@ class RegisterUserActivity : AppCompatActivity(), ButtonUpdater {
         verify_code_button.visibility = View.VISIBLE
     }
 
+    /**
+     * WIP: Gets the verification code from [activation_code_input] and checks with the
+     * web service that it looks as expected.
+     * Currently just a dummy function; returns true regardless.
+     */
     private fun verifyActivationCode(): Boolean {
         progressBar.visibility = View.VISIBLE
         // TODO read data from input fields and send it to the server, moving on only when
@@ -99,41 +131,64 @@ class RegisterUserActivity : AppCompatActivity(), ButtonUpdater {
         return true
     }
 
-    override fun updateButton(button: Button) {
-        if (button == send_email_button) {
-            // Enables the button iff:
-            // * the given email address is a valid one,
-            // * all input fields are non-null,
-            // * all input fields are non-empty, and
-            // * the passwords given match.
-            val email = email_input.text
-            val emailValid = (email != null
-                    && android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches())
-            val password = password_input.text
-            val passwordEmpty = password.isNullOrEmpty()
+    /**
+     * Gets the email from the [email_input] and checks that it is a valid email string.
+     * Sets errors on [email_input] as appropriate.
+     *
+     * @return whether the given email is a valid one
+     */
+    private fun checkEmailInput(): Boolean {
+        val email = email_input.text
+        val emailIsValid = (!email.isNullOrEmpty()
+                && android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches())
 
-            val confirmedPassword = confirm_password_input.text
-            val confirmedPasswordEmpty = confirmedPassword.isNullOrEmpty()
-
-            val passwordsMatch = password.toString() == confirmedPassword.toString()
-
-            button.isEnabled = (emailValid
-                    && !passwordEmpty
-                    && !confirmedPasswordEmpty
-                    && passwordsMatch)
-
-            // Also show an error to the user if the passwords given do not match
-            if (!passwordsMatch) {
-                confirm_password_input.error = "Passwords don't match"
-            } else {
-                // clear any previous error message
-                confirm_password_input.error = null
-            }
-        } else if (button == verify_code_button) {
-            button.isEnabled = !activation_code_input.text.isNullOrEmpty()
+        if (!emailIsValid) {
+            email_input.error = "Invalid email address"
         } else {
-            Log.w(tag, "[updateButton] Unexpected button encountered.")
+            email_input.error = null
         }
 
+        return emailIsValid
+    }
+
+    /**
+     * WIP: Gets the password from [password_input] and checks that it is valid.
+     * Currently only checks that it is not null or empty.
+     * Sets errors on [password_input] as appropriate.
+     *
+     * @return whether the password is a valid one
+     */
+    private fun checkPasswordInput(): Boolean {
+        // TODO we can add more checks here like password length etc
+        val pwIsValid = !password_input.text.isNullOrEmpty()
+
+        if (!pwIsValid) {
+            password_input.error = "Invalid password"
+        } else {
+            password_input.error = null
+        }
+
+
+        return pwIsValid
+    }
+
+    /**
+     * Checks that the password input in [confirm_password_input] matches that in [password_input].
+     *
+     * @return whether the two passwords match
+     */
+    private fun checkConfirmPasswordInput(): Boolean {
+        // Simply make sure that the two passwords given match.
+
+        val confirmedPwIsValid = (confirm_password_input.text.toString()
+                == password_input.text.toString())
+
+        if (!confirmedPwIsValid) {
+            confirm_password_input.error = "Passwords do not match"
+        } else {
+            confirm_password_input.error = null
+        }
+
+        return confirmedPwIsValid
     }
 }
