@@ -4,7 +4,7 @@ script:
   # Compiling reports
   - docker pull dxjoke/tectonic-docker
   - |
-    for DIR in `find $TRAVIS_BUILD_DIR/reports -type d`
-    do
-      docker run --mount src=${DIR},target=/usr/src/tex,type=bind dxjoke/tectonic-docker /bin/sh -c "tectonic document.tex"
+    for DIR in reports/*/; do
+      echo "Compiling ${DIR}";
+      docker run --mount src=${TRAVIS_BUILD_DIR}/${DIR},target=/usr/src/tex,type=bind dxjoke/tectonic-docker /bin/sh -c "tectonic document.tex"
     done
