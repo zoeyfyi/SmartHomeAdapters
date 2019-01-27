@@ -9,6 +9,7 @@ import (
 
 	"github.com/lib/pq"
 	_ "github.com/lib/pq"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // error messages for register route
@@ -68,8 +69,11 @@ func registerHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
+		// hash password
+		hash, err := bcrypt.GenerateFromPassword([]byte(password), 10)
+
 		// insert user into database
-		_, err = db.Exec("INSERT INTO users(email, password) VALUES($1, $2)", email, password)
+		_, err = db.Exec("INSERT INTO users(email, password) VALUES($1, $2)", email, hash)
 		if err != nil {
 			log.Printf("Failed to insert user into database: %v", err)
 			if err, ok := err.(*pq.Error); ok && err.Code.Name() == "unique_violation" {
