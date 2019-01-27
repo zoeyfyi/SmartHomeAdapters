@@ -44,7 +44,7 @@ class RegisterUserActivity : AppCompatActivity() {
             verify_code_button.isEnabled = false
             if (verifyActivationCode()) {
                 toast("Successfully registered your account")
-                startActivity<MainActivity>()
+                startActivity(intentFor<MainActivity>().clearTask().newTask())
             } else {
                 // TODO the below should also include an error message from the server
                 snackbar_layout.snackbar("Verification failed")

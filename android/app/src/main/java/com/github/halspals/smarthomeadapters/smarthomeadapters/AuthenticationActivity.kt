@@ -27,7 +27,7 @@ class AuthenticationActivity : AppCompatActivity() {
             if (signInUser()) {
                 toast("Signed in")
                 Log.d(tag, "Starting MainActivity")
-                startActivity<MainActivity>()
+                startActivity(intentFor<MainActivity>().clearTask().newTask())
             } else {
                 // TODO this should use the error message received by the server
                 snackbar_layout.snackbar("Failed to sign you in!")
