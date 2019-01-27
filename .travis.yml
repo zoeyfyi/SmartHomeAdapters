@@ -1,0 +1,6 @@
+language: generic
+
+script:
+  # Compiling reports
+  - docker pull dxjoke/tectonic-docker
+  - docker run --mount src=$TRAVIS_BUILD_DIR/reports/project-plan,target=/usr/src/tex,type=bind dxjoke/tectonic-docker /bin/sh -c "tectonic document.tex"
