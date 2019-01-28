@@ -7,15 +7,9 @@ import (
 )
 
 func TestPing(t *testing.T) {
-	req, err := http.NewRequest("GET", "/ping", nil)
-
-	if err != nil {
-		t.Errorf("Error: %v", err)
-	}
-
+	req, _ := http.NewRequest(http.MethodGet, "/ping", nil)
 	rr := httptest.NewRecorder()
-
-	http.HandlerFunc(pingHandler).ServeHTTP(rr, req)
+	createRouter().ServeHTTP(rr, req)
 
 	if status := rr.Code; status != http.StatusOK {
 		t.Errorf("Status code differs. Expected \"%d\", Got \"%d\"", http.StatusOK, status)
