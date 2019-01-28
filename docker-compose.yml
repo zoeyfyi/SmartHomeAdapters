@@ -23,6 +23,8 @@ services:
     restart: always
     environment:
       - POSTGRES_PASSWORD=password
+    volumes:
+      - database_data:/var/lib/postgresql/data
   userserver:
     build: 
       context: ./userserver
@@ -44,3 +46,4 @@ services:
       - 80:80
 volumes:
   portainer_data:
+  database_data:
