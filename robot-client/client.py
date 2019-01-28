@@ -17,10 +17,10 @@ def on_close(ws):
 def on_message(ws, msg):
 	if msg == "led on":
 		print("Sending 1")
-		ser.write(str(chr(1)).encode())
+		ser.write(b'1')
 	elif msg == "led off":
 		print("Sending 0")
-		ser.write(str(chr(0)).encode())
+		ser.write(b'0')
 	else:
 		print("Unknown message")
 
