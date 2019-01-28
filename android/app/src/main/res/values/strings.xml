@@ -14,4 +14,19 @@
     <string name="activation_code_input_hint">000000</string>
     <string name="verify_activation_code_button_text">Verify</string>
     <string name="login_button_text">Sign in instead</string>
+
+    <!-- Strings related to MainActivity -->
+    <string name="nav_bar_robots">Robots</string>
+    <string name="nav_bar_triggers">Triggers</string>
+    <string name="nav_bar_settings">Settings</string>
+
+    <!-- Strings related to RobotFragment -->
+    <string name="blank_robot_placeholder">I am a robot beep beep boop boop</string> <!-- TODO remove/replace -->
+
+    <!-- Strings related to TriggersFragment -->
+    <string name="blank_trigger_placeholder">Triggered</string> <!-- TODO remove/replace -->
+
+    <!-- Strings related to SettingsFragment -->
+    <string name="blank_settings_placeholder">Yarr there be settings here</string> <!-- TODO remove/replace -->
+
 </resources>
