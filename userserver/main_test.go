@@ -27,7 +27,7 @@ func TestRegisterFieldValidation(t *testing.T) {
 		}
 
 		rr := httptest.NewRecorder()
-		http.HandlerFunc(registerHandler).ServeHTTP(rr, req)
+		http.HandlerFunc(registerHandler(nil)).ServeHTTP(rr, req)
 
 		if status := rr.Code; status != c.expectedStatus {
 			t.Errorf("Status code differs. Expected \"%d\", Got \"%d\"", c.expectedStatus, status)
