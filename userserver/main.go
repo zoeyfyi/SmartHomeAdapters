@@ -43,6 +43,10 @@ type registerBody struct {
 	Password string `json:"password"`
 }
 
+type user struct {
+	Email string `json:"email"`
+}
+
 func registerHandler(db *sql.DB) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		log.Println("/register")
@@ -87,6 +91,12 @@ func registerHandler(db *sql.DB) http.HandlerFunc {
 			}
 			return
 		}
+
+		// return user
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(user{
+			Email: email,
+		})
 	})
 }
 
@@ -120,7 +130,7 @@ func main() {
 		log.Fatalf("Failed to ping postgres: %v", err)
 	}
 
-	log.Println("Connected to database: %v+", db.Stats())
+	log.Printf("Connected to database: %v+\n", db.Stats())
 
 	// register routes
 	http.HandleFunc("/register", registerHandler(db))
