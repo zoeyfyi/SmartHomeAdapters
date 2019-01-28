@@ -1,6 +1,10 @@
 language: generic
 
-script:
-  # test webserver (with go 1.11)
-  - eval "$(gimme 1.11)" && cd clientserver && go get -v ./... && go test
-  - eval "$(gimme 1.11)" && cd userserver && go get -v ./... && go test
+jobs:
+  include:
+    # test client server
+    - stage: test
+      script: eval "$(gimme 1.11)" && cd clientserver && go get -v ./... && go test
+    # test user server
+    - stage: test
+      script: eval "$(gimme 1.11)" && cd userserver && go get -v ./... && go test
