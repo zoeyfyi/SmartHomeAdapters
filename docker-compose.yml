@@ -22,7 +22,7 @@ services:
       context: ./database
     restart: always
     environment:
-      - POSTGRES_PASSWORD
+      - POSTGRES_PASSWORD=password
   userserver:
     build: 
       context: ./userserver
@@ -31,6 +31,11 @@ services:
     restart: always
     ports:
       - 8081:8081
+    environment:
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=password
+      - DB_DATABASE=postgres
+      - DB_URL=db
 
 volumes:
   portainer_data:

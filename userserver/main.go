@@ -3,9 +3,12 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"regexp"
+	"time"
 
 	"github.com/lib/pq"
 	_ "github.com/lib/pq"
@@ -90,9 +93,25 @@ func registerHandler(db *sql.DB) http.HandlerFunc {
 func main() {
 	log.Println("Server starting")
 
-	db, err := sql.Open("postgres", "postgres://postgres:password@db/postgres?sslmode=disable")
-	if err != nil {
-		log.Fatalf("Failed to connect to postgres: %v", err)
+	// database connection infomation
+	var (
+		username = os.Getenv("DB_USERNAME")
+		password = os.Getenv("DB_PASSWORD")
+		database = os.Getenv("DB_DATABASE")
+		url      = os.Getenv("DB_URL")
+	)
+
+	connectionStr := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable", username, password, url, database)
+	log.Printf("Connecting to database with \"%s\"\n", connectionStr)
+
+	db, err := sql.Open("postgres", connectionStr)
+	for i := 1; i <= 5; i++ {
+		// try to connect
+		if err == nil {
+			break
+		}
+		log.Fatalf("(%d) Failed to connect to postgres: %v", i, err)
+		time.Sleep(1000)
 	}
 	defer db.Close()
 
