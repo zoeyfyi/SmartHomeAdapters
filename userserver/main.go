@@ -136,7 +136,7 @@ func main() {
 	http.HandleFunc("/register", registerHandler(db))
 
 	// start server
-	if err := http.ListenAndServe(":8081", nil); err != nil {
+	if err := http.ListenAndServe(":80", nil); err != nil {
 		panic(err)
 	}
 }

@@ -30,12 +30,17 @@ services:
       - db
     restart: always
     ports:
-      - 8081:8081
+      - 8081:80
     environment:
       - DB_USERNAME=postgres
       - DB_PASSWORD=password
       - DB_DATABASE=postgres
       - DB_URL=db
-
+  clientserver:
+    build: 
+      context: ./clientserver
+    restart: always
+    ports:
+      - 80:80
 volumes:
   portainer_data:
