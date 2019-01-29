@@ -119,3 +119,27 @@ func TestSuccessfullyRemovingSwitch(t *testing.T) {
 		t.Errorf("Status code differs. Expected \"%d\", Got \"%d\"", http.StatusOK, status)
 	}
 }
+
+func TestRemoveSwitchDoesntExist(t *testing.T) {
+	req, err := http.NewRequest("DELETE", "/543", nil)
+	if err != nil {
+		t.Errorf("Error: %v", err)
+	}
+
+	rr := httptest.NewRecorder()
+	createRouter(db).ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusBadRequest {
+		t.Errorf("Status code differs. Expected \"%d\", Got \"%d\"", http.StatusBadRequest, status)
+	}
+
+	var restError restError
+	err = json.NewDecoder(rr.Body).Decode(&restError)
+	if err != nil {
+		t.Errorf("Could not read error json: %v", err)
+	}
+
+	if restError.Error != ErrorRobotNotRegistered {
+		t.Errorf("Error differs. Expected \"%s\", Got: \"%s\"", ErrorRobotNotRegistered, restError)
+	}
+}
