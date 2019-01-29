@@ -73,3 +73,31 @@ func TestSuccessfullRegistration(t *testing.T) {
 		t.Errorf("isOn differs. Expected \"%t\", Got: \"%t\"", false, switchRobot.IsOn)
 	}
 }
+
+func TestRegisterDuplicateRobots(t *testing.T) {
+	req, _ := http.NewRequest("POST", "/321/register", strings.NewReader("{\"isOn\":false}"))
+	rr := httptest.NewRecorder()
+	createRouter(db).ServeHTTP(rr, req)
+
+	req, err := http.NewRequest("POST", "/321/register", strings.NewReader("{\"isOn\":false}"))
+	if err != nil {
+		t.Errorf("Error: %v", err)
+	}
+
+	rr = httptest.NewRecorder()
+	createRouter(db).ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusBadRequest {
+		t.Errorf("Status code differs. Expected \"%d\", Got \"%d\"", http.StatusBadRequest, status)
+	}
+
+	var restError restError
+	err = json.NewDecoder(rr.Body).Decode(&restError)
+	if err != nil {
+		t.Errorf("Could not read error json: %v", err)
+	}
+
+	if restError.Error != ErrorRobotRegistered {
+		t.Errorf("Error differs. Expected \"%s\", Got: \"%s\"", ErrorRobotRegistered, restError)
+	}
+}
