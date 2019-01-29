@@ -1,6 +1,6 @@
 CREATE TABLE switches (
     -- ID of the robot
-    robotId serial,
-    -- True when the switch is on, false otherwise
-    switchOn boolean not null
+    robotId int not null unique,
+    -- Weather the switch is on or off
+    isOn boolean not null
 );

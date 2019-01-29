@@ -4,7 +4,7 @@
 *.dll
 *.so
 *.dylib
-clientserver
+switchserver
 
 # Test binary, built with `go test -c`
 *.test

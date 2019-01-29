@@ -16,7 +16,7 @@ services:
       - switchdb
     restart: always
     ports:
-      - 8081:80
+      - 8082:80
     environment:
       - DB_USERNAME=postgres
       - DB_PASSWORD=password

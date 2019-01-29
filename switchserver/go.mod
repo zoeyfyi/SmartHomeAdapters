@@ -1,3 +1,6 @@
 module github.com/mrbenshef/SmartHomeAdapters/switchserver
 
-require github.com/lib/pq v1.0.0
+require (
+	github.com/julienschmidt/httprouter v1.2.0
+	github.com/lib/pq v1.0.0
+)
