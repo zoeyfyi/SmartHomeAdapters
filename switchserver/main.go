@@ -95,7 +95,6 @@ func registerHandler(db *sql.DB) httprouter.Handle {
 
 		// parse robot ID
 		robotID, err := strconv.Atoi(p.ByName("id"))
-		log.Printf("robotId: %s\n", p.ByName("id"))
 		if err != nil {
 			httpWriteError(w, ErrorInvalidRobotID, http.StatusBadRequest)
 			return
@@ -122,6 +121,15 @@ func registerHandler(db *sql.DB) httprouter.Handle {
 	}
 }
 
+func createRouter(db *sql.DB) *httprouter.Router {
+	router := httprouter.New()
+
+	// register routes
+	router.POST("/:id/register", registerHandler(db))
+
+	return router
+}
+
 func main() {
 	// connect to database
 	db := getDb()
@@ -135,12 +143,8 @@ func main() {
 
 	log.Printf("Connected to database: %+v\n", db.Stats())
 
-	// register routes
-	router := httprouter.New()
-	router.POST("/:id/register", registerHandler(db))
-
 	// start server
-	if err := http.ListenAndServe(":80", router); err != nil {
+	if err := http.ListenAndServe(":80", createRouter(db)); err != nil {
 		panic(err)
 	}
 }

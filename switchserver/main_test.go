@@ -1,27 +1,51 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
-func TestPing(t *testing.T) {
-	req, err := http.NewRequest("GET", "/ping", nil)
+var db = getDb()
 
-	if err != nil {
-		t.Errorf("Error: %v", err)
+func TestRegisterFieldValidation(t *testing.T) {
+	cases := []struct {
+		id             string
+		body           string
+		expectedStatus int
+		expectedError  string
+	}{
+		{"foo", "{\"isOn\":true}", http.StatusBadRequest, ErrorInvalidRobotID},
+		{"123", "", http.StatusBadRequest, ErrorInvalidJSON},
+		{"foo", "{}", http.StatusBadRequest, ErrorIsOnMissing},
 	}
 
-	rr := httptest.NewRecorder()
+	for _, c := range cases {
+		url := fmt.Sprintf("/%s/register", c.id)
+		req, err := http.NewRequest("POST", url, strings.NewReader(c.body))
+		if err != nil {
+			t.Errorf("Error: %v", err)
+		}
 
-	http.HandlerFunc(pingHandler).ServeHTTP(rr, req)
+		rr := httptest.NewRecorder()
+		createRouter(db).ServeHTTP(rr, req)
 
-	if status := rr.Code; status != http.StatusOK {
-		t.Errorf("Status code differs. Expected \"%d\", Got \"%d\"", http.StatusOK, status)
+		if status := rr.Code; status != c.expectedStatus {
+			t.Errorf("Status code differs. Expected \"%d\", Got \"%d\"", c.expectedStatus, status)
+		}
+
+		var restError restError
+		err = json.NewDecoder(rr.Body).Decode(&restError)
+		if err != nil {
+			t.Errorf("Could not read error json: %v", err)
+		}
+
+		if restError.Error != c.expectedError {
+			t.Errorf("Error differs. Expected \"%s\", Got: \"%s\"", c.expectedError, restError.Error)
+		}
 	}
 
-	if rr.Body.String() != "pong" {
-		t.Errorf("Body differs. Expected \"%s\", Got: \"%s\"", "pong", rr.Body.String())
-	}
 }
