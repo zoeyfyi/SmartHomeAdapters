@@ -8,11 +8,18 @@ import (
 	"net/http"
 	"os"
 	"regexp"
-	"time"
 
 	"github.com/lib/pq"
 	_ "github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
+)
+
+// database connection infomation
+var (
+	username = os.Getenv("DB_USERNAME")
+	password = os.Getenv("DB_PASSWORD")
+	database = os.Getenv("DB_DATABASE")
+	url      = os.Getenv("DB_URL")
 )
 
 // error messages for register route
@@ -82,11 +89,11 @@ func registerHandler(db *sql.DB) http.HandlerFunc {
 		// insert user into database
 		_, err = db.Exec("INSERT INTO users(email, password) VALUES($1, $2)", email, hash)
 		if err != nil {
-			log.Printf("Failed to insert user into database: %v", err)
 			if err, ok := err.(*pq.Error); ok && err.Code.Name() == "unique_violation" {
 				// email already exists
 				httpWriteError(w, ErrorEmailExists, http.StatusBadRequest)
 			} else {
+				log.Printf("Failed to insert user into database: %v", err)
 				httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			}
 			return
@@ -100,32 +107,42 @@ func registerHandler(db *sql.DB) http.HandlerFunc {
 	})
 }
 
+func connectionStr() string {
+	if username == "" {
+		username = "postgres"
+	}
+	if password == "" {
+		password = "password"
+	}
+	if url == "" {
+		url = "localhost:5432"
+	}
+	if database == "" {
+		database = "postgres"
+	}
+
+	return fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable", username, password, url, database)
+}
+
+func getDb() *sql.DB {
+	log.Printf("Connecting to database with \"%s\"\n", connectionStr())
+	db, err := sql.Open("postgres", connectionStr())
+	if err != nil {
+		log.Fatalf("Failed to connect to postgres: %v", err)
+	}
+
+	return db
+}
+
 func main() {
 	log.Println("Server starting")
 
-	// database connection infomation
-	var (
-		username = os.Getenv("DB_USERNAME")
-		password = os.Getenv("DB_PASSWORD")
-		database = os.Getenv("DB_DATABASE")
-		url      = os.Getenv("DB_URL")
-	)
-
-	connectionStr := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable", username, password, url, database)
-	log.Printf("Connecting to database with \"%s\"\n", connectionStr)
-
-	db, err := sql.Open("postgres", connectionStr)
-	for i := 1; i <= 5; i++ {
-		// try to connect
-		if err == nil {
-			break
-		}
-		log.Fatalf("(%d) Failed to connect to postgres: %v", i, err)
-		time.Sleep(1000)
-	}
+	// connect to database
+	db := getDb()
 	defer db.Close()
 
-	err = db.Ping()
+	// test connection
+	err := db.Ping()
 	if err != nil {
 		log.Fatalf("Failed to ping postgres: %v", err)
 	}
