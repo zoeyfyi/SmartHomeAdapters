@@ -49,3 +49,27 @@ func TestRegisterFieldValidation(t *testing.T) {
 	}
 
 }
+
+func TestSuccessfullRegistration(t *testing.T) {
+	req, err := http.NewRequest("POST", "/123/register", strings.NewReader("{\"isOn\":false}"))
+	if err != nil {
+		t.Errorf("Error: %v", err)
+	}
+
+	rr := httptest.NewRecorder()
+	createRouter(db).ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("Status code differs. Expected \"%d\", Got \"%d\"", http.StatusOK, status)
+	}
+
+	var switchRobot switchRobot
+	err = json.NewDecoder(rr.Body).Decode(&switchRobot)
+	if err != nil {
+		t.Errorf("Could not read switch robot json: %v", err)
+	}
+
+	if switchRobot.IsOn != false {
+		t.Errorf("isOn differs. Expected \"%t\", Got: \"%t\"", false, switchRobot.IsOn)
+	}
+}
