@@ -62,7 +62,7 @@ func httpWriteError(w http.ResponseWriter, msg string, code int) {
 	json.NewEncoder(w).Encode(restError{msg})
 }
 
-// error messages for register route
+// error messages for add switch route
 const (
 	ErrorInvalidJSON     = "Invalid JSON"
 	ErrorIsOnMissing     = "Field \"isOn\" missing"
@@ -157,12 +157,107 @@ func removeSwitchHandler(db *sql.DB) httprouter.Handle {
 	}
 }
 
+func setSwitch(w http.ResponseWriter, db *sql.DB, robotID int, setOn bool, force bool) {
+	// check if the light is already on
+	if !force {
+		var isOn bool
+		row := db.QueryRow("SELECT isOn FROM switches WHERE robotId = $1", robotID)
+		err := row.Scan(&isOn)
+		if err != nil {
+			httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+
+		// check if switch is already on/off
+		if isOn == setOn {
+			if isOn {
+				httpWriteError(w, ErrorSwitchOn, http.StatusBadRequest)
+			} else {
+				httpWriteError(w, ErrorSwitchOff, http.StatusBadRequest)
+			}
+			return
+		}
+	}
+
+	// TODO: send servo commands
+
+	w.WriteHeader(http.StatusNotImplemented)
+
+	// TODO: check servo commands are success then update database
+}
+
+// error messages for on route
+const (
+	ErrorSwitchOn = "Switch is already on (use force to override)"
+)
+
+type onSwitchBody struct {
+	// Force determines weather a servo command is sent even if the robot is already on
+	Force bool `json:"force"`
+}
+
+func onHandler(db *sql.DB) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+		// parse robot ID
+		robotID, err := strconv.Atoi(p.ByName("id"))
+		if err != nil {
+			httpWriteError(w, ErrorInvalidRobotID, http.StatusBadRequest)
+			return
+		}
+
+		// decode body
+		var onSwitchBody onSwitchBody
+		err = json.NewDecoder(r.Body).Decode(&onSwitchBody)
+		if err != nil {
+			httpWriteError(w, ErrorInvalidJSON, http.StatusBadRequest)
+			return
+		}
+
+		// update switch
+		setSwitch(w, db, robotID, true, onSwitchBody.Force)
+	}
+}
+
+// error messages for off route
+const (
+	ErrorSwitchOff = "Switch is already off (use force to override)"
+)
+
+type offSwitchBody struct {
+	// Force determines weather a servo command is sent even if the robot is already on
+	Force bool `json:"force"`
+}
+
+func offHandler(db *sql.DB) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+		// parse robot ID
+		robotID, err := strconv.Atoi(p.ByName("id"))
+		if err != nil {
+			httpWriteError(w, ErrorInvalidRobotID, http.StatusBadRequest)
+			return
+		}
+
+		// decode body
+		var offSwitchBody offSwitchBody
+		err = json.NewDecoder(r.Body).Decode(&offSwitchBody)
+		if err != nil {
+			httpWriteError(w, ErrorInvalidJSON, http.StatusBadRequest)
+			return
+		}
+
+		// update switch
+		setSwitch(w, db, robotID, false, offSwitchBody.Force)
+	}
+}
+
 func createRouter(db *sql.DB) *httprouter.Router {
 	router := httprouter.New()
 
 	// register routes
 	router.POST("/:id", addSwitchHandler(db))
 	router.DELETE("/:id", removeSwitchHandler(db))
+	router.PATCH("/:id/on", onHandler(db))
+	router.PATCH("/:id/off", offHandler(db))
 
 	return router
 }
