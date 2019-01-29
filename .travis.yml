@@ -4,3 +4,4 @@ script:
   # test webserver (with go 1.11)
   - eval "$(gimme 1.11)" && cd ${TRAVIS_BUILD_DIR}/clientserver && go get -v ./... && go test
   - eval "$(gimme 1.11)" && cd ${TRAVIS_BUILD_DIR}/robotserver && go get -v ./... && go test
+  - eval "$(gimme 1.11)" && cd ${TRAVIS_BUILD_DIR}/switchserver && go get -v ./... && go test
