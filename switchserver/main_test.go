@@ -24,7 +24,7 @@ func TestRegisterFieldValidation(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		url := fmt.Sprintf("/%s/register", c.id)
+		url := fmt.Sprintf("/%s", c.id)
 		req, err := http.NewRequest("POST", url, strings.NewReader(c.body))
 		if err != nil {
 			t.Errorf("Error: %v", err)
@@ -51,7 +51,7 @@ func TestRegisterFieldValidation(t *testing.T) {
 }
 
 func TestSuccessfullRegistration(t *testing.T) {
-	req, err := http.NewRequest("POST", "/123/register", strings.NewReader("{\"isOn\":false}"))
+	req, err := http.NewRequest("POST", "/123", strings.NewReader("{\"isOn\":false}"))
 	if err != nil {
 		t.Errorf("Error: %v", err)
 	}
@@ -75,11 +75,11 @@ func TestSuccessfullRegistration(t *testing.T) {
 }
 
 func TestRegisterDuplicateRobots(t *testing.T) {
-	req, _ := http.NewRequest("POST", "/321/register", strings.NewReader("{\"isOn\":false}"))
+	req, _ := http.NewRequest("POST", "/321", strings.NewReader("{\"isOn\":false}"))
 	rr := httptest.NewRecorder()
 	createRouter(db).ServeHTTP(rr, req)
 
-	req, err := http.NewRequest("POST", "/321/register", strings.NewReader("{\"isOn\":false}"))
+	req, err := http.NewRequest("POST", "/321", strings.NewReader("{\"isOn\":false}"))
 	if err != nil {
 		t.Errorf("Error: %v", err)
 	}
