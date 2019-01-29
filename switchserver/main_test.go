@@ -11,7 +11,7 @@ import (
 
 var db = getDb()
 
-func TestRegisterFieldValidation(t *testing.T) {
+func TestAddSwitchFieldValidation(t *testing.T) {
 	cases := []struct {
 		id             string
 		body           string
@@ -50,7 +50,7 @@ func TestRegisterFieldValidation(t *testing.T) {
 
 }
 
-func TestSuccessfullRegistration(t *testing.T) {
+func TestSuccessfullyAddingSwitch(t *testing.T) {
 	req, err := http.NewRequest("POST", "/123", strings.NewReader("{\"isOn\":false}"))
 	if err != nil {
 		t.Errorf("Error: %v", err)
@@ -74,7 +74,7 @@ func TestSuccessfullRegistration(t *testing.T) {
 	}
 }
 
-func TestRegisterDuplicateRobots(t *testing.T) {
+func TestAddSwitchAlreadyAdded(t *testing.T) {
 	req, _ := http.NewRequest("POST", "/321", strings.NewReader("{\"isOn\":false}"))
 	rr := httptest.NewRecorder()
 	createRouter(db).ServeHTTP(rr, req)
@@ -99,5 +99,23 @@ func TestRegisterDuplicateRobots(t *testing.T) {
 
 	if restError.Error != ErrorRobotRegistered {
 		t.Errorf("Error differs. Expected \"%s\", Got: \"%s\"", ErrorRobotRegistered, restError)
+	}
+}
+
+func TestSuccessfullyRemovingSwitch(t *testing.T) {
+	req, _ := http.NewRequest("POST", "/321", strings.NewReader("{\"isOn\":false}"))
+	rr := httptest.NewRecorder()
+	createRouter(db).ServeHTTP(rr, req)
+
+	req, err := http.NewRequest("DELETE", "/321", nil)
+	if err != nil {
+		t.Errorf("Error: %v", err)
+	}
+
+	rr = httptest.NewRecorder()
+	createRouter(db).ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("Status code differs. Expected \"%d\", Got \"%d\"", http.StatusOK, status)
 	}
 }
