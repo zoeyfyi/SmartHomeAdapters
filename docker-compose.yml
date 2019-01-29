@@ -17,9 +17,9 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - portainer_data:/data
-  db:
+  userdb:
     build: 
-      context: ./database
+      context: ./userserver/database
     restart: always
     environment:
       - POSTGRES_PASSWORD=password
@@ -29,7 +29,7 @@ services:
     build: 
       context: ./userserver
     depends_on:
-      - db
+      - userdb
     restart: always
     ports:
       - 8081:80
@@ -37,7 +37,7 @@ services:
       - DB_USERNAME=postgres
       - DB_PASSWORD=password
       - DB_DATABASE=postgres
-      - DB_URL=db
+      - DB_URL=userdb
   clientserver:
     build: 
       context: ./clientserver
