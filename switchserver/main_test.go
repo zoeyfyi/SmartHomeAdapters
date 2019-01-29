@@ -11,7 +11,16 @@ import (
 
 var db = getDb()
 
+func clearDatabase(t *testing.T) {
+	_, err := db.Exec("DELETE FROM switches")
+	if err != nil {
+		t.Errorf("Error clearing database: %v", err)
+	}
+}
+
 func TestAddSwitchFieldValidation(t *testing.T) {
+	clearDatabase(t)
+
 	cases := []struct {
 		id             string
 		body           string
@@ -51,6 +60,8 @@ func TestAddSwitchFieldValidation(t *testing.T) {
 }
 
 func TestSuccessfullyAddingSwitch(t *testing.T) {
+	clearDatabase(t)
+
 	req, err := http.NewRequest("POST", "/123", strings.NewReader("{\"isOn\":false}"))
 	if err != nil {
 		t.Errorf("Error: %v", err)
@@ -75,11 +86,16 @@ func TestSuccessfullyAddingSwitch(t *testing.T) {
 }
 
 func TestAddSwitchAlreadyAdded(t *testing.T) {
-	req, _ := http.NewRequest("POST", "/321", strings.NewReader("{\"isOn\":false}"))
+	clearDatabase(t)
+
+	req, _ := http.NewRequest("POST", "/123", strings.NewReader("{\"isOn\":false}"))
 	rr := httptest.NewRecorder()
 	createRouter(db).ServeHTTP(rr, req)
+	if rr.Code != http.StatusOK {
+		t.Errorf("Expected OK from POST /123")
+	}
 
-	req, err := http.NewRequest("POST", "/321", strings.NewReader("{\"isOn\":false}"))
+	req, err := http.NewRequest("POST", "/123", strings.NewReader("{\"isOn\":false}"))
 	if err != nil {
 		t.Errorf("Error: %v", err)
 	}
@@ -103,11 +119,16 @@ func TestAddSwitchAlreadyAdded(t *testing.T) {
 }
 
 func TestSuccessfullyRemovingSwitch(t *testing.T) {
-	req, _ := http.NewRequest("POST", "/321", strings.NewReader("{\"isOn\":false}"))
+	clearDatabase(t)
+
+	req, _ := http.NewRequest("POST", "/123", strings.NewReader("{\"isOn\":false}"))
 	rr := httptest.NewRecorder()
 	createRouter(db).ServeHTTP(rr, req)
+	if rr.Code != http.StatusOK {
+		t.Errorf("Expected OK from POST /123")
+	}
 
-	req, err := http.NewRequest("DELETE", "/321", nil)
+	req, err := http.NewRequest("DELETE", "/123", nil)
 	if err != nil {
 		t.Errorf("Error: %v", err)
 	}
@@ -121,6 +142,8 @@ func TestSuccessfullyRemovingSwitch(t *testing.T) {
 }
 
 func TestRemoveSwitchDoesntExist(t *testing.T) {
+	clearDatabase(t)
+
 	req, err := http.NewRequest("DELETE", "/543", nil)
 	if err != nil {
 		t.Errorf("Error: %v", err)
@@ -142,4 +165,5 @@ func TestRemoveSwitchDoesntExist(t *testing.T) {
 	if restError.Error != ErrorRobotNotRegistered {
 		t.Errorf("Error differs. Expected \"%s\", Got: \"%s\"", ErrorRobotNotRegistered, restError)
 	}
+
 }
