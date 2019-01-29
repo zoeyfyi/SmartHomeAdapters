@@ -1,5 +1,10 @@
 language: generic
 
+before_install:
+  # disable services enabled by default
+  - sudo /etc/init.d/mysql stop
+  - sudo /etc/init.d/postgresql stop
+
 jobs:
   include:
     # test client server
