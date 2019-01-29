@@ -22,14 +22,6 @@ var (
 	url      = os.Getenv("DB_URL")
 )
 
-// error messages for register route
-const (
-	ErrorInvalidJSON     = "Invalid JSON"
-	ErrorIsOnMissing     = "Field \"isOn\" missing"
-	ErrorRobotRegistered = "Robot is already registered"
-	ErrorInvalidRobotID  = "Invalid robot ID"
-)
-
 func connectionStr() string {
 	if username == "" {
 		username = "postgres"
@@ -57,10 +49,6 @@ func getDb() *sql.DB {
 	return db
 }
 
-type registerBody struct {
-	IsOn *bool `json:"isOn"`
-}
-
 type switchRobot struct {
 	IsOn bool `json:"isOn"`
 }
@@ -74,21 +62,31 @@ func httpWriteError(w http.ResponseWriter, msg string, code int) {
 	json.NewEncoder(w).Encode(restError{msg})
 }
 
-// registerHandler registers a robot as a switch robot
-func registerHandler(db *sql.DB) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-		log.Println("/register")
+// error messages for register route
+const (
+	ErrorInvalidJSON     = "Invalid JSON"
+	ErrorIsOnMissing     = "Field \"isOn\" missing"
+	ErrorRobotRegistered = "Robot is already registered"
+	ErrorInvalidRobotID  = "Invalid robot ID"
+)
 
+type addSwitchBody struct {
+	IsOn *bool `json:"isOn"`
+}
+
+// addSwitchHandler registers a robot as a switch robot
+func addSwitchHandler(db *sql.DB) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 		// decode body
-		var registerBody registerBody
-		err := json.NewDecoder(r.Body).Decode(&registerBody)
+		var addSwitchBody addSwitchBody
+		err := json.NewDecoder(r.Body).Decode(&addSwitchBody)
 		if err != nil {
 			httpWriteError(w, ErrorInvalidJSON, http.StatusBadRequest)
 			return
 		}
 
 		// check fields
-		if registerBody.IsOn == nil {
+		if addSwitchBody.IsOn == nil {
 			httpWriteError(w, ErrorIsOnMissing, http.StatusBadRequest)
 			return
 		}
@@ -101,7 +99,7 @@ func registerHandler(db *sql.DB) httprouter.Handle {
 		}
 
 		// insert into database
-		_, err = db.Exec("INSERT INTO switches(robotId, isOn) VALUES($1, $2)", robotID, *registerBody.IsOn)
+		_, err = db.Exec("INSERT INTO switches(robotId, isOn) VALUES($1, $2)", robotID, *addSwitchBody.IsOn)
 		if err != nil {
 			if err, ok := err.(*pq.Error); ok && err.Code.Name() == "unique_violation" {
 				// robot is already registered
@@ -116,8 +114,46 @@ func registerHandler(db *sql.DB) httprouter.Handle {
 		// return success
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(switchRobot{
-			IsOn: *registerBody.IsOn,
+			IsOn: *addSwitchBody.IsOn,
 		})
+	}
+}
+
+// error messages for remove switch routes
+const (
+	ErrorRobotNotRegistered = "Robot is not registered"
+)
+
+// removeSwitchHandler unregisters a robot as a switch
+func removeSwitchHandler(db *sql.DB) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+		// parse robot ID
+		robotID, err := strconv.Atoi(p.ByName("id"))
+		if err != nil {
+			httpWriteError(w, ErrorInvalidRobotID, http.StatusBadRequest)
+			return
+		}
+
+		// insert into database
+		result, err := db.Exec("DELETE FROM switches WHERE robotId = $1", robotID)
+		if err != nil {
+			log.Printf("Failed to insert user into database: %v", err)
+			httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+
+		count, err := result.RowsAffected()
+		if err != nil {
+			httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+
+		if count == 0 {
+			httpWriteError(w, ErrorRobotNotRegistered, http.StatusBadRequest)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
 	}
 }
 
@@ -125,9 +161,18 @@ func createRouter(db *sql.DB) *httprouter.Router {
 	router := httprouter.New()
 
 	// register routes
-	router.POST("/:id/register", registerHandler(db))
+	router.POST("/:id", addSwitchHandler(db))
+	router.DELETE("/:id", removeSwitchHandler(db))
 
 	return router
+}
+
+// logRequests logs the method and URL of each request
+func logRequests(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("%s %s", r.Method, r.URL.String())
+		next.ServeHTTP(w, r)
+	})
 }
 
 func main() {
@@ -144,7 +189,7 @@ func main() {
 	log.Printf("Connected to database: %+v\n", db.Stats())
 
 	// start server
-	if err := http.ListenAndServe(":80", createRouter(db)); err != nil {
+	if err := http.ListenAndServe(":80", logRequests(createRouter(db))); err != nil {
 		panic(err)
 	}
 }
