@@ -15,10 +15,6 @@ class MainActivity :
 
     private val tag = "MainActivity"
 
-    private var robotsFragment = RobotsFragment()
-    private var triggersFragment = TriggersFragment()
-    private var settingsFragment = SettingsFragment()
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -26,14 +22,14 @@ class MainActivity :
         bottom_nav_bar.setOnNavigationItemSelectedListener(this)
 
         // Start the robots fragment by default
-        startFragment(robotsFragment)
+        startFragment(RobotsFragment())
     }
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
-            R.id.robots_nav -> startFragment(robotsFragment)
-            R.id.triggers_nav -> startFragment(triggersFragment)
-            R.id.settings_nav -> startFragment(settingsFragment)
+            R.id.robots_nav -> startFragment(RobotsFragment())
+            R.id.triggers_nav -> startFragment(TriggersFragment())
+            R.id.settings_nav -> startFragment(SettingsFragment())
             else -> {
                 Log.e(tag, "[onNavigationItemSelected] id ${item.itemId} not recognized.")
                 return false
