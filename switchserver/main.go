@@ -61,6 +61,10 @@ type registerBody struct {
 	IsOn *bool `json:"isOn"`
 }
 
+type switchRobot struct {
+	IsOn bool `json:"isOn"`
+}
+
 type restError struct {
 	Error string `json:"error"`
 }
@@ -97,6 +101,7 @@ func registerHandler(db *sql.DB) httprouter.Handle {
 			return
 		}
 
+		// insert into database
 		_, err = db.Exec("INSERT INTO switches(robotId, isOn) VALUES($1, $2)", robotID, *registerBody.IsOn)
 		if err != nil {
 			if err, ok := err.(*pq.Error); ok && err.Code.Name() == "unique_violation" {
@@ -108,6 +113,12 @@ func registerHandler(db *sql.DB) httprouter.Handle {
 			}
 			return
 		}
+
+		// return success
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(switchRobot{
+			IsOn: *registerBody.IsOn,
+		})
 	}
 }
 
