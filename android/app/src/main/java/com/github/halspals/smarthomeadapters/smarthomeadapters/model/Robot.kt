@@ -2,7 +2,7 @@ package com.github.halspals.smarthomeadapters.smarthomeadapters.model
 
 sealed class RobotInterface {
     class Toggle(val isOn: Boolean) : RobotInterface()
-    class Range(val value: Double, val min: Double, val max: Double)
+    class Range(val value: Int, val min: Int, val max: Int) : RobotInterface()
 }
 
 /**
