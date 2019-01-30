@@ -18,7 +18,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Robot'
   /robot/{robotId}:
-    put:
+    post:
       description: Registers a robot to the users account
       parameters:
       - in: query
