@@ -7,7 +7,15 @@
     tools:context=".RobotsFragment">
 
     <GridView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" android:id="@+id/RobotGrid" android:numColumns="2"/>
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/RobotGrid"
+        android:numColumns="2"
+        android:verticalSpacing="8dp"
+        android:horizontalSpacing="8dp"
+        android:padding="8dp"
+        android:clipToPadding="false"
+        android:scrollbarStyle="outsideOverlay"
+    />
 
 </android.support.constraint.ConstraintLayout>

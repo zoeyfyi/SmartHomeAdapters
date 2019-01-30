@@ -1,33 +1,42 @@
 package com.github.halspals.smarthomeadapters.smarthomeadapters
 
 import android.content.Context
+import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.BaseAdapter
+import android.widget.ImageView
 import android.widget.TextView
 import com.github.halspals.smarthomeadapters.smarthomeadapters.model.Robot
 
+
 class RobotAdapter (private val context: Context) :  BaseAdapter() {
 
-    private val robots = arrayOf(
-        Robot("Living room light"),
-        Robot("Garage fridge"),
-        Robot("Garden gate"),
-        Robot("Thermostat")
+    private val robotIcons = listOf<Int>(
+        R.drawable.basic_accelerator,
+        R.drawable.basic_chronometer,
+        R.drawable.basic_home,
+        R.drawable.basic_key,
+        R.drawable.basic_lightbulb,
+        R.drawable.basic_lock,
+        R.drawable.basic_lock_open
     )
 
-    override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
-        val textView: TextView
-        if (convertView == null) {
-            // if it's not recycled, initialize some attributes
-            textView = TextView(context)
-            textView.setPadding(8, 8, 8, 8)
-        } else {
-            textView = convertView as TextView
-        }
+    private val robots = (1..20).map {
+        Robot("Robot $it", robotIcons[it % robotIcons.size])
+    }
 
-        textView.text = robots[position].nickname
-        return textView
+    override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
+        val inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+        val view: View = convertView ?: inflater.inflate(R.layout.view_robot_card, parent, false)
+
+        val robotIcon = view.findViewById<ImageView>(R.id.robot_icon_image_view)
+        val robotNickname = view.findViewById<TextView>(R.id.robot_nickname_text_view)
+
+        robotIcon.setImageResource(robots[position].iconDrawable)
+        robotNickname.text = robots[position].nickname
+
+        return view
     }
 
     override fun getItem(position: Int): Any = robots[position]
