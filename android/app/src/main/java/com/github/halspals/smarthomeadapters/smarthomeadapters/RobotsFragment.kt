@@ -1,6 +1,7 @@
 package com.github.halspals.smarthomeadapters.smarthomeadapters
 
 import android.os.Bundle
+import android.support.design.widget.FloatingActionButton
 import android.support.v4.app.Fragment
 import android.util.Log
 import android.view.LayoutInflater
@@ -48,6 +49,7 @@ class RobotsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // robot card grid
         robotGrid = view.findViewById(R.id.RobotGrid)
         robotGrid.adapter = RobotAdapter(view.context, robots) { robot ->
             Log.d(fTag, "Clicked robot: \"${robot.nickname}\"")
@@ -59,6 +61,12 @@ class RobotsFragment : Fragment() {
             robotFragment.arguments = bundle
 
             (activity as MainActivity).startFragment(robotFragment, true)
+        }
+
+        // register robot floating action button
+        val registerRobotFAB = view.findViewById<FloatingActionButton>(R.id.register_robot_fab)
+        registerRobotFAB.setOnClickListener {
+            (activity as MainActivity).startFragment(RegisterRobotFragment(), true)
         }
     }
 }
