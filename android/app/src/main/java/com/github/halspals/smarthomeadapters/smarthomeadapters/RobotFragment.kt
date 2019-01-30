@@ -11,11 +11,10 @@ import android.widget.*
 import com.github.halspals.smarthomeadapters.smarthomeadapters.model.Robot
 import com.github.halspals.smarthomeadapters.smarthomeadapters.model.RobotInterface
 import org.jetbrains.anko.toast
-import kotlin.math.ceil
-import kotlin.math.floor
-import kotlin.math.roundToInt
 
 class RobotFragment : Fragment() {
+
+    private val fTag = "RobotFragment"
 
     private lateinit var robotId: String
     private var robot: Robot? = null
@@ -56,6 +55,18 @@ class RobotFragment : Fragment() {
         progressBar.visibility = View.VISIBLE
         switch.visibility = View.INVISIBLE
         seekBar.visibility = View.INVISIBLE
+
+        switch.setOnCheckedChangeListener { _, isOn ->
+            onSwitch(isOn)
+        }
+
+        seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                onSeek(progress)
+            }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        })
 
         fetchRobot()
     }
@@ -108,6 +119,26 @@ class RobotFragment : Fragment() {
                 seekBar.progress = robot.robotInterface.value
             }
         }
+    }
+
+    /**
+     * onSwitch is called whenever the switch changes states
+     *
+     * @param isOn whether the switch is on/off
+     */
+    private fun onSwitch(isOn: Boolean) {
+        Log.d(fTag, "onSwitch($isOn)")
+        // TODO: send update to server
+    }
+
+    /**
+     * onSeek is called whenever the seek bar changes states
+     *
+     * @param value value of seek bar
+     */
+    private fun onSeek(value: Int) {
+        Log.d(fTag, "onSeek($value)")
+        // TODO: send update to server
     }
 
 }
