@@ -1,15 +1,38 @@
 package com.github.halspals.smarthomeadapters.smarthomeadapters
 
 
+import android.Manifest.permission.*
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Context.WIFI_SERVICE
+import android.content.Intent
+import android.content.IntentFilter
+import android.content.pm.PackageManager
+import android.content.pm.PackageManager.PERMISSION_GRANTED
+import android.net.wifi.ScanResult
+import android.net.wifi.WifiConfiguration
+import android.net.wifi.WifiManager
 import android.os.Bundle
 import android.support.v4.app.Fragment
-import android.support.v4.app.FragmentManager
+import android.support.v4.content.ContextCompat.checkSelfPermission
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
+import org.jetbrains.anko.alert
+import org.jetbrains.anko.cancelButton
+import org.jetbrains.anko.okButton
+import java.util.*
 
 class ConnectToAdapterFragment : Fragment() {
+    private val fTag = "ConnectToAdapterFrag"
+
+    private lateinit var continueButton: Button
+
+    var wifiManager: WifiManager? = null
+    var scanTask: TimerTask? = null
+    var scanTimer: Timer? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -19,7 +42,190 @@ class ConnectToAdapterFragment : Fragment() {
         return inflater.inflate(R.layout.fragment_connect_to_adapter, container, false)
     }
 
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
+        continueButton = view.findViewById(R.id.continue_button)
+        continueButton.isEnabled = false
 
+        // check for wifi permission
+        if (checkSelfPermission(context!!, ACCESS_WIFI_STATE) != PERMISSION_GRANTED ||
+            checkSelfPermission(context!!, CHANGE_WIFI_STATE) != PERMISSION_GRANTED ||
+            checkSelfPermission(context!!, ACCESS_COARSE_LOCATION) != PERMISSION_GRANTED) {
+            requestWifiPermissions()
+        } else {
+            wifiManager = setupWifiManager()
+            startScanning()
+        }
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        when(requestCode) {
+            CONNECT_TO_ADAPTER_REQUEST_ACCESS_WIFI_STATE -> {
+                Log.d(fTag, "Got result for wifi permissions request")
+                if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
+                    wifiManager = setupWifiManager()
+                    startScanning()
+                } else {
+                    // can't continue without wifi permission, quit device registration
+                    activity?.finish()
+                }
+            }
+            else -> {}
+        }
+    }
+
+    /**
+     * Starts scanning for smart home adapters
+     */
+    private fun startScanning() {
+        val wifiManager = setupWifiManager()
+        this.wifiManager = wifiManager
+
+        // check wifi is enabled
+        if (!wifiManager.isWifiEnabled) {
+            Log.d(fTag, "Wifi is not enabled, enabling it")
+            wifiManager.isWifiEnabled = true
+        }
+
+        // start scanning
+        scanTask = object : TimerTask() {
+            override fun run() {
+                Log.d(fTag, "Scanning for Wifi networks")
+                wifiManager.startScan()
+            }
+        }
+
+        // wifi scanning is rate limited to 4 per 2 minuets, see:
+        // https://developer.android.com/guide/topics/connectivity/wifi-scan#wifi-scan-throttling
+        // scan every 30s to avoid throttling
+        if (scanTimer == null) scanTimer = Timer()
+        scanTimer?.schedule(scanTask, 0, 30 * 1000)
+    }
+
+    /**
+     * Requests permissions to read and modify wifi networks
+     */
+    private fun requestWifiPermissions() {
+        Log.d(fTag, "Requesting wifi permissions")
+
+        if (shouldShowRequestPermissionRationale(ACCESS_WIFI_STATE)) {
+            context!!.alert(
+                "Wifi permissions",
+                "We need to scan for Wifi devices to find your smart home adapter"
+            ) {
+                okButton {
+                    requestWifiPermissions()
+                }
+                cancelButton {
+                    // can't continue without wifi permission, quit device registration
+                    activity?.finish()
+                }
+            }.show()
+        } else {
+            requestPermissions(
+                arrayOf(ACCESS_WIFI_STATE, CHANGE_WIFI_STATE, ACCESS_COARSE_LOCATION),
+                CONNECT_TO_ADAPTER_REQUEST_ACCESS_WIFI_STATE
+            )
+        }
+    }
+
+    /**
+     * Sets up the wifi manager, with listeners for connectivity and scan results
+     */
+    private fun setupWifiManager(): WifiManager {
+        val wifiManager = context!!.getSystemService(WIFI_SERVICE) as WifiManager
+
+        // call onConnectivityChange when wifi connection changes
+        val connectivityReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                val connected = intent?.action.equals(WifiManager.SUPPLICANT_CONNECTION_CHANGE_ACTION)
+                onConnectivityChange(connected)
+            }
+        }
+        context!!.registerReceiver(connectivityReceiver, IntentFilter(WifiManager.SUPPLICANT_CONNECTION_CHANGE_ACTION))
+
+        // call onScanResults when we have wifi scan results
+        val scanReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                val success = intent?.getBooleanExtra(WifiManager.EXTRA_RESULTS_UPDATED, false)
+                Log.d(fTag, "Scan successful? $success")
+                onScanResults(wifiManager.scanResults)
+            }
+        }
+        context!!.registerReceiver(scanReceiver, IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION))
+
+        return wifiManager
+    }
+
+    /**
+     * Called whenever the wifi connectivity changes. Enables and disables the continue button.
+     *
+     * @param connected true if the device is connected to wifi, false otherwise
+     */
+    private fun onConnectivityChange(connected: Boolean) {
+        Log.d(fTag, "Connectivity changed, connected: $connected")
+
+        // if we are connected to the adapter, we can continue
+        // otherwise disable the button
+        continueButton.isEnabled = connected && wifiManager?.let { isNetworkAnAdapter(it.connectionInfo.ssid) } ?: false
+    }
+
+    /**
+     * Called whenever a network scan is finished
+     *
+     * @param results list of networks from wifi scan
+     */
+    private fun onScanResults(results: List<ScanResult>) {
+        Log.d(fTag, "Found ${results.size} Wifi networks")
+
+        // filter smart home adapters
+        val adapters = results.filter { isNetworkAnAdapter(it.SSID) }
+        Log.d(fTag, "Found ${adapters.size} adapters")
+
+        // try to the first adapter
+        if (adapters.isNotEmpty()) {
+            scanTimer?.cancel() // stop scanning
+            connectToAdapter(adapters[0].SSID)
+        }
+    }
+
+    /**
+     * isNetworkAnAdapter checks if the SSID of a network matches the format of a smart home adapter
+     *
+     * @param ssid SSID of the network
+     * @return true if the SSID matches an adapter
+     */
+    private fun isNetworkAnAdapter(ssid: String): Boolean {
+        // TODO: decide on a adapter network name scheme
+        return false
+    }
+
+    /**
+     * connectToAdapter connects to the smart home adapters temporary wifi network
+     *
+     * @param ssid SSID of the adapters network
+     */
+    private fun connectToAdapter(ssid: String) {
+        Log.d(fTag, "Connecting to adapter with SSID \"$ssid\"")
+
+        // add wifi network
+        val configuration = WifiConfiguration().apply {
+            SSID = ssid
+            allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE)
+        }
+
+        // connect to wifi network
+        wifiManager?.apply {
+            val networkId = addNetwork(configuration)
+            disconnect()
+            enableNetwork(networkId, true)
+            reconnect()
+        }
+    }
+
+    companion object {
+        private const val CONNECT_TO_ADAPTER_REQUEST_ACCESS_WIFI_STATE = 1000;
+    }
 
 }
