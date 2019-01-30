@@ -10,23 +10,7 @@ import android.widget.TextView
 import com.github.halspals.smarthomeadapters.smarthomeadapters.model.Robot
 
 
-class RobotAdapter (private val context: Context) :  BaseAdapter() {
-
-    // TODO: remove once we have a real data source
-    private val robotIcons = listOf(
-        R.drawable.basic_accelerator,
-        R.drawable.basic_chronometer,
-        R.drawable.basic_home,
-        R.drawable.basic_key,
-        R.drawable.basic_lightbulb,
-        R.drawable.basic_lock,
-        R.drawable.basic_lock_open
-    )
-
-    // TODO: get list of robots from REST API
-    private val robots = (1..20).map {
-        Robot("Robot $it", robotIcons[it % robotIcons.size])
-    }
+class RobotAdapter (private val context: Context, private val robots: List<Robot>, private val onClick: (Robot) -> Unit) :  BaseAdapter() {
 
     override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
         // inflate card view
@@ -38,6 +22,7 @@ class RobotAdapter (private val context: Context) :  BaseAdapter() {
         val robotNickname = view.findViewById<TextView>(R.id.robot_nickname_text_view)
 
         // configure views
+        view.setOnClickListener { onClick(robots[position]) }
         robotIcon.setImageResource(robots[position].iconDrawable)
         robotNickname.text = robots[position].nickname
 

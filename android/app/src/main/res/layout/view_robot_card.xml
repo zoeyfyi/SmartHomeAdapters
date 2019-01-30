@@ -4,11 +4,15 @@
                                               xmlns:tools="http://schemas.android.com/tools"
                                               android:layout_width="match_parent"
                                               android:layout_height="match_parent" android:padding="16dp"
+                                              android:clickable="true"
+                                              android:focusable="true"
 >
 
     <android.support.constraint.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            android:foreground="?android:attr/selectableItemBackground"
+            >
 
         <ImageView
                 android:layout_width="32dp"
