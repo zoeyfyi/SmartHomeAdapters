@@ -6,13 +6,16 @@
     android:layout_height="match_parent"
     tools:context=".RobotsFragment">
 
-    <TextView
+    <GridView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:text="@string/blank_robot_placeholder"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:id="@+id/RobotGrid"
+        android:numColumns="2"
+        android:verticalSpacing="8dp"
+        android:horizontalSpacing="8dp"
+        android:padding="8dp"
+        android:clipToPadding="false"
+        android:scrollbarStyle="outsideOverlay"
+    />
 
 </android.support.constraint.ConstraintLayout>
