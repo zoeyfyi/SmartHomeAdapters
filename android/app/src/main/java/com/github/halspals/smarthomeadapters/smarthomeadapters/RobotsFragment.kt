@@ -42,7 +42,7 @@ class RobotsFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         robotGrid = view.findViewById(R.id.RobotGrid)
-        robotGrid.adapter = RobotAdapter(context!!, robots) { robot ->
+        robotGrid.adapter = RobotAdapter(view.context, robots) { robot ->
             Log.d(fTag, "Clicked robot: \"${robot.nickname}\"")
         }
     }
