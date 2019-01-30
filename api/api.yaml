@@ -72,6 +72,37 @@ paths:
       description: ID of robot
       schema:
         type: string
+  /robot/{robotId}/toggle/{value}:
+    patch:
+      description: Toggles a robot (e.g a switch on/off)
+      parameters:
+      - in: path
+        name: value
+        description: Value to toggle too
+        schema:
+          type: bool
+    parameters:
+    - in: path
+      name: robotId
+      description: ID of robot
+      schema:
+        type: string
+  /robot/{robotId}/range/{value}:
+    patch:
+      description: Sets a robot with range (e.g set thermostat to tempreture)
+      parameters:
+      - in: path
+        name: value
+        description: Value to set
+        schema:
+          type: bool
+    parameters:
+    - in: path
+      name: robotId
+      description: ID of robot
+      schema:
+        type: string
+
 components:
   schemas:
     Robot:
@@ -81,3 +112,16 @@ components:
           type: string
         nickname:
           type: string
+        interface:
+          type: object
+          properties:
+            type:
+              type: string
+              pattern: toggle|range
+              description: What interface to show (toggle button or slider)
+            min:
+              type: number
+              description: Minimum value of slider
+            max:
+              type: number
+              description: Maximum value of slider
