@@ -7,6 +7,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import org.jetbrains.anko.*
 import android.widget.GridView
 import com.github.halspals.smarthomeadapters.smarthomeadapters.model.Robot
 import com.github.halspals.smarthomeadapters.smarthomeadapters.model.RobotInterface
@@ -66,7 +67,7 @@ class RobotsFragment : Fragment() {
         // register robot floating action button
         val registerRobotFAB = view.findViewById<FloatingActionButton>(R.id.register_robot_fab)
         registerRobotFAB.setOnClickListener {
-            (activity as MainActivity).startFragment(RegisterRobotFragment(), true)
+            context?.startActivity<RegisterRobotActivity>()
         }
     }
 }
