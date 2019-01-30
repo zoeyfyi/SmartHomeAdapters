@@ -89,7 +89,7 @@ paths:
         type: string
   /robot/{robotId}/range/{value}:
     patch:
-      description: Sets a robot with range (e.g set thermostat to tempreture)
+      description: Sets a robot with range (e.g set thermostat to temperature)
       parameters:
       - in: path
         name: value
