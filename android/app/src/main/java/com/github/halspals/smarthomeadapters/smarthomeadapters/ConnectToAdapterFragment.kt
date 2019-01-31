@@ -47,6 +47,7 @@ class ConnectToAdapterFragment : Fragment() {
     var wifiManager: WifiManager? = null
     var scanTask: TimerTask? = null
     var scanTimer: Timer? = null
+    var isScanning = true
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -111,8 +112,10 @@ class ConnectToAdapterFragment : Fragment() {
         // start scanning
         scanTask = object : TimerTask() {
             override fun run() {
-                Log.d(fTag, "Scanning for Wifi networks")
-                wifiManager.startScan()
+                if (isScanning) {
+                    Log.d(fTag, "Scanning for Wifi networks")
+                    wifiManager.startScan()
+                }
             }
         }
 
@@ -203,10 +206,12 @@ class ConnectToAdapterFragment : Fragment() {
         Log.d(fTag, "Connected to adapter: $connectedToAdapter")
 
         if (connectedToAdapter) {
+            isScanning = false
             continueButton.isEnabled = true
             wifiScanAnimation.setMaxFrame(Int.MAX_VALUE)
             wifiScanAnimation.loop(false)
         } else {
+            isScanning = true
             continueButton.isEnabled = false
             wifiScanAnimation.setMaxFrame(WIFI_SCAN_LOADING_MAX_FRAME)
             wifiScanAnimation.loop(true)
@@ -228,7 +233,6 @@ class ConnectToAdapterFragment : Fragment() {
 
         // try to the first adapter
         if (adapters.isNotEmpty()) {
-            scanTimer?.cancel() // stop scanning
             connectToAdapter(adapters[0].SSID)
         }
     }
