@@ -2,6 +2,8 @@
 #include <ESP8266WiFi.h>
 #include "wifi.h"
 
+#define STATUS_PIN D7
+
 char path[] = "/";
 char host[] = "echo.websocket.org";
   
@@ -11,11 +13,11 @@ WiFiClient client;
 void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
 	switch(type) {
 		case WStype_DISCONNECTED:
-      digitalWrite(D7, LOW);
+      digitalWrite(STATUS_PIN, LOW);
 			Serial.printf("[WSc] Disconnected!\n");
 			break;
 		case WStype_CONNECTED:
-      digitalWrite(D7, HIGH);
+      digitalWrite(STATUS_PIN, HIGH);
 			Serial.printf("[WSc] Connected to url: %s\n", payload);
 			break;
 		case WStype_TEXT:
@@ -23,12 +25,12 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
       
       // led on
       if (strcmp((char *)payload, "led on") == 0) {
-        digitalWrite(D8, HIGH);
+        digitalWrite(LED_BUILTIN, HIGH);
       } 
       
       // led off
       if (strcmp((char *)payload, "led off") == 0) {
-        digitalWrite(D8, LOW);
+        digitalWrite(LED_BUILTIN, LOW);
       }
       
       break;
@@ -41,8 +43,8 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
 
 void setup() {
   // use pin 7/8 as our LED indicators
-  pinMode(D7, OUTPUT);
-  pinMode(D8, OUTPUT);
+  pinMode(STATUS_PIN, OUTPUT);
+  pinMode(LED_BUILTIN, OUTPUT);
 
   // begin serial communications
   Serial.begin(9600);
@@ -59,9 +61,9 @@ void setup() {
   int i = 0;
   while (WiFi.status() != WL_CONNECTED) {
     // wait for the Wi-Fi to connect
-    digitalWrite(D7, HIGH);
+    digitalWrite(STATUS_PIN, HIGH);
     delay(500);
-    digitalWrite(D7, LOW);
+    digitalWrite(STATUS_PIN, LOW);
     delay(500);
     Serial.print('-');
   }
@@ -72,7 +74,7 @@ void setup() {
   Serial.print("IP address:\t");
   Serial.println(WiFi.localIP());
 
-  digitalWrite(D7, HIGH);
+  digitalWrite(STATUS_PIN, HIGH);
 
   delay(1000);
 
