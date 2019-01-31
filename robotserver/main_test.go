@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -84,19 +85,17 @@ func TestSendLEDCommand(t *testing.T) {
 }
 
 func TestUnavalibleWhenRobotNotConnected(t *testing.T) {
-	requests := []struct {
-		path            string
-		expectedMessage string
-	}{
-		{"/led/on", "led on"},
-		{"/led/off", "led off"},
+	requests := []string{
+		"/led/on",
+		"/led/off",
+		"/servo/90",
 	}
 
 	s := newServer(t)
 	defer s.Server.Close()
 
 	for _, r := range requests {
-		req, err := http.NewRequest("PUT", s.URL+r.path, nil)
+		req, err := http.NewRequest("PUT", s.URL+r, nil)
 		if err != nil {
 			t.Errorf("Error with request: %v", err)
 		}
@@ -106,6 +105,16 @@ func TestUnavalibleWhenRobotNotConnected(t *testing.T) {
 
 		if rr.Code != http.StatusServiceUnavailable {
 			t.Errorf("Expected service unavailble, got: %v", rr.Code)
+		}
+
+		var restError restError
+		err = json.NewDecoder(rr.Body).Decode(&restError)
+		if err != nil {
+			t.Errorf("Could not read error json: %v", err)
+		}
+
+		if restError.Error != ErrNotConnected {
+			t.Errorf("Error differs. Expected \"%s\", Got: \"%s\"", ErrNotConnected, restError.Error)
 		}
 	}
 }
@@ -138,5 +147,43 @@ func TestSendServoCommand(t *testing.T) {
 	}
 	if string(msg) != "servo 90" {
 		t.Errorf("Expected message: \"%s\", got message: \"%s\"", "servo 90", msg)
+	}
+}
+
+func TestSendInvalidServoCommand(t *testing.T) {
+	requests := []struct {
+		path          string
+		expectedError string
+	}{
+		{"/servo/-100", ErrAngleSmall},
+		{"/servo/999", ErrAngleLarge},
+		{"/servo/foo", ErrAngleNotNumber},
+	}
+
+	s := newServer(t)
+	defer s.Server.Close()
+
+	for _, r := range requests {
+		req, err := http.NewRequest("PUT", s.URL+r.path, nil)
+		if err != nil {
+			t.Errorf("Error with request: %v", err)
+		}
+
+		rr := httptest.NewRecorder()
+		s.Handler.ServeHTTP(rr, req)
+
+		if rr.Code != http.StatusBadRequest {
+			t.Errorf("Expected bad request, got: %v", rr.Code)
+		}
+
+		var restError restError
+		err = json.NewDecoder(rr.Body).Decode(&restError)
+		if err != nil {
+			t.Errorf("Could not read error json: %v", err)
+		}
+
+		if restError.Error != r.expectedError {
+			t.Errorf("Error differs. Expected \"%s\", Got: \"%s\"", r.expectedError, restError.Error)
+		}
 	}
 }
