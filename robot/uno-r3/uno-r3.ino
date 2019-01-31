@@ -29,5 +29,14 @@ void loop() {
             digitalWrite(LED_BUILTIN, LOW);
         }
       }
+
+      if (command.startsWith("servo")) {
+        // convert characters after "servo " to int
+        int angle = command.substring(6).toInt();
+
+        Serial.print("Setting servo to ");
+        Serial.print(angle);
+        Serial.println(" degrees");
+      }
   }
 }
