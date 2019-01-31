@@ -60,18 +60,18 @@ func sendMessage(w http.ResponseWriter, msg string) {
 		}
 		return
 	}
-
-	w.WriteHeader(http.StatusOK)
 }
 
 func ledOnHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	log.Println("Turning the LED on")
 	sendMessage(w, "led on")
+	w.WriteHeader(http.StatusOK)
 }
 
 func ledOffHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	log.Println("Turning the LED off")
 	sendMessage(w, "led off")
+	w.WriteHeader(http.StatusOK)
 }
 
 func servoHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -80,19 +80,23 @@ func servoHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 	angle, err := strconv.Atoi(ps.ByName("angle"))
 	if err != nil {
 		log.Printf("Angle was not a number")
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	if angle > 180 {
 		log.Printf("Angle is to large")
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	} else if angle < 0 {
 		log.Printf("Angle is to small")
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	msg := fmt.Sprintf("servo %d", angle)
 	sendMessage(w, msg)
+	w.WriteHeader(http.StatusOK)
 }
 
 func createRouter() *httprouter.Router {

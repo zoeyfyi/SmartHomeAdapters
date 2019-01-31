@@ -125,6 +125,10 @@ func TestSendServoCommand(t *testing.T) {
 	rr := httptest.NewRecorder()
 	s.Handler.ServeHTTP(rr, req)
 
+	if rr.Code != http.StatusOK {
+		t.Errorf("Expected OK, got: %v", rr.Code)
+	}
+
 	typ, msg, err := ws.ReadMessage()
 	if err != nil {
 		t.Errorf("Error reading websocket message: %v", err)
