@@ -135,21 +135,33 @@ class ConnectToAdapterFragment : Fragment() {
      */
     private fun setupWifiManager(): WifiManager {
         val wifiManager = context!!.getSystemService(WIFI_SERVICE) as WifiManager
+        val connectivityManager = context!!.getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
 
-        // call onConnectivityChange when wifi connection changes
-        val connectivityReceiver = object : BroadcastReceiver() {
-            override fun onReceive(context: Context?, intent: Intent?) {
-                val connected = intent?.action.equals(WifiManager.SUPPLICANT_CONNECTION_CHANGE_ACTION)
-                onConnectivityChange(connected)
+        val networkRequest = NetworkRequest.Builder()
+            .addTransportType(android.net.NetworkCapabilities.TRANSPORT_WIFI)
+            .build()
+
+        connectivityManager.registerNetworkCallback(networkRequest, object : ConnectivityManager.NetworkCallback() {
+            override fun onAvailable(network: Network?) {
+                Handler(Looper.getMainLooper()).post {
+                    onConnectivityChange(true)
+                }
             }
-        }
-        context!!.registerReceiver(connectivityReceiver, IntentFilter(WifiManager.SUPPLICANT_CONNECTION_CHANGE_ACTION))
+
+            override fun onUnavailable() {
+                Handler(Looper.getMainLooper()).post {
+                    onConnectivityChange(false)
+                }
+            }
+        })
 
         // call onScanResults when we have wifi scan results
         val scanReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
-                val success = intent?.getBooleanExtra(WifiManager.EXTRA_RESULTS_UPDATED, false)
-                Log.d(fTag, "Scan successful? $success")
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    val success = intent?.getBooleanExtra(WifiManager.EXTRA_RESULTS_UPDATED, false)
+                    Log.d(fTag, "Scan successful: $success")
+                }
                 onScanResults(wifiManager.scanResults)
             }
         }
