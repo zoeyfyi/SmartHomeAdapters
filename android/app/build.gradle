@@ -37,6 +37,9 @@ dependencies {
     implementation "org.jetbrains.anko:anko-commons:$anko_version"
     implementation "org.jetbrains.anko:anko-design:$anko_version"
 
+    // lottie (animations)
+    implementation 'com.airbnb.android:lottie:2.7.0'
+
     // Test dependencies
     androidTestImplementation 'com.android.support.test:rules:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-intents:3.0.2'

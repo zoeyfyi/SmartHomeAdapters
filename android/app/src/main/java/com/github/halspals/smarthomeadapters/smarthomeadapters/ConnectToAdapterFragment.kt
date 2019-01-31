@@ -20,15 +20,29 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import com.airbnb.lottie.LottieAnimationView
 import org.jetbrains.anko.alert
 import org.jetbrains.anko.cancelButton
 import org.jetbrains.anko.okButton
 import java.util.*
+import android.R.attr.start
+import android.animation.ValueAnimator
+import android.content.Context.CONNECTIVITY_SERVICE
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkRequest
+import android.os.Build
+import android.os.Handler
+import android.os.Looper
+import android.view.animation.Animation
+import com.airbnb.lottie.LottieDrawable
+
 
 class ConnectToAdapterFragment : Fragment() {
     private val fTag = "ConnectToAdapterFrag"
 
     private lateinit var continueButton: Button
+    private lateinit var wifiScanAnimation: LottieAnimationView
 
     var wifiManager: WifiManager? = null
     var scanTask: TimerTask? = null
@@ -48,10 +62,15 @@ class ConnectToAdapterFragment : Fragment() {
         continueButton = view.findViewById(R.id.continue_button)
         continueButton.isEnabled = false
 
+        wifiScanAnimation = view.findViewById(R.id.wifi_scan_animation)
+        wifiScanAnimation.setMaxFrame(WIFI_SCAN_LOADING_MAX_FRAME) // only play loading portion
+        wifiScanAnimation.speed = 0.6f
+
         // check for wifi permission
         if (checkSelfPermission(context!!, ACCESS_WIFI_STATE) != PERMISSION_GRANTED ||
             checkSelfPermission(context!!, CHANGE_WIFI_STATE) != PERMISSION_GRANTED ||
-            checkSelfPermission(context!!, ACCESS_COARSE_LOCATION) != PERMISSION_GRANTED) {
+            checkSelfPermission(context!!, ACCESS_COARSE_LOCATION) != PERMISSION_GRANTED
+        ) {
             requestWifiPermissions()
         } else {
             wifiManager = setupWifiManager()
@@ -60,7 +79,7 @@ class ConnectToAdapterFragment : Fragment() {
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        when(requestCode) {
+        when (requestCode) {
             CONNECT_TO_ADAPTER_REQUEST_ACCESS_WIFI_STATE -> {
                 Log.d(fTag, "Got result for wifi permissions request")
                 if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
@@ -71,7 +90,8 @@ class ConnectToAdapterFragment : Fragment() {
                     activity?.finish()
                 }
             }
-            else -> {}
+            else -> {
+            }
         }
     }
 
@@ -178,9 +198,20 @@ class ConnectToAdapterFragment : Fragment() {
     private fun onConnectivityChange(connected: Boolean) {
         Log.d(fTag, "Connectivity changed, connected: $connected")
 
-        // if we are connected to the adapter, we can continue
-        // otherwise disable the button
-        continueButton.isEnabled = connected && wifiManager?.let { isNetworkAnAdapter(it.connectionInfo.ssid) } ?: false
+        // check we are connected to the adapter
+        val connectedToAdapter = connected && wifiManager?.let { isNetworkAnAdapter(it.connectionInfo.ssid) } ?: false
+        Log.d(fTag, "Connected to adapter: $connectedToAdapter")
+
+        if (connectedToAdapter) {
+            continueButton.isEnabled = true
+            wifiScanAnimation.setMaxFrame(Int.MAX_VALUE)
+            wifiScanAnimation.loop(false)
+        } else {
+            continueButton.isEnabled = false
+            wifiScanAnimation.setMaxFrame(WIFI_SCAN_LOADING_MAX_FRAME)
+            wifiScanAnimation.loop(true)
+            wifiScanAnimation.playAnimation() // restart animation
+        }
     }
 
     /**
@@ -209,8 +240,7 @@ class ConnectToAdapterFragment : Fragment() {
      * @return true if the SSID matches an adapter
      */
     private fun isNetworkAnAdapter(ssid: String): Boolean {
-        // TODO: decide on a adapter network name scheme
-        return false
+        return ssid.contains("Smart Home Adapter")
     }
 
     /**
@@ -238,6 +268,7 @@ class ConnectToAdapterFragment : Fragment() {
 
     companion object {
         private const val CONNECT_TO_ADAPTER_REQUEST_ACCESS_WIFI_STATE = 1000;
+        private const val WIFI_SCAN_LOADING_MAX_FRAME = 50
     }
 
 }
