@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -19,6 +20,15 @@ var upgrader = websocket.Upgrader{
 
 // socket to send messages to
 var socket *websocket.Conn
+
+type restError struct {
+	Error string `json:"error"`
+}
+
+func httpWriteError(w http.ResponseWriter, msg string, code int) {
+	w.WriteHeader(code)
+	json.NewEncoder(w).Encode(restError{msg})
+}
 
 // connectHandler establishes the WebSocket with the client
 func connectHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -40,10 +50,15 @@ func connectHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params
 	socket = newSocket
 }
 
+// socket errors
+const (
+	ErrNotConnected = "Robot is not connected"
+)
+
 func sendMessage(w http.ResponseWriter, msg string) {
 	if socket == nil {
-		log.Println("Robot not connected")
-		w.WriteHeader(http.StatusServiceUnavailable)
+		// socket was never opened
+		httpWriteError(w, ErrNotConnected, http.StatusServiceUnavailable)
 		return
 	}
 
@@ -51,52 +66,54 @@ func sendMessage(w http.ResponseWriter, msg string) {
 	if err := socket.WriteMessage(websocket.TextMessage, []byte(msg)); err != nil {
 		if _, ok := err.(*websocket.CloseError); ok {
 			// socket was closed
-			log.Println("Robot not connected (socket is closed)")
-			w.WriteHeader(http.StatusServiceUnavailable)
+			httpWriteError(w, ErrNotConnected, http.StatusServiceUnavailable)
 		} else {
 			// unknown error
 			log.Printf("Failed to send message: %v", err)
-			w.WriteHeader(http.StatusInternalServerError)
+			httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		}
 		return
 	}
+
+	w.WriteHeader(http.StatusOK)
 }
 
 func ledOnHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	log.Println("Turning the LED on")
 	sendMessage(w, "led on")
-	w.WriteHeader(http.StatusOK)
 }
 
 func ledOffHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	log.Println("Turning the LED off")
 	sendMessage(w, "led off")
-	w.WriteHeader(http.StatusOK)
 }
+
+// servo errors
+const (
+	ErrAngleNotNumber = "Angle was not a number"
+	ErrAngleLarge     = "Angle was to large, must be 0-180"
+	ErrAngleSmall     = "Angle was to small, must be 0-180"
+)
 
 func servoHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	log.Printf("Setting servo to %s\n", ps.ByName("angle"))
 
 	angle, err := strconv.Atoi(ps.ByName("angle"))
 	if err != nil {
-		log.Printf("Angle was not a number")
-		w.WriteHeader(http.StatusBadRequest)
+		httpWriteError(w, ErrAngleNotNumber, http.StatusBadRequest)
 		return
 	}
 
 	if angle > 180 {
-		log.Printf("Angle is to large")
-		w.WriteHeader(http.StatusBadRequest)
+		httpWriteError(w, ErrAngleLarge, http.StatusBadRequest)
 		return
 	} else if angle < 0 {
-		log.Printf("Angle is to small")
-		w.WriteHeader(http.StatusBadRequest)
+		httpWriteError(w, ErrAngleSmall, http.StatusBadRequest)
 		return
 	}
 
 	msg := fmt.Sprintf("servo %d", angle)
 	sendMessage(w, msg)
-	w.WriteHeader(http.StatusOK)
 }
 
 func createRouter() *httprouter.Router {
