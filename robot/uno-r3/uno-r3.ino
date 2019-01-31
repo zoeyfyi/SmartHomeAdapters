@@ -1,3 +1,9 @@
+#include <Servo.h>
+
+#define SERVO_PIN 9
+
+Servo servo;
+
 // the setup function runs once when you press reset or power the board
 void setup() {
   // begin serial communications
@@ -7,6 +13,9 @@ void setup() {
   // initialize digital pin LED_BUILTIN as an output.
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, LOW);
+
+  // initialize servo
+  servo.attach(SERVO_PIN);
 }
 
 // the loop function runs over and over again forever
@@ -37,6 +46,8 @@ void loop() {
         Serial.print("Setting servo to ");
         Serial.print(angle);
         Serial.println(" degrees");
+
+        servo.write(angle);
       }
   }
 }
