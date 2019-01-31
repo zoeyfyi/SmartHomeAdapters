@@ -22,7 +22,7 @@ void setup() {
 void loop() {
   if(Serial.available() > 0){
       String command = Serial.readString();
-      command.remove(command.length() - 1); // remove new line
+      command.trim();
 
       Serial.print("Received command: ");
       Serial.print(command);
