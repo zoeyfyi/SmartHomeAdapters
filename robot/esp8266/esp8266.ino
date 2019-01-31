@@ -25,12 +25,12 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
       
       // led on
       if (strcmp((char *)payload, "led on") == 0) {
-        digitalWrite(LED_BUILTIN, HIGH);
+        digitalWrite(LED_BUILTIN, LOW);
       } 
       
       // led off
       if (strcmp((char *)payload, "led off") == 0) {
-        digitalWrite(LED_BUILTIN, LOW);
+        digitalWrite(LED_BUILTIN, HIGH);
       }
       
       break;
@@ -80,7 +80,7 @@ void setup() {
 
   // connect to websocket server
   Serial.println("Connecting to WebSocket server");
-  socket.begin("192.168.0.2", 8080, "/connect");
+  socket.begin("192.168.0.12", 8080, "/connect");
   socket.onEvent(webSocketEvent);
   socket.setReconnectInterval(1000);
 }
