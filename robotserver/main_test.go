@@ -109,3 +109,30 @@ func TestUnavalibleWhenRobotNotConnected(t *testing.T) {
 		}
 	}
 }
+
+func TestSendServoCommand(t *testing.T) {
+	s := newServer(t)
+	defer s.Server.Close()
+
+	ws, _, _ := websocket.DefaultDialer.Dial(s.URL+"/connect", nil)
+	defer func() { socket = nil }()
+
+	req, err := http.NewRequest("PUT", s.URL+"/servo/90", nil)
+	if err != nil {
+		t.Errorf("Error with request: %v", err)
+	}
+
+	rr := httptest.NewRecorder()
+	s.Handler.ServeHTTP(rr, req)
+
+	typ, msg, err := ws.ReadMessage()
+	if err != nil {
+		t.Errorf("Error reading websocket message: %v", err)
+	}
+	if typ != websocket.TextMessage {
+		t.Errorf("Expected websocket.TextMessage type, got type: %v", typ)
+	}
+	if string(msg) != "servo 90" {
+		t.Errorf("Expected message: \"%s\", got message: \"%s\"", "servo 90", msg)
+	}
+}
