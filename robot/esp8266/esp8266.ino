@@ -24,17 +24,11 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
 			break;
 		case WStype_TEXT:
 			Serial.printf("[WSc] get text: %s\n", payload);
-      
-      // led on
-      if (strcmp((char *)payload, "led on") == 0) {
-        digitalWrite(LED_BUILTIN, LOW);
-        servo.write(0);
-      } 
-      
-      // led off
-      if (strcmp((char *)payload, "led off") == 0) {
-        digitalWrite(LED_BUILTIN, HIGH);
-        servo.write(180);
+
+      {
+        String command = String((char *) payload);
+        command.trim();
+        executeCommand(command);
       }
       
       break;
@@ -43,6 +37,34 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
 			hexdump(payload, length);
       break;
 	}
+}
+
+void executeCommand(String command) {
+      Serial.print("Received command: ");
+      Serial.print(command);
+      Serial.println();
+
+      // process LED commands
+      if (command.startsWith("led")) {
+        if(command == "led on") {
+            Serial.println("Turning LED on");
+            digitalWrite(LED_BUILTIN, LOW);
+        } else if (command == "led off") {
+            Serial.println("Turning LED off");
+            digitalWrite(LED_BUILTIN, HIGH);
+        }
+      }
+
+      if (command.startsWith("servo")) {
+        // convert characters after "servo " to int
+        int angle = command.substring(6).toInt();
+
+        Serial.print("Setting servo to ");
+        Serial.print(angle);
+        Serial.println(" degrees");
+
+        servo.write(angle);
+      }
 }
 
 void setup() {
