@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/websocket"
 	"github.com/julienschmidt/httprouter"
@@ -72,12 +74,34 @@ func ledOffHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 	sendMessage(w, "led off")
 }
 
+func servoHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	log.Printf("Setting servo to %s\n", ps.ByName("angle"))
+
+	angle, err := strconv.Atoi(ps.ByName("angle"))
+	if err != nil {
+		log.Printf("Angle was not a number")
+		return
+	}
+
+	if angle > 180 {
+		log.Printf("Angle is to large")
+		return
+	} else if angle < 0 {
+		log.Printf("Angle is to small")
+		return
+	}
+
+	msg := fmt.Sprintf("servo %d", angle)
+	sendMessage(w, msg)
+}
+
 func createRouter() *httprouter.Router {
 	router := httprouter.New()
 
 	router.GET("/connect", connectHandler)
 	router.PUT("/led/on", ledOnHandler)
 	router.PUT("/led/off", ledOffHandler)
+	router.PUT("/servo/:angle", servoHandler)
 
 	return router
 }
