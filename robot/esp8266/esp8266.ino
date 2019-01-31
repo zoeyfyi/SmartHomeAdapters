@@ -3,9 +3,6 @@
 #include "wifi.h"
 
 #define STATUS_PIN D7
-
-char path[] = "/";
-char host[] = "echo.websocket.org";
   
 WebSocketsClient socket;
 WiFiClient client;
