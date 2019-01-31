@@ -1,11 +1,16 @@
+#include <Servo.h>
+
 #include <WebSocketsClient.h>
 #include <ESP8266WiFi.h>
 #include "wifi.h"
 
+#define SERVO_PIN D0
 #define STATUS_PIN D7
   
 WebSocketsClient socket;
 WiFiClient client;
+
+Servo servo;
 
 void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
 	switch(type) {
@@ -23,11 +28,13 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
       // led on
       if (strcmp((char *)payload, "led on") == 0) {
         digitalWrite(LED_BUILTIN, LOW);
+        servo.write(0);
       } 
       
       // led off
       if (strcmp((char *)payload, "led off") == 0) {
         digitalWrite(LED_BUILTIN, HIGH);
+        servo.write(180);
       }
       
       break;
@@ -39,6 +46,9 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
 }
 
 void setup() {
+  // setup servo
+  servo.attach(SERVO_PIN);
+  
   // use pin 7/8 as our LED indicators
   pinMode(STATUS_PIN, OUTPUT);
   pinMode(LED_BUILTIN, OUTPUT);
