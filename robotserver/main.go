@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/websocket"
+	"github.com/julienschmidt/httprouter"
 )
 
 // upgrader upgrades http connections to WebSocket
@@ -18,7 +19,7 @@ var upgrader = websocket.Upgrader{
 var socket *websocket.Conn
 
 // connectHandler establishes the WebSocket with the client
-func connectHandler(w http.ResponseWriter, r *http.Request) {
+func connectHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	log.Println("Attempting to establish WebSocket connection")
 
 	// upgrade request
@@ -61,24 +62,29 @@ func sendMessage(w http.ResponseWriter, msg string) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func ledOnHandler(w http.ResponseWriter, r *http.Request) {
+func ledOnHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	log.Println("Turning the LED on")
 	sendMessage(w, "led on")
 }
 
-func ledOffHandler(w http.ResponseWriter, r *http.Request) {
+func ledOffHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	log.Println("Turning the LED off")
 	sendMessage(w, "led off")
 }
 
-func main() {
-	// register routes
-	http.HandleFunc("/connect", connectHandler)
-	http.HandleFunc("/led/on", ledOnHandler)
-	http.HandleFunc("/led/off", ledOffHandler)
+func createRouter() *httprouter.Router {
+	router := httprouter.New()
 
+	router.GET("/connect", connectHandler)
+	router.PUT("/led/on", ledOnHandler)
+	router.PUT("/led/off", ledOffHandler)
+
+	return router
+}
+
+func main() {
 	// start server
-	if err := http.ListenAndServe(":8080", nil); err != nil {
+	if err := http.ListenAndServe(":8080", createRouter()); err != nil {
 		panic(err)
 	}
 }

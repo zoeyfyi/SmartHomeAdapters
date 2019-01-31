@@ -14,12 +14,6 @@ func httpToWsProtocol(url string) string {
 	return "ws" + strings.TrimPrefix(url, "http")
 }
 
-type testHandler struct{ *testing.T }
-
-func (t testHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	connectHandler(w, r)
-}
-
 type testServer struct {
 	Handler http.Handler
 	Server  *httptest.Server
@@ -28,13 +22,7 @@ type testServer struct {
 
 func newServer(t *testing.T) *testServer {
 	var server testServer
-
-	mux := http.NewServeMux()
-	mux.HandleFunc("/connect", connectHandler)
-	mux.HandleFunc("/led/on", ledOnHandler)
-	mux.HandleFunc("/led/off", ledOffHandler)
-	server.Handler = mux
-
+	server.Handler = createRouter()
 	server.Server = httptest.NewServer(server.Handler)
 	server.URL = httpToWsProtocol(server.Server.URL)
 	return &server
@@ -70,7 +58,7 @@ func TestSendLEDCommand(t *testing.T) {
 	defer func() { socket = nil }()
 
 	for _, r := range requests {
-		req, err := http.NewRequest("GET", s.URL+r.path, nil)
+		req, err := http.NewRequest("PUT", s.URL+r.path, nil)
 		if err != nil {
 			t.Errorf("Error with request: %v", err)
 		}
@@ -108,7 +96,7 @@ func TestUnavalibleWhenRobotNotConnected(t *testing.T) {
 	defer s.Server.Close()
 
 	for _, r := range requests {
-		req, err := http.NewRequest("GET", s.URL+r.path, nil)
+		req, err := http.NewRequest("PUT", s.URL+r.path, nil)
 		if err != nil {
 			t.Errorf("Error with request: %v", err)
 		}
