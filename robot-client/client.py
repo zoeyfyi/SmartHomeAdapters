@@ -15,14 +15,8 @@ def on_close(ws):
 	print("Websocket closed")
 
 def on_message(ws, msg):
-	if msg == "led on":
-		print("Sending 1")
-		ser.write(b'1')
-	elif msg == "led off":
-		print("Sending 0")
-		ser.write(b'0')
-	else:
-		print("Unknown message")
+	print("Sending \"" + msg + "\" to arduino")
+	ser.write(msg.encode('ascii', 'ignore'))
 
 ws = websocket.WebSocket()
 ws.on_open = on_open
