@@ -44,7 +44,7 @@ func registerHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params
 }
 
 func loginHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	proxy(http.MethodPost, "http://userserver/login", w, r)
+	proxy(http.MethodGet, "http://userserver/login", w, r)
 }
 
 func createRouter() *httprouter.Router {
