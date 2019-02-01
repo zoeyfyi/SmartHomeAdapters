@@ -8,7 +8,9 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"time"
 
+	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/lib/pq"
 	_ "github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
@@ -21,6 +23,12 @@ var (
 	database = os.Getenv("DB_DATABASE")
 	url      = os.Getenv("DB_URL")
 )
+
+// signingKey key for signing json web tokens
+var signingKey = os.Getenv("JWT_SIGNING_KEY")
+
+// bcryptRounds number of rounds bcrypt uses to hash passwords
+const bcryptRounds = 10
 
 // error messages for register route
 const (
@@ -50,7 +58,7 @@ type registerBody struct {
 	Password string `json:"password"`
 }
 
-type user struct {
+type userResponce struct {
 	Email string `json:"email"`
 }
 
@@ -85,6 +93,9 @@ func registerHandler(db *sql.DB) http.HandlerFunc {
 
 		// hash password
 		hash, err := bcrypt.GenerateFromPassword([]byte(password), 10)
+		if err != nil {
+			httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		}
 
 		// insert user into database
 		_, err = db.Exec("INSERT INTO users(email, password) VALUES($1, $2)", email, hash)
@@ -101,8 +112,84 @@ func registerHandler(db *sql.DB) http.HandlerFunc {
 
 		// return user
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(user{
+		json.NewEncoder(w).Encode(userResponce{
 			Email: email,
+		})
+	})
+}
+
+// error messages for register route
+const (
+	ErrorEmailDoesntExist  = "A user with that email adress does not exist"
+	ErrorPasswordIncorrect = "Password incorrect"
+)
+
+type loginBody struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+type tokenResponce struct {
+	Token string `json:"token"`
+}
+
+func loginHandler(db *sql.DB) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Println("/login")
+
+		// decode body
+		var loginBody loginBody
+		err := json.NewDecoder(r.Body).Decode(&loginBody)
+		if err != nil {
+			httpWriteError(w, ErrorInvalidJSON, http.StatusBadRequest)
+			return
+		}
+
+		email := loginBody.Email
+		password := loginBody.Password
+
+		// get email/hash from database
+		var id int
+		var hash string
+		row := db.QueryRow("SELECT id, password FROM users WHERE email = $1", email)
+		err = row.Scan(&id, &hash)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				httpWriteError(w, ErrorEmailDoesntExist, http.StatusBadRequest)
+			} else {
+				log.Printf("Error scanning database: %v", err)
+				httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			}
+			return
+		}
+
+		// check password
+		err = bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+		if err != nil {
+			if err == bcrypt.ErrMismatchedHashAndPassword {
+				httpWriteError(w, ErrorPasswordIncorrect, http.StatusBadRequest)
+			} else {
+				log.Printf("Error comparing hashes: %v", err)
+				httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			}
+			return
+		}
+
+		// create token
+		expire := time.Now().Add(time.Hour * 24)
+		token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+			"exp": expire,
+			"id":  id,
+		})
+		tokenString, err := token.SignedString([]byte(signingKey))
+		if err != nil {
+			httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(tokenResponce{
+			Token: tokenString,
 		})
 	})
 }
@@ -151,6 +238,7 @@ func main() {
 
 	// register routes
 	http.HandleFunc("/register", registerHandler(db))
+	http.HandleFunc("/login", loginHandler(db))
 
 	// start server
 	if err := http.ListenAndServe(":80", nil); err != nil {
