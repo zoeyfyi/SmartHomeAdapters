@@ -60,14 +60,14 @@ func TestSuccessfullRegistration(t *testing.T) {
 		t.Errorf("Status code differs. Expected \"%d\", Got \"%d\"", http.StatusOK, status)
 	}
 
-	var user user
-	err = json.NewDecoder(rr.Body).Decode(&user)
+	var userResponce userResponce
+	err = json.NewDecoder(rr.Body).Decode(&userResponce)
 	if err != nil {
-		t.Errorf("Could not read user json: %v", err)
+		t.Errorf("Could not read userResponce json: %v", err)
 	}
 
-	if user.Email != "foo@email.com" {
-		t.Errorf("Email differs. Expected \"%s\", Got: \"%s\"", "foo@email.com", user.Email)
+	if userResponce.Email != "foo@email.com" {
+		t.Errorf("Email differs. Expected \"%s\", Got: \"%s\"", "foo@email.com", userResponce.Email)
 	}
 }
 
