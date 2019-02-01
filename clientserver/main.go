@@ -1,13 +1,27 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
+	"fmt"
+	"log"
 	"net/http"
+	"os"
+
+	_ "github.com/lib/pq"
 )
 
 func pingHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("pong"))
 }
+
+var (
+	username = os.Getenv("DB_USERNAME")
+	password = os.Getenv("DB_PASSWORD")
+	database = os.Getenv("DB_DATABASE")
+	url      = os.Getenv("DB_URL")
+)
+
 
 type response struct {
 	Id string `json:"id"`
@@ -17,6 +31,32 @@ type response struct {
 		Min int `json:"min"`
 		Max int `json:"max"`} `json:"interface"`}
 
+func connectionStr() string {
+	if username == "" {
+		username = "postgres"
+	}
+	if password == "" {
+		password = "password"
+	}
+	if url == "" {
+		url = "localhots:5432"
+	}
+	if database == "" {
+		database = "postgres"
+	}
+
+	return fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable", username, password, url, database)
+}
+
+func getDb() *sql.DB {
+	log.Printf("Connecting to database with \"%s\"\n", connectionStr())
+	db, err := sql.Open("postgres", connectionStr())
+	if err != nil {
+		log.Fatalf("Failed to connect to postgres: %v", err)
+	}
+
+	return db
+}
 
 func listRobotHandler(w http.ResponseWriter, r *http.Request){
 	// Need to make a database connections and retrieve robots
@@ -48,6 +88,16 @@ func listRobotHandler(w http.ResponseWriter, r *http.Request){
 func main() {
 	// register routes
 	// mux := http.NewServeMux()
+
+	db := getDb()
+	defer db.Close()
+
+	err := db.Ping()
+	if err != nil {
+		log.Fatalf("Failed to ping postgres: %v", err)
+	}
+
+	log.Printf("Connected to database: %+v\n", db.Stats())
 	http.HandleFunc("/ping", pingHandler)
 	http.HandleFunc("/robots", listRobotHandler)
 

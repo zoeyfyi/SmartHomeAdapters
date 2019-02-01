@@ -14,3 +14,6 @@ clientserver
 
 # IDEA files, when used with Jetbrains IDEs
 .idea/
+
+# Docker generated file (Windows)
+docker*
