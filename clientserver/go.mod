@@ -1,3 +1,3 @@
 module github.com/mrbenshef/SmartHomeAdapters/clientserver
 
-require github.com/lib/pq v1.0.0 // indirect
+require github.com/julienschmidt/httprouter v1.2.0

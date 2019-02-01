@@ -1,108 +1,68 @@
 package main
 
 import (
-	"database/sql"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
-	"os"
 
-	_ "github.com/lib/pq"
+	"github.com/julienschmidt/httprouter"
 )
 
-func pingHandler(w http.ResponseWriter, r *http.Request) {
+type restError struct {
+	Error string `json:"error"`
+}
+
+func httpWriteError(w http.ResponseWriter, msg string, code int) {
+	w.WriteHeader(http.StatusBadRequest)
+	json.NewEncoder(w).Encode(restError{msg})
+}
+
+func pingHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	w.Write([]byte("pong"))
 }
 
-var (
-	username = os.Getenv("DB_USERNAME")
-	password = os.Getenv("DB_PASSWORD")
-	database = os.Getenv("DB_DATABASE")
-	url      = os.Getenv("DB_URL")
-)
-
-
-type response struct {
-	Id string `json:"id"`
-	Nickname string `json:"nickname"`
-	Interface struct {
-		RobotType string `json:"type"`
-		Min int `json:"min"`
-		Max int `json:"max"`} `json:"interface"`}
-
-func connectionStr() string {
-	if username == "" {
-		username = "postgres"
-	}
-	if password == "" {
-		password = "password"
-	}
-	if url == "" {
-		url = "localhots:5432"
-	}
-	if database == "" {
-		database = "postgres"
-	}
-
-	return fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable", username, password, url, database)
-}
-
-func getDb() *sql.DB {
-	log.Printf("Connecting to database with \"%s\"\n", connectionStr())
-	db, err := sql.Open("postgres", connectionStr())
+// proxy forwards the request to a different url
+func proxy(method string, url string, w http.ResponseWriter, r *http.Request) {
+	req, err := http.NewRequest(method, url, r.Body)
 	if err != nil {
-		log.Fatalf("Failed to connect to postgres: %v", err)
+		log.Printf("Error creating request: %v", err)
+		httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
 
-	return db
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		log.Printf("Error executing request: %v", err)
+		httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	}
+
+	w.WriteHeader(resp.StatusCode)
+	resp.Write(w)
 }
 
-func listRobotHandler(w http.ResponseWriter, r *http.Request){
-	// Need to make a database connections and retrieve robots
-	// TODO - Connect to database here
+func registerHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	proxy(http.MethodPost, "http://userserver/register", w, r)
+}
 
+func loginHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	proxy(http.MethodGet, "http://userserver/login", w, r)
+}
 
-	resp := &response{
-		Id : "123abc",
-		Nickname : "myLightRobot",
-		Interface: struct {
-			RobotType string `json:"type"`
-			Min       int `json:"min"`
-			Max       int `json:"max"`
-		} {RobotType: "lightSwitch", Min: 0, Max: 100} 	}
+func createRouter() *httprouter.Router {
+	router := httprouter.New()
 
-	jsonResponse, err := json.Marshal(resp)
+	// register routes
+	router.GET("/ping", pingHandler)
+	router.POST("/register", registerHandler)
+	router.GET("/login", loginHandler)
 
-
-	if (err != nil){
-		w.Write([]byte("Something went wrong with the database. Please try again."))
-		panic(err)
-	}
-
-	w.Write(jsonResponse)
-
-
+	return router
 }
 
 func main() {
-	// register routes
-	// mux := http.NewServeMux()
-
-	db := getDb()
-	defer db.Close()
-
-	err := db.Ping()
-	if err != nil {
-		log.Fatalf("Failed to ping postgres: %v", err)
-	}
-
-	log.Printf("Connected to database: %+v\n", db.Stats())
-	http.HandleFunc("/ping", pingHandler)
-	http.HandleFunc("/robots", listRobotHandler)
+	log.Println("Server starting")
 
 	// start server
-	if err := http.ListenAndServe(":8080", nil); err != nil {
+	if err := http.ListenAndServe(":80", createRouter()); err != nil {
 		panic(err)
 	}
 }
