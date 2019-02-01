@@ -21,15 +21,30 @@ func pingHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	w.Write([]byte("pong"))
 }
 
-func registerHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	resp, err := http.Post("http://userserver/register", r.Header.Get("Content-Type"), r.Body)
+// proxy forwards the request to a different url
+func proxy(method string, url string, w http.ResponseWriter, r *http.Request) {
+	req, err := http.NewRequest(method, url, r.Body)
 	if err != nil {
-		log.Printf("Error posting to userserver: %v", err)
+		log.Printf("Error creating request: %v", err)
 		httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-	} else {
-		w.WriteHeader(resp.StatusCode)
-		resp.Write(w)
 	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		log.Printf("Error executing request: %v", err)
+		httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	}
+
+	w.WriteHeader(resp.StatusCode)
+	resp.Write(w)
+}
+
+func registerHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	proxy(http.MethodPost, "http://userserver/register", w, r)
+}
+
+func loginHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	proxy(http.MethodPost, "http://userserver/login", w, r)
 }
 
 func createRouter() *httprouter.Router {
@@ -38,6 +53,7 @@ func createRouter() *httprouter.Router {
 	// register routes
 	router.GET("/ping", pingHandler)
 	router.POST("/register", registerHandler)
+	router.GET("/login", loginHandler)
 
 	return router
 }
