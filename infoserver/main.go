@@ -22,14 +22,26 @@ var (
 	url      = os.Getenv("DB_URL")
 )
 
+type RobotInterface interface{
 
-type response struct {
+}
+type TriggerInterface struct {
+	InterfaceType string `json:"type"`
+	StateOn string `json:"stateOn"`
+}
+type RangeInterface struct {
+	InterfaceType string `json:"type"`
+	Min int `json:"min"`
+	Max int `json:"max"`
+}
+
+type Response struct {
 	Id string `json:"id"`
 	Nickname string `json:"nickname"`
-	Interface struct {
-		RobotType string `json:"type"`
-		Min int `json:"min"`
-		Max int `json:"max"`} `json:"interface"`}
+	RobotType string `json:"robotType"`
+	RobotInterface `json:"interface"`
+
+}
 
 func connectionStr() string {
 	if username == "" {
@@ -39,7 +51,7 @@ func connectionStr() string {
 		password = "password"
 	}
 	if url == "" {
-		url = "localhost:5432"
+		url = "192.168.99.100:5432"
 	}
 	if database == "" {
 		database = "postgres"
@@ -65,53 +77,94 @@ func httpWriteError(w http.ResponseWriter, msg string, code int) {
 	w.WriteHeader(http.StatusBadRequest)
 	json.NewEncoder(w).Encode(restError{msg})
 }
+
+func writeJSON(resp *Response, w http.ResponseWriter, r *http.Request){
+	json.NewEncoder(w).Encode(resp)
+}
+
+
+func displayResults(rows *sql.Rows, w http.ResponseWriter, r *http.Request, interfaceType string){
+	var (
+		serial    string
+		nickname  string
+		robotType string
+
+		minimum   int
+		maximum   int
+		stateOn string
+	)
+	// iterate through rows
+
+	for rows.Next() {
+
+		if interfaceType == "toggle" {
+
+			err := rows.Scan(&serial, &nickname, &robotType, &stateOn)
+			if err != nil {
+				log.Printf("Failed to scan row of toggle table: %v", err)
+				httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			}
+
+			robotInterface := TriggerInterface{interfaceType, stateOn}
+			resp := &Response{
+				Id:        serial,
+				Nickname:  nickname,
+				RobotType: robotType,
+				RobotInterface : robotInterface,
+			}
+			writeJSON(resp, w, r)
+
+		}   else if interfaceType == "range" {
+
+			err := rows.Scan(&serial, &nickname, &robotType, &minimum, &maximum)
+			if err != nil {
+				log.Printf("Failed to scan row of range table: %v", err)
+				httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			}
+			robotInterface := RangeInterface{interfaceType, minimum, maximum}
+
+			resp := &Response{
+				Id:        serial,
+				Nickname:  nickname,
+				RobotType: robotType,
+				RobotInterface : robotInterface,
+			}
+			writeJSON(resp, w, r)
+		}    else{
+			log.Println("Incorrect interface type specified")
+			httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+
+		}
+
+
+
+
+
+
+	}
+}
+
 func listRobotHandler(db *sql.DB) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
+		w.Header().Set("Content-Type", "application/json")
 
 		log.Println("/robots")
 
 		// Query database for robots
-		rows, err := db.Query("SELECT * FROM robots")
+		t_rows, err := db.Query("SELECT * FROM toggleRobots")
 		if err != nil {
 			log.Printf("Failed to retrive list of robots: %v", err)
 			httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		}
+		displayResults(t_rows, w, r, "toggle")
 
-		var (
-			serial    string
-			nickname  string
-			robotType string
-			minimum   int
-			maximum   int
-		)
-		// iterate through rows
-		for rows.Next() {
-			err := rows.Scan(&serial, &nickname, &robotType, &minimum, &maximum)
-			if err != nil {
-				log.Printf("Failed to retrive list of robots: %v", err)
-				httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-			}
-			// write JSON response
-			resp := &response{
-				Id:       serial,
-				Nickname: nickname,
-				Interface: struct {
-					RobotType string `json:"type"`
-					Min       int    `json:"min"`
-					Max       int    `json:"max"`
-				}{RobotType: robotType, Min: minimum, Max: maximum}}
-
-			jsonResponse, err := json.Marshal(resp)
-
-			if err != nil {
-				log.Printf("Failed to convert robot list into JSON")
-				httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-			}
-
-			w.Write(jsonResponse)
+		r_rows, err := db.Query("SELECT * FROM rangeRobots")
+		if err != nil {
+			log.Printf("Failed to retrive list of robots: %v", err)
+			httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		}
-
+		displayResults(r_rows, w, r, "range")
 	})
 }
 func main() {
