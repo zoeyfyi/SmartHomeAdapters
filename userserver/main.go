@@ -8,7 +8,10 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"strconv"
+	"time"
 
+	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/lib/pq"
 	_ "github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
@@ -21,6 +24,12 @@ var (
 	database = os.Getenv("DB_DATABASE")
 	url      = os.Getenv("DB_URL")
 )
+
+// signingKey key for signing json web tokens
+var signingKey = os.Getenv("JWT_SIGNING_KEY")
+
+// bcryptRounds number of rounds bcrypt uses to hash passwords
+const bcryptRounds = 10
 
 // error messages for register route
 const (
@@ -50,7 +59,7 @@ type registerBody struct {
 	Password string `json:"password"`
 }
 
-type user struct {
+type userResponce struct {
 	Email string `json:"email"`
 }
 
@@ -85,6 +94,9 @@ func registerHandler(db *sql.DB) http.HandlerFunc {
 
 		// hash password
 		hash, err := bcrypt.GenerateFromPassword([]byte(password), 10)
+		if err != nil {
+			httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		}
 
 		// insert user into database
 		_, err = db.Exec("INSERT INTO users(email, password) VALUES($1, $2)", email, hash)
@@ -101,8 +113,135 @@ func registerHandler(db *sql.DB) http.HandlerFunc {
 
 		// return user
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(user{
+		json.NewEncoder(w).Encode(userResponce{
 			Email: email,
+		})
+	})
+}
+
+// error messages for register route
+const (
+	ErrorEmailDoesntExist  = "A user with that email adress does not exist"
+	ErrorPasswordIncorrect = "Password incorrect"
+)
+
+type loginBody struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+type tokenResponce struct {
+	Token string `json:"token"`
+}
+
+func loginHandler(db *sql.DB) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Println("/login")
+
+		// decode body
+		var loginBody loginBody
+		err := json.NewDecoder(r.Body).Decode(&loginBody)
+		if err != nil {
+			httpWriteError(w, ErrorInvalidJSON, http.StatusBadRequest)
+			return
+		}
+
+		email := loginBody.Email
+		password := loginBody.Password
+
+		// get email/hash from database
+		var id int
+		var hash string
+		row := db.QueryRow("SELECT id, password FROM users WHERE email = $1", email)
+		err = row.Scan(&id, &hash)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				httpWriteError(w, ErrorEmailDoesntExist, http.StatusBadRequest)
+			} else {
+				log.Printf("Error scanning database: %v", err)
+				httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			}
+			return
+		}
+
+		// check password
+		err = bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+		if err != nil {
+			if err == bcrypt.ErrMismatchedHashAndPassword {
+				httpWriteError(w, ErrorPasswordIncorrect, http.StatusBadRequest)
+			} else {
+				log.Printf("Error comparing hashes: %v", err)
+				httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			}
+			return
+		}
+
+		// create token
+		expire := time.Now().Add(time.Hour * 24)
+		token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+			"exp": expire,
+			"id":  strconv.Itoa(id),
+		})
+		tokenString, err := token.SignedString([]byte(signingKey))
+		if err != nil {
+			httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(tokenResponce{
+			Token: tokenString,
+		})
+	})
+}
+
+// error messages for authorization route
+const (
+	ErrorInvalidToken = "Authorization token is invalid"
+)
+
+type authorizationResponce struct {
+	ID string `json:"id"`
+}
+
+func authorizeHandler() http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Println("/authorize")
+
+		// parse token
+		tokenString := r.Header.Get("token")
+		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+			}
+			return []byte(signingKey), nil
+		})
+		if err != nil {
+			log.Printf("Couldnt parse token: %v", err)
+			httpWriteError(w, ErrorInvalidToken, http.StatusBadRequest)
+			return
+		}
+
+		// get claims
+		claims, ok := token.Claims.(jwt.MapClaims)
+		if !ok || !token.Valid {
+			log.Printf("Could not get token claims")
+			httpWriteError(w, ErrorInvalidToken, http.StatusBadRequest)
+			return
+		}
+
+		// get ID from claims
+		id, ok := claims["id"].(string)
+		if !ok {
+			log.Printf("Token did not have ID claim, claims: %+v", claims)
+			httpWriteError(w, ErrorInvalidToken, http.StatusBadRequest)
+			return
+		}
+
+		// return authorization responce
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(authorizationResponce{
+			ID: string(id),
 		})
 	})
 }
@@ -151,6 +290,8 @@ func main() {
 
 	// register routes
 	http.HandleFunc("/register", registerHandler(db))
+	http.HandleFunc("/login", loginHandler(db))
+	http.HandleFunc("/authorize", authorizeHandler())
 
 	// start server
 	if err := http.ListenAndServe(":80", nil); err != nil {

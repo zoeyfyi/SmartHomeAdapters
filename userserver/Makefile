@@ -13,7 +13,7 @@ test:
 	@bash ../wait-for-database.sh > /dev/null
 
 	@# run the tests
-	@go test
+	@go test -v
 
 	@# remove the container
 	@docker kill user-database > /dev/null
