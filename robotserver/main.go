@@ -1,10 +1,14 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/websocket"
+	"github.com/julienschmidt/httprouter"
 )
 
 // upgrader upgrades http connections to WebSocket
@@ -17,8 +21,17 @@ var upgrader = websocket.Upgrader{
 // socket to send messages to
 var socket *websocket.Conn
 
+type restError struct {
+	Error string `json:"error"`
+}
+
+func httpWriteError(w http.ResponseWriter, msg string, code int) {
+	w.WriteHeader(code)
+	json.NewEncoder(w).Encode(restError{msg})
+}
+
 // connectHandler establishes the WebSocket with the client
-func connectHandler(w http.ResponseWriter, r *http.Request) {
+func connectHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	log.Println("Attempting to establish WebSocket connection")
 
 	// upgrade request
@@ -37,10 +50,15 @@ func connectHandler(w http.ResponseWriter, r *http.Request) {
 	socket = newSocket
 }
 
+// socket errors
+const (
+	ErrNotConnected = "Robot is not connected"
+)
+
 func sendMessage(w http.ResponseWriter, msg string) {
 	if socket == nil {
-		log.Println("Robot not connected")
-		w.WriteHeader(http.StatusServiceUnavailable)
+		// socket was never opened
+		httpWriteError(w, ErrNotConnected, http.StatusServiceUnavailable)
 		return
 	}
 
@@ -48,12 +66,11 @@ func sendMessage(w http.ResponseWriter, msg string) {
 	if err := socket.WriteMessage(websocket.TextMessage, []byte(msg)); err != nil {
 		if _, ok := err.(*websocket.CloseError); ok {
 			// socket was closed
-			log.Println("Robot not connected (socket is closed)")
-			w.WriteHeader(http.StatusServiceUnavailable)
+			httpWriteError(w, ErrNotConnected, http.StatusServiceUnavailable)
 		} else {
 			// unknown error
 			log.Printf("Failed to send message: %v", err)
-			w.WriteHeader(http.StatusInternalServerError)
+			httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		}
 		return
 	}
@@ -61,24 +78,58 @@ func sendMessage(w http.ResponseWriter, msg string) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func ledOnHandler(w http.ResponseWriter, r *http.Request) {
+func ledOnHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	log.Println("Turning the LED on")
 	sendMessage(w, "led on")
 }
 
-func ledOffHandler(w http.ResponseWriter, r *http.Request) {
+func ledOffHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	log.Println("Turning the LED off")
 	sendMessage(w, "led off")
 }
 
-func main() {
-	// register routes
-	http.HandleFunc("/connect", connectHandler)
-	http.HandleFunc("/led/on", ledOnHandler)
-	http.HandleFunc("/led/off", ledOffHandler)
+// servo errors
+const (
+	ErrAngleNotNumber = "Angle was not a number"
+	ErrAngleLarge     = "Angle was to large, must be 0-180"
+	ErrAngleSmall     = "Angle was to small, must be 0-180"
+)
 
+func servoHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	log.Printf("Setting servo to %s\n", ps.ByName("angle"))
+
+	angle, err := strconv.Atoi(ps.ByName("angle"))
+	if err != nil {
+		httpWriteError(w, ErrAngleNotNumber, http.StatusBadRequest)
+		return
+	}
+
+	if angle > 180 {
+		httpWriteError(w, ErrAngleLarge, http.StatusBadRequest)
+		return
+	} else if angle < 0 {
+		httpWriteError(w, ErrAngleSmall, http.StatusBadRequest)
+		return
+	}
+
+	msg := fmt.Sprintf("servo %d", angle)
+	sendMessage(w, msg)
+}
+
+func createRouter() *httprouter.Router {
+	router := httprouter.New()
+
+	router.GET("/connect", connectHandler)
+	router.PUT("/led/on", ledOnHandler)
+	router.PUT("/led/off", ledOffHandler)
+	router.PUT("/servo/:angle", servoHandler)
+
+	return router
+}
+
+func main() {
 	// start server
-	if err := http.ListenAndServe(":8080", nil); err != nil {
+	if err := http.ListenAndServe(":8080", createRouter()); err != nil {
 		panic(err)
 	}
 }

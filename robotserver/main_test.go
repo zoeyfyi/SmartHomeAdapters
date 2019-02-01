@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -14,12 +15,6 @@ func httpToWsProtocol(url string) string {
 	return "ws" + strings.TrimPrefix(url, "http")
 }
 
-type testHandler struct{ *testing.T }
-
-func (t testHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	connectHandler(w, r)
-}
-
 type testServer struct {
 	Handler http.Handler
 	Server  *httptest.Server
@@ -28,13 +23,7 @@ type testServer struct {
 
 func newServer(t *testing.T) *testServer {
 	var server testServer
-
-	mux := http.NewServeMux()
-	mux.HandleFunc("/connect", connectHandler)
-	mux.HandleFunc("/led/on", ledOnHandler)
-	mux.HandleFunc("/led/off", ledOffHandler)
-	server.Handler = mux
-
+	server.Handler = createRouter()
 	server.Server = httptest.NewServer(server.Handler)
 	server.URL = httpToWsProtocol(server.Server.URL)
 	return &server
@@ -70,7 +59,7 @@ func TestSendLEDCommand(t *testing.T) {
 	defer func() { socket = nil }()
 
 	for _, r := range requests {
-		req, err := http.NewRequest("GET", s.URL+r.path, nil)
+		req, err := http.NewRequest("PUT", s.URL+r.path, nil)
 		if err != nil {
 			t.Errorf("Error with request: %v", err)
 		}
@@ -96,19 +85,17 @@ func TestSendLEDCommand(t *testing.T) {
 }
 
 func TestUnavalibleWhenRobotNotConnected(t *testing.T) {
-	requests := []struct {
-		path            string
-		expectedMessage string
-	}{
-		{"/led/on", "led on"},
-		{"/led/off", "led off"},
+	requests := []string{
+		"/led/on",
+		"/led/off",
+		"/servo/90",
 	}
 
 	s := newServer(t)
 	defer s.Server.Close()
 
 	for _, r := range requests {
-		req, err := http.NewRequest("GET", s.URL+r.path, nil)
+		req, err := http.NewRequest("PUT", s.URL+r, nil)
 		if err != nil {
 			t.Errorf("Error with request: %v", err)
 		}
@@ -118,6 +105,85 @@ func TestUnavalibleWhenRobotNotConnected(t *testing.T) {
 
 		if rr.Code != http.StatusServiceUnavailable {
 			t.Errorf("Expected service unavailble, got: %v", rr.Code)
+		}
+
+		var restError restError
+		err = json.NewDecoder(rr.Body).Decode(&restError)
+		if err != nil {
+			t.Errorf("Could not read error json: %v", err)
+		}
+
+		if restError.Error != ErrNotConnected {
+			t.Errorf("Error differs. Expected \"%s\", Got: \"%s\"", ErrNotConnected, restError.Error)
+		}
+	}
+}
+
+func TestSendServoCommand(t *testing.T) {
+	s := newServer(t)
+	defer s.Server.Close()
+
+	ws, _, _ := websocket.DefaultDialer.Dial(s.URL+"/connect", nil)
+	defer func() { socket = nil }()
+
+	req, err := http.NewRequest("PUT", s.URL+"/servo/90", nil)
+	if err != nil {
+		t.Errorf("Error with request: %v", err)
+	}
+
+	rr := httptest.NewRecorder()
+	s.Handler.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Errorf("Expected OK, got: %v", rr.Code)
+	}
+
+	typ, msg, err := ws.ReadMessage()
+	if err != nil {
+		t.Errorf("Error reading websocket message: %v", err)
+	}
+	if typ != websocket.TextMessage {
+		t.Errorf("Expected websocket.TextMessage type, got type: %v", typ)
+	}
+	if string(msg) != "servo 90" {
+		t.Errorf("Expected message: \"%s\", got message: \"%s\"", "servo 90", msg)
+	}
+}
+
+func TestSendInvalidServoCommand(t *testing.T) {
+	requests := []struct {
+		path          string
+		expectedError string
+	}{
+		{"/servo/-100", ErrAngleSmall},
+		{"/servo/999", ErrAngleLarge},
+		{"/servo/foo", ErrAngleNotNumber},
+	}
+
+	s := newServer(t)
+	defer s.Server.Close()
+
+	for _, r := range requests {
+		req, err := http.NewRequest("PUT", s.URL+r.path, nil)
+		if err != nil {
+			t.Errorf("Error with request: %v", err)
+		}
+
+		rr := httptest.NewRecorder()
+		s.Handler.ServeHTTP(rr, req)
+
+		if rr.Code != http.StatusBadRequest {
+			t.Errorf("Expected bad request, got: %v", rr.Code)
+		}
+
+		var restError restError
+		err = json.NewDecoder(rr.Body).Decode(&restError)
+		if err != nil {
+			t.Errorf("Could not read error json: %v", err)
+		}
+
+		if restError.Error != r.expectedError {
+			t.Errorf("Error differs. Expected \"%s\", Got: \"%s\"", r.expectedError, restError.Error)
 		}
 	}
 }
