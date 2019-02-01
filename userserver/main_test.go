@@ -191,3 +191,46 @@ func TestLoginFailure(t *testing.T) {
 		}
 	}
 }
+
+func TestAuthorize(t *testing.T) {
+	clearDatabase(t)
+
+	req, _ := http.NewRequest("GET", "/register", strings.NewReader("{\"email\":\"foo@email.com\", \"password\":\"bar\"}"))
+	rr := httptest.NewRecorder()
+	http.HandlerFunc(registerHandler(db)).ServeHTTP(rr, req)
+	if rr.Code != http.StatusOK {
+		t.Errorf("Expected OK from /register")
+	}
+
+	req, _ = http.NewRequest("GET", "/login", strings.NewReader("{\"email\":\"foo@email.com\", \"password\":\"bar\"}"))
+	rr = httptest.NewRecorder()
+	http.HandlerFunc(loginHandler(db)).ServeHTTP(rr, req)
+	if rr.Code != http.StatusOK {
+		t.Errorf("Expected OK from /login")
+	}
+	var tokenResponce tokenResponce
+	json.NewDecoder(rr.Body).Decode(&tokenResponce)
+
+	req, err := http.NewRequest("GET", "/authorize", nil)
+	req.Header.Set("token", tokenResponce.Token)
+	if err != nil {
+		t.Errorf("Error: %v", err)
+	}
+
+	rr = httptest.NewRecorder()
+	http.HandlerFunc(authorizeHandler()).ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("Status code differs. Expected \"%d\", Got \"%d\"", http.StatusOK, status)
+	}
+
+	var authorizationResponce authorizationResponce
+	err = json.NewDecoder(rr.Body).Decode(&authorizationResponce)
+	if err != nil {
+		t.Errorf("Could not read authorizationResponce json: %v", err)
+	}
+
+	if authorizationResponce.ID == "" {
+		t.Errorf("ID is blank, authorizationResponce: %+v", authorizationResponce)
+	}
+}
