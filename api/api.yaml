@@ -16,7 +16,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Robot'
+                $ref: '#/components/schemas/Robots'
   /robot/{robotId}:
     post:
       description: Registers a robot to the users account
@@ -105,6 +105,10 @@ paths:
 
 components:
   schemas:
+    Robots:
+       type: array
+       items:
+        $ref: '#/components/schemas/Robot'
     Robot:
       type: object
       properties:
