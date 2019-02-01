@@ -16,4 +16,4 @@ clientserver
 .idea/
 
 # Docker generated file (Windows)
-docker*
+docker
