@@ -51,7 +51,7 @@ func connectionStr() string {
 		password = "password"
 	}
 	if url == "" {
-		url = "192.168.99.100:5432"
+		url = "localhost:5432"
 	}
 	if database == "" {
 		database = "postgres"
