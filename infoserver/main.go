@@ -78,12 +78,8 @@ func httpWriteError(w http.ResponseWriter, msg string, code int) {
 	json.NewEncoder(w).Encode(restError{msg})
 }
 
-func writeJSON(resp *Response, w http.ResponseWriter, r *http.Request){
-	json.NewEncoder(w).Encode(resp)
-}
 
-
-func displayResults(rows *sql.Rows, w http.ResponseWriter, r *http.Request, interfaceType string){
+func getResults(rows *sql.Rows, w http.ResponseWriter, r *http.Request, interfaceType string) ([]*Response){
 	var (
 		serial    string
 		nickname  string
@@ -94,6 +90,8 @@ func displayResults(rows *sql.Rows, w http.ResponseWriter, r *http.Request, inte
 		stateOn string
 	)
 	// iterate through rows
+
+	robots := []*Response{}
 
 	for rows.Next() {
 
@@ -112,7 +110,8 @@ func displayResults(rows *sql.Rows, w http.ResponseWriter, r *http.Request, inte
 				RobotType: robotType,
 				RobotInterface : robotInterface,
 			}
-			writeJSON(resp, w, r)
+			robots = append(robots, resp)
+
 
 		}   else if interfaceType == "range" {
 
@@ -129,19 +128,17 @@ func displayResults(rows *sql.Rows, w http.ResponseWriter, r *http.Request, inte
 				RobotType: robotType,
 				RobotInterface : robotInterface,
 			}
-			writeJSON(resp, w, r)
+			robots = append(robots, resp)
+
 		}    else{
 			log.Println("Incorrect interface type specified")
 			httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 
 		}
 
-
-
-
-
-
 	}
+	return robots
+
 }
 
 func listRobotHandler(db *sql.DB) http.HandlerFunc {
@@ -157,14 +154,20 @@ func listRobotHandler(db *sql.DB) http.HandlerFunc {
 			log.Printf("Failed to retrive list of robots: %v", err)
 			httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		}
-		displayResults(t_rows, w, r, "toggle")
+		robots := getResults(t_rows, w, r, "toggle")
+		log.Printf("Writing list of robots: ")
 
 		r_rows, err := db.Query("SELECT * FROM rangeRobots")
 		if err != nil {
 			log.Printf("Failed to retrive list of robots: %v", err)
 			httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		}
-		displayResults(r_rows, w, r, "range")
+
+		rangeRobots := getResults(r_rows, w, r, "range")
+		robots = append(robots, rangeRobots...)
+
+		json.NewEncoder(w).Encode(robots)
+
 	})
 }
 func main() {
