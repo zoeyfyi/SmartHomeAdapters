@@ -67,11 +67,11 @@ func httpWriteError(w http.ResponseWriter, msg string, code int) {
 }
 func listRobotHandler(db *sql.DB) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Need to make a database connections and retrieve robots
-		// TODO - Connect to database here
+
 
 		log.Println("/robots")
 
+		// Query database for robots
 		rows, err := db.Query("SELECT * FROM robots")
 		if err != nil {
 			log.Printf("Failed to retrive list of robots: %v", err)
@@ -85,12 +85,14 @@ func listRobotHandler(db *sql.DB) http.HandlerFunc {
 			minimum   int
 			maximum   int
 		)
+		// iterate through rows
 		for rows.Next() {
 			err := rows.Scan(&serial, &nickname, &robotType, &minimum, &maximum)
 			if err != nil {
 				log.Printf("Failed to retrive list of robots: %v", err)
 				httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			}
+			// write JSON response
 			resp := &response{
 				Id:       serial,
 				Nickname: nickname,
@@ -119,12 +121,15 @@ func main() {
 	db := getDb()
 	defer db.Close()
 
+	// test database
 	err := db.Ping()
 	if err != nil {
 		log.Fatalf("Failed to ping postgres: %v", err)
 	}
 
 	log.Printf("Connected to database: %+v\n", db.Stats())
+
+	// set up handlers
 	http.HandleFunc("/ping", pingHandler)
 	http.HandleFunc("/robots", listRobotHandler(db))
 
