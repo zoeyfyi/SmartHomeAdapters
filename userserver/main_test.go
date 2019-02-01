@@ -10,7 +10,15 @@ import (
 
 var db = getDb()
 
+func clearDatabase(t *testing.T) {
+	_, err := db.Exec("DELETE FROM users")
+	if err != nil {
+		t.Errorf("Error clearing database: %v", err)
+	}
+}
 func TestRegisterFieldValidation(t *testing.T) {
+	clearDatabase(t)
+
 	cases := []struct {
 		body           string
 		expectedStatus int
@@ -48,6 +56,8 @@ func TestRegisterFieldValidation(t *testing.T) {
 }
 
 func TestSuccessfullRegistration(t *testing.T) {
+	clearDatabase(t)
+
 	req, err := http.NewRequest("GET", "/register", strings.NewReader("{\"email\":\"foo@email.com\", \"password\":\"bar\"}"))
 	if err != nil {
 		t.Errorf("Error: %v", err)
@@ -72,11 +82,16 @@ func TestSuccessfullRegistration(t *testing.T) {
 }
 
 func TestRegisterDuplicateEmails(t *testing.T) {
-	req, _ := http.NewRequest("GET", "/register", strings.NewReader("{\"email\":\"bar@email.com\", \"password\":\"bar\"}"))
+	clearDatabase(t)
+
+	req, _ := http.NewRequest("GET", "/register", strings.NewReader("{\"email\":\"foo@email.com\", \"password\":\"bar\"}"))
 	rr := httptest.NewRecorder()
 	http.HandlerFunc(registerHandler(db)).ServeHTTP(rr, req)
+	if rr.Code != http.StatusOK {
+		t.Errorf("Expected OK from first /register")
+	}
 
-	req, err := http.NewRequest("GET", "/register", strings.NewReader("{\"email\":\"bar@email.com\", \"password\":\"bar\"}"))
+	req, err := http.NewRequest("GET", "/register", strings.NewReader("{\"email\":\"foo@email.com\", \"password\":\"bar\"}"))
 	if err != nil {
 		t.Errorf("Error: %v", err)
 	}
