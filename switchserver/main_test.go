@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -74,14 +75,19 @@ func TestSuccessfullyAddingSwitch(t *testing.T) {
 		t.Errorf("Status code differs. Expected \"%d\", Got \"%d\"", http.StatusOK, status)
 	}
 
-	var switchRobot switchRobot
-	err = json.NewDecoder(rr.Body).Decode(&switchRobot)
+	var robot switchRobot
+	err = json.NewDecoder(rr.Body).Decode(&robot)
 	if err != nil {
 		t.Errorf("Could not read switch robot json: %v", err)
 	}
 
-	if switchRobot.IsOn != false {
-		t.Errorf("isOn differs. Expected \"%t\", Got: \"%t\"", false, switchRobot.IsOn)
+	expectedRobot := switchRobot{
+		RobotID: 123,
+		IsOn:    false,
+	}
+
+	if reflect.DeepEqual(robot, expectedRobot) {
+		t.Errorf("Robots differ. Expected: %+v, Got: %+v", expectedRobot, robot)
 	}
 }
 

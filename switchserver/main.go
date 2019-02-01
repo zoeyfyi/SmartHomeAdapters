@@ -50,7 +50,12 @@ func getDb() *sql.DB {
 }
 
 type switchRobot struct {
-	IsOn bool `json:"isOn"`
+	RobotID      int  `json:"robotId"`
+	IsOn         bool `json:"isOn"`
+	IsCalibrated bool `json:"isCalibrated"`
+	OnAngle      int  `json:"onAngle"`
+	OffAngle     int  `json:"offAngle"`
+	RestAngle    int  `json:"restAngle"`
 }
 
 type restError struct {
@@ -98,8 +103,21 @@ func addSwitchHandler(db *sql.DB) httprouter.Handle {
 			return
 		}
 
+		switchRobot := switchRobot{
+			RobotID: robotID,
+			IsOn:    *addSwitchBody.IsOn,
+		}
+
 		// insert into database
-		_, err = db.Exec("INSERT INTO switches(robotId, isOn) VALUES($1, $2)", robotID, *addSwitchBody.IsOn)
+		_, err = db.Exec(
+			"INSERT INTO switches(robotId, isOn, onAngle, offAngle, restAngle, isCalibrated) VALUES($1, $2, $3, $4, $5, $6)",
+			switchRobot.RobotID,
+			switchRobot.IsOn,
+			switchRobot.OnAngle,
+			switchRobot.OffAngle,
+			switchRobot.RestAngle,
+			switchRobot.IsCalibrated,
+		)
 		if err != nil {
 			if err, ok := err.(*pq.Error); ok && err.Code.Name() == "unique_violation" {
 				// robot is already registered
@@ -113,9 +131,7 @@ func addSwitchHandler(db *sql.DB) httprouter.Handle {
 
 		// return success
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(switchRobot{
-			IsOn: *addSwitchBody.IsOn,
-		})
+		json.NewEncoder(w).Encode(switchRobot)
 	}
 }
 
@@ -157,17 +173,34 @@ func removeSwitchHandler(db *sql.DB) httprouter.Handle {
 	}
 }
 
+// errors for light on/off routes
+const (
+	ErrorNotCalibrated = "Robot has not been calibrated"
+	ErrorSwitchOn      = "Switch is already on (use force to override)"
+	ErrorSwitchOff     = "Switch is already off (use force to override)"
+)
+
 func setSwitch(w http.ResponseWriter, db *sql.DB, robotID int, setOn bool, force bool) {
+	// get switch status from database
+	var (
+		isOn         bool
+		isCalibrated bool
+	)
+	row := db.QueryRow("SELECT isOn isCalibrated FROM switches WHERE robotId = $1", robotID)
+	err := row.Scan(&isOn, &isCalibrated)
+	if err != nil {
+		log.Printf("Failed to scan database: %v", err)
+		httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	// check if it has been calibrated
+	if !isCalibrated {
+		httpWriteError(w, ErrorNotCalibrated, http.StatusBadRequest)
+	}
+
 	// check if the light is already on
 	if !force {
-		var isOn bool
-		row := db.QueryRow("SELECT isOn FROM switches WHERE robotId = $1", robotID)
-		err := row.Scan(&isOn)
-		if err != nil {
-			httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-			return
-		}
-
 		// check if switch is already on/off
 		if isOn == setOn {
 			if isOn {
@@ -185,11 +218,6 @@ func setSwitch(w http.ResponseWriter, db *sql.DB, robotID int, setOn bool, force
 
 	// TODO: check servo commands are success then update database
 }
-
-// error messages for on route
-const (
-	ErrorSwitchOn = "Switch is already on (use force to override)"
-)
 
 type onSwitchBody struct {
 	// Force determines weather a servo command is sent even if the robot is already on
@@ -217,11 +245,6 @@ func onHandler(db *sql.DB) httprouter.Handle {
 		setSwitch(w, db, robotID, true, onSwitchBody.Force)
 	}
 }
-
-// error messages for off route
-const (
-	ErrorSwitchOff = "Switch is already off (use force to override)"
-)
 
 type offSwitchBody struct {
 	// Force determines weather a servo command is sent even if the robot is already on
