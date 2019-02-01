@@ -113,3 +113,81 @@ func TestRegisterDuplicateEmails(t *testing.T) {
 		t.Errorf("Error differs. Expected \"%s\", Got: \"%s\"", ErrorEmailExists, restError)
 	}
 }
+
+func TestSuccessfulLogin(t *testing.T) {
+	clearDatabase(t)
+
+	req, _ := http.NewRequest("GET", "/register", strings.NewReader("{\"email\":\"foo@email.com\", \"password\":\"bar\"}"))
+	rr := httptest.NewRecorder()
+	http.HandlerFunc(registerHandler(db)).ServeHTTP(rr, req)
+	if rr.Code != http.StatusOK {
+		t.Errorf("Expected OK from /register")
+	}
+
+	req, err := http.NewRequest("GET", "/login", strings.NewReader("{\"email\":\"foo@email.com\", \"password\":\"bar\"}"))
+	if err != nil {
+		t.Errorf("Error: %v", err)
+	}
+
+	rr = httptest.NewRecorder()
+	http.HandlerFunc(loginHandler(db)).ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("Status code differs. Expected \"%d\", Got \"%d\"", http.StatusOK, status)
+	}
+
+	var tokenResponce tokenResponce
+	err = json.NewDecoder(rr.Body).Decode(&tokenResponce)
+	if err != nil {
+		t.Errorf("Could not read tokenResponce json: %v", err)
+	}
+
+	if tokenResponce.Token == "" {
+		t.Errorf("Token is blank, tokenResponce: %+v", tokenResponce)
+	}
+}
+
+func TestLoginFailure(t *testing.T) {
+	clearDatabase(t)
+
+	req, _ := http.NewRequest("GET", "/register", strings.NewReader("{\"email\":\"foo@email.com\", \"password\":\"bar\"}"))
+	rr := httptest.NewRecorder()
+	http.HandlerFunc(registerHandler(db)).ServeHTTP(rr, req)
+	if rr.Code != http.StatusOK {
+		t.Errorf("Expected OK from /register")
+	}
+
+	cases := []struct {
+		body               string
+		expectedError      string
+		expectedReturnCode int
+	}{
+		{"", ErrorInvalidJSON, http.StatusBadRequest},
+		{"{\"email\":\"wrongemail\", \"password\":\"bar\"}", ErrorEmailDoesntExist, http.StatusBadRequest},
+		{"{\"email\":\"foo@email.com\", \"password\":\"wrongpassword\"}", ErrorPasswordIncorrect, http.StatusBadRequest},
+	}
+
+	for _, c := range cases {
+		req, err := http.NewRequest("GET", "/login", strings.NewReader(c.body))
+		if err != nil {
+			t.Errorf("Error: %v", err)
+		}
+
+		rr = httptest.NewRecorder()
+		http.HandlerFunc(loginHandler(db)).ServeHTTP(rr, req)
+
+		if status := rr.Code; status != c.expectedReturnCode {
+			t.Errorf("Status code differs. Expected \"%d\", Got \"%d\"", c.expectedReturnCode, status)
+		}
+
+		var restError restError
+		err = json.NewDecoder(rr.Body).Decode(&restError)
+		if err != nil {
+			t.Errorf("Could not read restError json: %v", err)
+		}
+
+		if restError.Error != c.expectedError {
+			t.Errorf("Error differs. Expected \"%s\", Got: \"%s\"", c.expectedError, restError.Error)
+		}
+	}
+}
