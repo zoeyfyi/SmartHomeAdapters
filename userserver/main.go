@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"strconv"
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
@@ -179,7 +180,7 @@ func loginHandler(db *sql.DB) http.HandlerFunc {
 		expire := time.Now().Add(time.Hour * 24)
 		token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 			"exp": expire,
-			"id":  id,
+			"id":  strconv.Itoa(id),
 		})
 		tokenString, err := token.SignedString([]byte(signingKey))
 		if err != nil {
@@ -190,6 +191,57 @@ func loginHandler(db *sql.DB) http.HandlerFunc {
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(tokenResponce{
 			Token: tokenString,
+		})
+	})
+}
+
+// error messages for authorization route
+const (
+	ErrorInvalidToken = "Authorization token is invalid"
+)
+
+type authorizationResponce struct {
+	ID string `json:"id"`
+}
+
+func authorizeHandler() http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Println("/authorize")
+
+		// parse token
+		tokenString := r.Header.Get("token")
+		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+			}
+			return []byte(signingKey), nil
+		})
+		if err != nil {
+			log.Printf("Couldnt parse token: %v", err)
+			httpWriteError(w, ErrorInvalidToken, http.StatusBadRequest)
+			return
+		}
+
+		// get claims
+		claims, ok := token.Claims.(jwt.MapClaims)
+		if !ok || !token.Valid {
+			log.Printf("Could not get token claims")
+			httpWriteError(w, ErrorInvalidToken, http.StatusBadRequest)
+			return
+		}
+
+		// get ID from claims
+		id, ok := claims["id"].(string)
+		if !ok {
+			log.Printf("Token did not have ID claim, claims: %+v", claims)
+			httpWriteError(w, ErrorInvalidToken, http.StatusBadRequest)
+			return
+		}
+
+		// return authorization responce
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(authorizationResponce{
+			ID: string(id),
 		})
 	})
 }
@@ -239,6 +291,7 @@ func main() {
 	// register routes
 	http.HandleFunc("/register", registerHandler(db))
 	http.HandleFunc("/login", loginHandler(db))
+	http.HandleFunc("/authorize", authorizeHandler())
 
 	// start server
 	if err := http.ListenAndServe(":80", nil); err != nil {
