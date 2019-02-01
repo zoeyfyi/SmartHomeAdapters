@@ -86,7 +86,7 @@ func TestSuccessfullyAddingSwitch(t *testing.T) {
 		IsOn:    false,
 	}
 
-	if reflect.DeepEqual(robot, expectedRobot) {
+	if !reflect.DeepEqual(robot, expectedRobot) {
 		t.Errorf("Robots differ. Expected: %+v, Got: %+v", expectedRobot, robot)
 	}
 }
