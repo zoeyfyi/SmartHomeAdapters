@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -36,7 +37,10 @@ func proxy(method string, url string, w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(resp.StatusCode)
-	resp.Write(w)
+
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(resp.Body)
+	w.Write(buf.Bytes())
 }
 
 func registerHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
@@ -53,7 +57,7 @@ func createRouter() *httprouter.Router {
 	// register routes
 	router.GET("/ping", pingHandler)
 	router.POST("/register", registerHandler)
-	router.GET("/login", loginHandler)
+	router.POST("/login", loginHandler)
 
 	return router
 }
