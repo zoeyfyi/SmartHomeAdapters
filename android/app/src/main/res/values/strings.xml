@@ -9,7 +9,7 @@
 
     <!-- Strings related to the RegisterUser Activity -->
     <string name="confirm_password_input_hint">Re-enter password</string>
-    <string name="send_confirmation_button_text">Confirm email</string>
+    <string name="send_confirmation_button_text">Register</string>
     <string name="email_sent_text">We have sent your activation code to your email.\nYou can press the email logo above to open your default email app.</string>
     <string name="activation_code_input_hint">000000</string>
     <string name="verify_activation_code_button_text">Verify</string>

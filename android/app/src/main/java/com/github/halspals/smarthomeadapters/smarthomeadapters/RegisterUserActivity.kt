@@ -1,16 +1,15 @@
 package com.github.halspals.smarthomeadapters.smarthomeadapters
 
-import android.content.Intent
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.View
-import android.widget.Button
 import kotlinx.android.synthetic.main.activity_register_user.*
 import org.jetbrains.anko.*
 import org.jetbrains.anko.design.snackbar
+import org.json.JSONObject
 
-class RegisterUserActivity : AppCompatActivity() {
+class RegisterUserActivity : AppCompatActivity(), RESTResponseListener {
 
     private val tag = "RegisterUserActivity"
 
@@ -21,35 +20,12 @@ class RegisterUserActivity : AppCompatActivity() {
         /*
             Set up the click events for the buttons.
          */
-        email_image_view.setOnClickListener { _ ->
-            // Fire up the user's default email app.
-            val intent = Intent(Intent.ACTION_MAIN)
-            intent.addCategory(Intent.CATEGORY_APP_EMAIL)
-            startActivity(intent)
+        register_button.setOnClickListener { _ ->
+            register_button.isEnabled = false
+            progressBar.visibility = View.VISIBLE
+            registerNewUser()
         }
 
-        send_email_button.setOnClickListener { _ ->
-            send_email_button.isEnabled = false
-            if (registerNewUser()) {
-                switchToVerificationContext()
-            } else {
-                // TODO the below should also include an error message from the server
-                snackbar_layout.snackbar("Registration failed")
-                send_email_button.isEnabled = true
-            }
-        }
-
-        verify_code_button.setOnClickListener { _ ->
-            verify_code_button.isEnabled = false
-            if (verifyActivationCode()) {
-                toast("Successfully registered your account")
-                startActivity(intentFor<MainActivity>().clearTask().newTask())
-            } else {
-                // TODO the below should also include an error message from the server
-                snackbar_layout.snackbar("Verification failed")
-                verify_code_button.isEnabled = true
-            }
-        }
 
         login_button.setOnClickListener { _ ->
             // Return to the AuthenticationActivity which launched this RegisterUserActivity
@@ -62,19 +38,20 @@ class RegisterUserActivity : AppCompatActivity() {
          */
         email_input.setOnFocusChangeListener { _, hasFocus ->
             if (!hasFocus) {
-                checkEmailInput()
+                checkEmailInput(email_input.text.toString())
             }
         }
 
         password_input.setOnFocusChangeListener { _, hasFocus ->
             if (!hasFocus) {
-                checkPasswordInput()
+                checkPasswordInput(password_input.text.toString())
             }
         }
 
         confirm_password_input.setOnFocusChangeListener { _, hasFocus ->
             if (!hasFocus) {
-                checkConfirmPasswordInput()
+                checkConfirmPasswordInput(
+                        password_input.text.toString(), confirm_password_input.text.toString())
             }
         }
 
@@ -82,64 +59,39 @@ class RegisterUserActivity : AppCompatActivity() {
     }
 
     /**
-     * WIP: Gets the input email and password and registers a new user with the web service.
-     * Currently just makes sure that all three inputs are valid.
+     * Gets the input email and password and registers a new user with the web service.
+     * First makes sure that the inputs are valid.
      *
-     * @return whether setting up the new user was successful
      */
-    private fun registerNewUser(): Boolean {
+    private fun registerNewUser() {
         progressBar.visibility = View.VISIBLE
-        // TODO read data from input fields and send it to the server, moving on only when
-        // receiving a success
-        val inputsOK = checkEmailInput() && checkPasswordInput() && checkConfirmPasswordInput()
-        progressBar.visibility = View.GONE
 
+        val email = email_input.text.toString()
+        val password = password_input.text.toString()
+        val confirmedPassword = confirm_password_input.text.toString()
 
-        return inputsOK
+        val inputsOK = checkEmailInput(email)
+                && checkPasswordInput(password)
+                && checkConfirmPasswordInput(password, confirmedPassword)
+
+        if (inputsOK) {
+            RESTRequestTask(this).execute(RESTRequest.REGISTER(email, password))
+        } else {
+            register_button.isEnabled = true
+            progressBar.visibility = View.GONE
+        }
+
     }
 
     /**
-     * Hides the views corresponding to registering, instead showing those
-     * where the user is asked to verify their email before proceeding.
-     */
-    private fun switchToVerificationContext() {
-        // Hides the previous input fields and buttons and displays
-        // new ones as appropriate to verify the user's email
-        email_input_layout.visibility = View.GONE
-        password_input_layout.visibility = View.GONE
-        confirm_password_input_layout.visibility = View.GONE
-        send_email_button.visibility = View.GONE
-        login_button.visibility = View.GONE
-        email_image_view.visibility = View.VISIBLE
-        email_sent_textView.visibility = View.VISIBLE
-        activation_code_input.visibility = View.VISIBLE
-        verify_code_button.visibility = View.VISIBLE
-    }
-
-    /**
-     * WIP: Gets the verification code from [activation_code_input] and checks with the
-     * web service that it looks as expected.
-     * Currently just a dummy function; returns true regardless.
-     */
-    private fun verifyActivationCode(): Boolean {
-        progressBar.visibility = View.VISIBLE
-        // TODO read data from input fields and send it to the server, moving on only when
-        // receiving a success
-        progressBar.visibility = View.GONE
-
-        return true
-    }
-
-    /**
-     * Gets the email from the [email_input] and checks that it is a valid email string.
-     * Sets errors on [email_input] as appropriate.
+     * Makes sure the given email is valid, setting an error to [email_input] if not.
      *
+     * @param email the email to check for validity
      * @return whether the given email is a valid one
      */
-    private fun checkEmailInput(): Boolean {
-        val email = email_input.text
-        val emailIsValid = (!email.isNullOrEmpty()
-                && android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches())
+    private fun checkEmailInput(email: String): Boolean {
+
+        val emailIsValid = android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
 
         if (!emailIsValid) {
             email_input.error = "Invalid email address"
@@ -150,37 +102,36 @@ class RegisterUserActivity : AppCompatActivity() {
         return emailIsValid
     }
 
+
     /**
-     * WIP: Gets the password from [password_input] and checks that it is valid.
-     * Currently only checks that it is not null or empty.
-     * Sets errors on [password_input] as appropriate.
+     * Checks the validity of the password (>= 8 chars).
+     * Sets an error to [password_input] if it is not valid.
      *
+     * @param password the password to check
      * @return whether the password is a valid one
      */
-    private fun checkPasswordInput(): Boolean {
+    private fun checkPasswordInput(password: String): Boolean {
         // TODO we can add more checks here like password length etc
-        val pwIsValid = !password_input.text.isNullOrEmpty()
+        val pwIsValid = password.length >= 8
 
         if (!pwIsValid) {
-            password_input.error = "Invalid password"
+            password_input.error = "Must be at least 8 characters long"
         } else {
             password_input.error = null
         }
-
 
         return pwIsValid
     }
 
     /**
-     * Checks that the password input in [confirm_password_input] matches that in [password_input].
+     * Checks that the two passwords match, adding an error to [confirm_password_input] if not.
      *
      * @return whether the two passwords match
      */
-    private fun checkConfirmPasswordInput(): Boolean {
+    private fun checkConfirmPasswordInput(password: String, confirmed_password: String): Boolean {
         // Simply make sure that the two passwords given match.
 
-        val confirmedPwIsValid = (confirm_password_input.text.toString()
-                == password_input.text.toString())
+        val confirmedPwIsValid = password == confirmed_password
 
         if (!confirmedPwIsValid) {
             confirm_password_input.error = "Passwords do not match"
@@ -189,5 +140,22 @@ class RegisterUserActivity : AppCompatActivity() {
         }
 
         return confirmedPwIsValid
+    }
+
+
+    override fun handleRESTResponse(responseCode: Int, response: String) {
+        Log.d(tag, "Auth response: $responseCode; $response")
+        if (responseCode == 200) {
+            // TODO do we wanna check that the email in the response matches
+            // the one we sent?
+            toast("Successfully registered your account")
+            startActivity(intentFor<MainActivity>().clearTask().newTask())
+        } else {
+            val responseJSON = JSONObject(response)
+            val errorMsg = responseJSON.getString("error")
+            snackbar_layout.snackbar(errorMsg)
+            register_button.isEnabled = true
+            progressBar.visibility = View.GONE
+        }
     }
 }
