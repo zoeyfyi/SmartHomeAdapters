@@ -120,6 +120,8 @@ func createRouter() *httprouter.Router {
 	router := httprouter.New()
 
 	router.GET("/connect", connectHandler)
+
+	// TODO: restrict these routes to internal services only
 	router.PUT("/led/on", ledOnHandler)
 	router.PUT("/led/off", ledOffHandler)
 	router.PUT("/servo/:angle", servoHandler)
