@@ -8,6 +8,7 @@ import kotlinx.android.synthetic.main.activity_register_user.*
 import org.jetbrains.anko.*
 import org.jetbrains.anko.design.snackbar
 import org.json.JSONObject
+import java.net.HttpURLConnection
 
 class RegisterUserActivity : AppCompatActivity(), RESTResponseListener {
 
@@ -145,7 +146,7 @@ class RegisterUserActivity : AppCompatActivity(), RESTResponseListener {
 
     override fun handleRESTResponse(responseCode: Int, response: String) {
         Log.d(tag, "Auth response: $responseCode; $response")
-        if (responseCode == 200) {
+        if (responseCode < HttpURLConnection.HTTP_BAD_REQUEST) {
             // TODO do we wanna check that the email in the response matches
             // the one we sent?
             toast("Successfully registered your account")

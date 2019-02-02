@@ -47,9 +47,9 @@ class RESTRequestTask(private val caller: RESTResponseListener)
         Log.d(tag, "Return code: $responseCode")
 
         val response = if (responseCode < HttpURLConnection.HTTP_BAD_REQUEST) {
-            extractJSONString(conn.inputStream)
+            String(conn.inputStream.readBytes())
         } else {
-            extractJSONString(conn.errorStream)
+            String(conn.errorStream.readBytes())
         }
 
         Log.d(tag, "JSON Response: $response")
@@ -61,25 +61,5 @@ class RESTRequestTask(private val caller: RESTResponseListener)
         super.onPostExecute(result)
         caller.handleRESTResponse(
                 responseCode = result.first, response = result.second)
-    }
-
-    /**
-     * WIP: Attempts to extract a single line of JSON from the [InputStream].
-     * If there are multiple such lines, or in general lines starting with a {,
-     * only the last will be returned.
-     * TODO figure out a nicer way of extracting the JSON from the response.
-     */
-    private fun extractJSONString(inputStream: InputStream): String {
-        var res = ""
-        inputStream.bufferedReader().use {
-            it.forEachLine { line ->
-                if (line.startsWith("{")) {
-                    res = line
-                }
-            }
-            res
-        }
-
-        return res
     }
 }

@@ -8,6 +8,7 @@ import kotlinx.android.synthetic.main.activity_authentication.*
 import org.jetbrains.anko.*
 import org.jetbrains.anko.design.snackbar
 import org.json.JSONObject
+import java.net.HttpURLConnection
 
 class AuthenticationActivity : AppCompatActivity(), RESTResponseListener {
 
@@ -111,9 +112,7 @@ class AuthenticationActivity : AppCompatActivity(), RESTResponseListener {
     }
 
     override fun handleRESTResponse(responseCode: Int, response: String) {
-        if (responseCode == 200 || responseCode == 405) {
-            // TODO 405's should only be temporarily allowed until the server
-            // has started accepting POSTs at /login
+        if (responseCode < HttpURLConnection.HTTP_BAD_REQUEST) {
             toast("Signed in")
             Log.d(tag, "Starting MainActivity")
             startActivity(intentFor<MainActivity>().clearTask().newTask())
