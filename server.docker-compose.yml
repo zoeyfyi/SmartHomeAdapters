@@ -63,6 +63,14 @@ services:
       - 9100:8080
     environment:
       - VIRTUAL_HOST=robot.halspals.co.uk
+  infoserver:
+    build: 
+      context: ./infoserver
+    restart: always
+    ports:
+      - 9200:8080
+    environment:
+      - VIRTUAL_HOST=info.api.halspals.co.uk
 
 volumes:
   portainer_data:
