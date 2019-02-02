@@ -1,0 +1,49 @@
+version: '3'
+
+services:
+  # database managment
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
+  # container management
+  portainer:
+    image: portainer/portainer
+    command: -H unix:///var/run/docker.sock
+    restart: always
+    ports:
+      - 9000:9000
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+  userdb:
+    build: 
+      context: ./userserver/database
+    restart: always
+    environment:
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - database_data:/var/lib/postgresql/data
+  userserver:
+    build: 
+      context: ./userserver
+    depends_on:
+      - userdb
+    restart: always
+    ports:
+      - 8081:80
+    environment:
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=password
+      - DB_DATABASE=postgres
+      - DB_URL=userdb
+  clientserver:
+    build: 
+      context: ./clientserver
+    restart: always
+    ports:
+      - 80:80
+volumes:
+  portainer_data:
+  database_data:

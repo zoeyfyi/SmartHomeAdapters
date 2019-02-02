@@ -10,3 +10,12 @@ jobs:
     # test info server
     - stage: test
       script: eval "$(gimme 1.11)" && cd ${TRAVIS_BUILD_DIR}/infoserver && make test
+    # test client server
+    - stage: test
+      script: eval "$(gimme 1.11)" && cd ${TRAVIS_BUILD_DIR}/clientserver && make test
+    # test user server
+    - stage: test
+      script: eval "$(gimme 1.11)" && cd ${TRAVIS_BUILD_DIR}/userserver && make test
+    # test robot server
+    - stage: test
+      script: eval "$(gimme 1.11)" && cd ${TRAVIS_BUILD_DIR}/robotserver && make test
