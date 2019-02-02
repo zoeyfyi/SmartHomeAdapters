@@ -55,6 +55,15 @@ services:
       - 9000:80
     environment:
       - VIRTUAL_HOST=client.api.halspals.co.uk
+  robotserver:
+    build:
+      context: ./robotserver
+    restart: always
+    ports:
+      - 9100:8080
+    environment:
+      - VIRTUAL_HOST=robot.halspals.co.uk
+
 volumes:
   portainer_data:
   database_data:
