@@ -149,7 +149,7 @@ func queryRobotHandler(db *sql.DB) httprouter.Handle {
 
 		// if no robots were found, return nil
 		if found == false {
-			json.NewEncoder(w).Encode(nil)
+			json.NewEncoder(w).Encode("No robot with that ID")
 		}
 
 	})
