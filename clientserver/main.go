@@ -53,7 +53,7 @@ func createRouter() *httprouter.Router {
 	// register routes
 	router.GET("/ping", pingHandler)
 	router.POST("/register", registerHandler)
-	router.GET("/login", loginHandler)
+	router.POST("/login", loginHandler)
 
 	return router
 }
