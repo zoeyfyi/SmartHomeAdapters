@@ -67,6 +67,8 @@ func registerHandler(db *sql.DB) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		log.Println("/register")
 
+		w.Header().Add("Content-Type", "application/json")
+
 		// decode body
 		var registerBody registerBody
 		err := json.NewDecoder(r.Body).Decode(&registerBody)
@@ -138,6 +140,8 @@ func loginHandler(db *sql.DB) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		log.Println("/login")
 
+		w.Header().Add("Content-Type", "application/json")
+
 		// decode body
 		var loginBody loginBody
 		err := json.NewDecoder(r.Body).Decode(&loginBody)
@@ -207,6 +211,8 @@ type authorizationResponce struct {
 func authorizeHandler() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		log.Println("/authorize")
+
+		w.Header().Add("Content-Type", "application/json")
 
 		// parse token
 		tokenString := r.Header.Get("token")
