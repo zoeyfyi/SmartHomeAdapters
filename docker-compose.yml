@@ -24,7 +24,7 @@ services:
     environment:
       - POSTGRES_PASSWORD=password
     volumes:
-      - database_data:/var/lib/postgresql/data
+      - userdb_data:/var/lib/postgresql/data
   userserver:
     build: 
       context: ./userserver
@@ -51,7 +51,7 @@ services:
     environment:
       - POSTGRES_PASSWORD=password
     volumes:
-      - database_data:/var/lib/postgresql/data
+      - infodb_data:/var/lib/postgresql/data
   infoserver:
     build: 
       context: ./infoserver
@@ -68,4 +68,5 @@ services:
 
 volumes:
   portainer_data:
-  database_data:
+  userdb_data:
+  infodb_data:
