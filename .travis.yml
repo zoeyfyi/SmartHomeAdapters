@@ -1,6 +1,12 @@
 language: generic
 
-script:
-  # test webserver (with go 1.11)
-  - eval "$(gimme 1.11)" && cd ${TRAVIS_BUILD_DIR}/clientserver && go get -v ./... && go test
-  - eval "$(gimme 1.11)" && cd ${TRAVIS_BUILD_DIR}/robotserver && go get -v ./... && go test
+before_install:
+  # disable services enabled by default
+  - sudo /etc/init.d/mysql stop
+  - sudo /etc/init.d/postgresql stop
+
+jobs:
+  include:
+    # test info server
+    - stage: test
+      script: eval "$(gimme 1.11)" && cd ${TRAVIS_BUILD_DIR}/infoserver && make test
