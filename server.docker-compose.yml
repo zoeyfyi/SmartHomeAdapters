@@ -35,7 +35,7 @@ services:
     environment:
       - POSTGRES_PASSWORD=password
     volumes:
-      - database_data:/var/lib/postgresql/data
+      - userdb_data:/var/lib/postgresql/data
   userserver:
     build: 
       context: ./userserver
@@ -63,7 +63,24 @@ services:
       - 9100:8080
     environment:
       - VIRTUAL_HOST=robot.halspals.co.uk
+  infodb:
+    build:
+      context: ./infoserver/database
+    restart: always
+    environment:
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - infodb_data:/var/lib/postgresql/data
+  infoserver:
+    build: 
+      context: ./infoserver
+    restart: always
+    ports:
+      - 9200:8080
+    environment:
+      - VIRTUAL_HOST=info.api.halspals.co.uk
 
 volumes:
   portainer_data:
-  database_data:
+  userdb_data:
+  infodb_data:
