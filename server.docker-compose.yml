@@ -22,7 +22,7 @@ services:
     command: -H unix:///var/run/docker.sock
     restart: always
     ports:
-      - 9000:9000
+      - 8090:9000
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - portainer_data:/data
@@ -52,7 +52,7 @@ services:
       context: ./clientserver
     restart: always
     ports:
-      - 80:80
+      - 9000:80
     environment:
       - VIRTUAL_HOST=client.api.halspals.co.uk
 volumes:
