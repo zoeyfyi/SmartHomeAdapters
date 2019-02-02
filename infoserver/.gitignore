@@ -12,5 +12,8 @@ clientserver
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
-# optional vendor folder
-vendor/
+# IDEA files, when used with Jetbrains IDEs
+.idea/
+
+# Docker generated file (Windows)
+docker

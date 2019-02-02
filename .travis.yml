@@ -7,6 +7,9 @@ before_install:
 
 jobs:
   include:
+    # test info server
+    - stage: test
+      script: eval "$(gimme 1.11)" && cd ${TRAVIS_BUILD_DIR}/infoserver && make test
     # test client server
     - stage: test
       script: eval "$(gimme 1.11)" && cd ${TRAVIS_BUILD_DIR}/clientserver && make test

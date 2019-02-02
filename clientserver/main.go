@@ -37,7 +37,6 @@ func proxy(method string, url string, w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(resp.StatusCode)
-
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(resp.Body)
 	w.Write(buf.Bytes())
