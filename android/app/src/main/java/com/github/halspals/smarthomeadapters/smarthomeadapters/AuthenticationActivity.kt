@@ -1,7 +1,11 @@
 package com.github.halspals.smarthomeadapters.smarthomeadapters
 
+import android.content.Context
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.security.keystore.KeyGenParameterSpec
+import android.security.keystore.KeyProperties
+import android.util.Base64
 import android.util.Log
 import android.view.View
 import kotlinx.android.synthetic.main.activity_authentication.*
@@ -9,6 +13,11 @@ import org.jetbrains.anko.*
 import org.jetbrains.anko.design.snackbar
 import org.json.JSONObject
 import java.net.HttpURLConnection
+import java.security.KeyStore
+import javax.crypto.Cipher
+import javax.crypto.KeyGenerator
+import javax.crypto.SecretKey
+import javax.crypto.spec.GCMParameterSpec
 
 class AuthenticationActivity : AppCompatActivity(), RESTResponseListener {
 
@@ -112,12 +121,22 @@ class AuthenticationActivity : AppCompatActivity(), RESTResponseListener {
     }
 
     override fun handleRESTResponse(responseCode: Int, response: String) {
+        val responseJSON = JSONObject(response)
         if (responseCode < HttpURLConnection.HTTP_BAD_REQUEST) {
+            // Save the token which we received securely
+            val token = responseJSON.getString("token")
+            if (token == null) {
+                Log.e(tag, "Login was successful but did not receive a token")
+                return
+            }
+
+            // Store the token securely on the device for future authentication
+            securelyStoreToken(token, DEFAULT_ALIAS, applicationContext)
+
             toast("Signed in")
             Log.d(tag, "Starting MainActivity")
             startActivity(intentFor<MainActivity>().clearTask().newTask())
         } else {
-            val responseJSON = JSONObject(response)
             val errorMsg = responseJSON.getString("error")
             snackbar_layout.snackbar(errorMsg)
             login_progress_bar.visibility = View.GONE

@@ -17,6 +17,8 @@ class MainActivity :
 
     private val tag = "MainActivity"
 
+    private var authenticationToken: String? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -25,6 +27,9 @@ class MainActivity :
 
         // Start the robots fragment by default
         startFragment(RobotsFragment())
+
+        // Get the token for the current session
+        authenticationToken = retrieveStoredToken(DEFAULT_ALIAS, applicationContext)
     }
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
