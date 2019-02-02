@@ -4,11 +4,11 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"github.com/gorilla/mux"
+	_ "github.com/lib/pq"
 	"log"
 	"net/http"
 	"os"
-
-	_ "github.com/lib/pq"
 )
 
 func pingHandler(w http.ResponseWriter, r *http.Request) {
@@ -74,6 +74,89 @@ type restError struct {
 func httpWriteError(w http.ResponseWriter, msg string, code int) {
 	w.WriteHeader(http.StatusBadRequest)
 	json.NewEncoder(w).Encode(restError{msg})
+}
+
+func queryRobotHandler(db *sql.DB) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		// get user-supplied ID parameter
+		vars := mux.Vars(r)
+		robotId := vars["robotId"]
+
+		var (
+			serial    string
+			nickname  string
+			robotType string
+			minimum   int
+			maximum   int
+		)
+
+		w.Header().Set("Content-Type", "application/json")
+
+		log.Println("/robot/" + robotId)
+
+		// query toggleRobots table for matching robots
+		rows, err := db.Query("SELECT * FROM toggleRobots WHERE serial = $1", robotId)
+
+		// initialise counter
+		i := 0
+		if err != nil {
+			log.Printf("Failed to retrive robot %s: %v", robotId, err)
+			httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		}
+
+		for rows.Next() {
+			// read from table and write response
+			i++
+			err := rows.Scan(&serial, &nickname, &robotType)
+			robotInterface := TriggerInterface{"toggle"}
+			resp := &Response{
+				Id:             serial,
+				Nickname:       nickname,
+				RobotType:      robotType,
+				RobotInterface: robotInterface,
+			}
+			json.NewEncoder(w).Encode(resp)
+			if err != nil {
+				log.Printf("Failed to scan robot %s: %v", robotId, err)
+				httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			}
+		}
+
+		// if the robot was not found in toggleRobots, search rangeRobots
+		if i == 0 {
+			rows, err := db.Query("SELECT * FROM rangeRobots WHERE serial = $1", robotId)
+
+			if err != nil {
+				log.Printf("Failed to retrive robot %s: %v", robotId, err)
+				httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			}
+
+			for rows.Next() {
+				i++
+				err := rows.Scan(&serial, &nickname, &robotType, &minimum, &maximum)
+				robotInterface := RangeInterface{"range", minimum, maximum}
+				resp := &Response{
+					Id:             serial,
+					Nickname:       nickname,
+					RobotType:      robotType,
+					RobotInterface: robotInterface,
+				}
+				json.NewEncoder(w).Encode(resp)
+				if err != nil {
+					log.Printf("Failed to scan robot %s: %v", robotId, err)
+					httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+				}
+			}
+
+		}
+
+		// if no robots were found, return nil
+		if i == 0 {
+			json.NewEncoder(w).Encode(nil)
+		}
+
+	})
 }
 
 func listRobotHandler(db *sql.DB) http.HandlerFunc {
@@ -160,11 +243,14 @@ func main() {
 	log.Printf("Connected to database: %+v\n", db.Stats())
 
 	// set up handlers
-	http.HandleFunc("/ping", pingHandler)
-	http.HandleFunc("/robots", listRobotHandler(db))
+	// using mux as it can handle /{robotId} etc
+	r := mux.NewRouter()
+	r.HandleFunc("/robot/{robotId}", queryRobotHandler(db))
+	r.HandleFunc("/ping", pingHandler)
+	r.HandleFunc("/robots", listRobotHandler(db))
 
 	// start server
-	if err := http.ListenAndServe(":8080", nil); err != nil {
+	if err := http.ListenAndServe(":8080", r); err != nil {
 		panic(err)
 	}
 }
