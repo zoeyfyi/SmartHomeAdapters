@@ -4,16 +4,12 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"github.com/gorilla/mux"
+	"github.com/julienschmidt/httprouter"
 	_ "github.com/lib/pq"
 	"log"
 	"net/http"
 	"os"
 )
-
-func pingHandler(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("pong"))
-}
 
 var (
 	username = os.Getenv("DB_USERNAME")
@@ -76,12 +72,12 @@ func httpWriteError(w http.ResponseWriter, msg string, code int) {
 	json.NewEncoder(w).Encode(restError{msg})
 }
 
-func queryRobotHandler(db *sql.DB) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func queryRobotHandler(db *sql.DB) httprouter.Handle {
+	return httprouter.Handle(func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 		// get user-supplied ID parameter
-		vars := mux.Vars(r)
-		robotId := vars["robotId"]
+
+		robotId := ps.ByName("robotId")
 
 		var (
 			serial    string
@@ -99,7 +95,7 @@ func queryRobotHandler(db *sql.DB) http.HandlerFunc {
 		rows, err := db.Query("SELECT * FROM toggleRobots WHERE serial = $1", robotId)
 
 		// initialise counter
-		i := 0
+		found := false
 		if err != nil {
 			log.Printf("Failed to retrive robot %s: %v", robotId, err)
 			httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -107,7 +103,7 @@ func queryRobotHandler(db *sql.DB) http.HandlerFunc {
 
 		for rows.Next() {
 			// read from table and write response
-			i++
+			found = true
 			err := rows.Scan(&serial, &nickname, &robotType)
 			robotInterface := TriggerInterface{"toggle"}
 			resp := &Response{
@@ -124,7 +120,7 @@ func queryRobotHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		// if the robot was not found in toggleRobots, search rangeRobots
-		if i == 0 {
+		if found == false {
 			rows, err := db.Query("SELECT * FROM rangeRobots WHERE serial = $1", robotId)
 
 			if err != nil {
@@ -133,7 +129,7 @@ func queryRobotHandler(db *sql.DB) http.HandlerFunc {
 			}
 
 			for rows.Next() {
-				i++
+				found = true
 				err := rows.Scan(&serial, &nickname, &robotType, &minimum, &maximum)
 				robotInterface := RangeInterface{"range", minimum, maximum}
 				resp := &Response{
@@ -152,15 +148,15 @@ func queryRobotHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		// if no robots were found, return nil
-		if i == 0 {
+		if found == false {
 			json.NewEncoder(w).Encode(nil)
 		}
 
 	})
 }
 
-func listRobotHandler(db *sql.DB) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func listRobotHandler(db *sql.DB) httprouter.Handle {
+	return httprouter.Handle(func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 		w.Header().Set("Content-Type", "application/json")
 
@@ -227,6 +223,15 @@ func listRobotHandler(db *sql.DB) http.HandlerFunc {
 
 	})
 }
+
+func createRouter(db *sql.DB) *httprouter.Router {
+	router := httprouter.New()
+	router.GET("/robot/:robotId", queryRobotHandler(db))
+	router.GET("/robots", listRobotHandler(db))
+
+	return router
+}
+
 func main() {
 	// register routes
 	// mux := http.NewServeMux()
@@ -242,15 +247,8 @@ func main() {
 
 	log.Printf("Connected to database: %+v\n", db.Stats())
 
-	// set up handlers
-	// using mux as it can handle /{robotId} etc
-	r := mux.NewRouter()
-	r.HandleFunc("/robot/{robotId}", queryRobotHandler(db))
-	r.HandleFunc("/ping", pingHandler)
-	r.HandleFunc("/robots", listRobotHandler(db))
-
 	// start server
-	if err := http.ListenAndServe(":8080", r); err != nil {
+	if err := http.ListenAndServe(":8080", createRouter(db)); err != nil {
 		panic(err)
 	}
 }
