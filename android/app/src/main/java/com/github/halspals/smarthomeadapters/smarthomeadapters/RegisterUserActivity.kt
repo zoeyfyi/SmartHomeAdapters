@@ -14,6 +14,9 @@ class RegisterUserActivity : AppCompatActivity(), RESTResponseListener {
 
     private val tag = "RegisterUserActivity"
 
+    private lateinit var email: String
+    private lateinit var password: String
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_register_user)
@@ -76,6 +79,8 @@ class RegisterUserActivity : AppCompatActivity(), RESTResponseListener {
                 && checkConfirmPasswordInput(password, confirmedPassword)
 
         if (inputsOK) {
+            this.email = email
+            this.password = password
             RESTRequestTask(this).execute(RESTRequest.REGISTER(email, password))
         } else {
             register_button.isEnabled = true
@@ -144,19 +149,39 @@ class RegisterUserActivity : AppCompatActivity(), RESTResponseListener {
     }
 
 
-    override fun handleRESTResponse(responseCode: Int, response: String) {
+    override fun handleRESTResponse(responseCode: Int, response: String, requestType: String) {
         Log.d(tag, "Auth response: $responseCode; $response")
-        if (responseCode < HttpURLConnection.HTTP_BAD_REQUEST) {
-            // TODO do we wanna check that the email in the response matches
-            // the one we sent?
-            toast("Successfully registered your account")
-            startActivity(intentFor<MainActivity>().clearTask().newTask())
-        } else {
-            val responseJSON = JSONObject(response)
-            val errorMsg = responseJSON.getString("error")
-            snackbar_layout.snackbar(errorMsg)
-            register_button.isEnabled = true
-            progressBar.visibility = View.GONE
+        val responseJSON = JSONObject(response)
+
+        when(requestType) {
+            RESTRequest.LOGIN_TYPE -> {
+                if (responseCode < HttpURLConnection.HTTP_BAD_REQUEST) {
+                    // We have heard back from a login we requested after registering
+                    val token = responseJSON.getString("token")
+                    if (token != null) {
+                        toast("Signed in")
+                        startActivity(intentFor<MainActivity>("token" to token).clearTask().newTask())
+                    }
+                } else {
+                    snackbar_layout.snackbar("Registered account but failed to sign in")
+                    register_button.isEnabled = true
+                    progressBar.visibility = View.GONE
+                }
+            }
+
+            RESTRequest.REGISTER_TYPE -> {
+                if (responseCode < HttpURLConnection.HTTP_BAD_REQUEST) {
+                    // TODO do we wanna check that the email in the response matches
+                    // the one we sent?
+                    toast("Registered; now signing you in...")
+                    RESTRequestTask(this).execute(RESTRequest.LOGIN(email, password))
+                } else {
+                    val errorMsg = responseJSON.getString("error")
+                    snackbar_layout.snackbar(errorMsg)
+                    register_button.isEnabled = true
+                    progressBar.visibility = View.GONE
+                }
+            }
         }
     }
 }

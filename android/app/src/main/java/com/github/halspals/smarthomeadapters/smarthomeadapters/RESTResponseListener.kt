@@ -8,5 +8,5 @@ interface RESTResponseListener {
      * @param responseCode the response code return by the server
      * @param response the json found in the body of the response
      */
-    fun handleRESTResponse(responseCode: Int, response: String)
+    fun handleRESTResponse(responseCode: Int, response: String, requestType: String)
 }

@@ -8,13 +8,13 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 class RESTRequestTask(private val caller: RESTResponseListener)
-    : AsyncTask<RESTRequest, Void, Pair<Int, String>>()
+    : AsyncTask<RESTRequest, Void, Triple<Int, String, String>>()
 {
 
     private val tag = "RESTRequestTask"
 
-    override fun doInBackground(vararg params: RESTRequest): Pair<Int, String> {
-        assert(params.size == 1) { "Expected only one parameter"}
+    override fun doInBackground(vararg params: RESTRequest): Triple<Int, String, String> {
+        assert(params.size == 1) { "Expected only one parameter" }
         val request = params[0]
         val endpoint = request.endpoint
         val requestMethod = request.requestMethod
@@ -53,13 +53,14 @@ class RESTRequestTask(private val caller: RESTResponseListener)
         }
 
         Log.d(tag, "JSON Response: $response")
-        return Pair(responseCode, response)
+        return Triple(responseCode, response, request.type)
 
     }
 
-    override fun onPostExecute(result: Pair<Int, String>) {
+    override fun onPostExecute(result: Triple<Int, String, String>) {
         super.onPostExecute(result)
         caller.handleRESTResponse(
-                responseCode = result.first, response = result.second)
+                responseCode = result.first, response = result.second,
+                requestType = result.third)
     }
 }

@@ -29,7 +29,8 @@ class MainActivity :
         startFragment(RobotsFragment())
 
         // Get the token for the current session
-        authenticationToken = retrieveStoredToken(DEFAULT_ALIAS, applicationContext)
+        authenticationToken = intent.getStringExtra("token")
+        Log.d(tag, "token: $authenticationToken")
     }
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {

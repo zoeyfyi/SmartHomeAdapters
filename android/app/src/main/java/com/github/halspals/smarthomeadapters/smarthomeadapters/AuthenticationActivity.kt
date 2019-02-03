@@ -120,7 +120,13 @@ class AuthenticationActivity : AppCompatActivity(), RESTResponseListener {
         return pwIsValid
     }
 
-    override fun handleRESTResponse(responseCode: Int, response: String) {
+    override fun handleRESTResponse(responseCode: Int, response: String, requestType: String) {
+
+        if (requestType != RESTRequest.LOGIN_TYPE) {
+            // Only expect to hear back from login events
+            return
+        }
+
         val responseJSON = JSONObject(response)
         if (responseCode < HttpURLConnection.HTTP_BAD_REQUEST) {
             // Save the token which we received securely
@@ -130,12 +136,10 @@ class AuthenticationActivity : AppCompatActivity(), RESTResponseListener {
                 return
             }
 
-            // Store the token securely on the device for future authentication
-            securelyStoreToken(token, DEFAULT_ALIAS, applicationContext)
 
             toast("Signed in")
             Log.d(tag, "Starting MainActivity")
-            startActivity(intentFor<MainActivity>().clearTask().newTask())
+            startActivity(intentFor<MainActivity>("token" to token).clearTask().newTask())
         } else {
             val errorMsg = responseJSON.getString("error")
             snackbar_layout.snackbar(errorMsg)
