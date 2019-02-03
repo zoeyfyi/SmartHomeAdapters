@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -8,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/lib/pq"
@@ -21,6 +23,8 @@ var (
 	database = os.Getenv("DB_DATABASE")
 	url      = os.Getenv("DB_URL")
 )
+
+var client = http.DefaultClient
 
 func connectionStr() string {
 	if username == "" {
@@ -173,6 +177,58 @@ func removeSwitchHandler(db *sql.DB) httprouter.Handle {
 	}
 }
 
+func setServo(w http.ResponseWriter, angle int) bool {
+	// send servo commands
+	url := fmt.Sprintf("robotserver/servo/%d", angle)
+	req, err := http.NewRequest(http.MethodPut, url, nil)
+	if err != nil {
+		log.Printf("Error creating request: %v", err)
+		httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return false
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Printf("Error executing request: %v", err)
+		httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return false
+	}
+	if resp.StatusCode != http.StatusOK {
+		w.WriteHeader(resp.StatusCode)
+		buf := new(bytes.Buffer)
+		buf.ReadFrom(resp.Body)
+		w.Write(buf.Bytes())
+		return false
+	}
+
+	return true
+}
+
+func setIsOn(w http.ResponseWriter, db *sql.DB, robotID int, isOn bool) bool {
+	res, err := db.Exec("UPDATE switches SET isOn = $1 WHERE robotId = $2", isOn, robotID)
+	if err != nil {
+		log.Printf("Failed to update database: %v", err)
+		httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return false
+	}
+
+	rowsAffected, err := res.RowsAffected()
+
+	if err != nil {
+		log.Printf("Failed to get the amount of rows affected: %v", err)
+		httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return false
+	}
+
+	if rowsAffected != 1 {
+		log.Printf("Expected to update exactly 1 row, rows updated: %d\n", rowsAffected)
+		httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return false
+	}
+
+	return true
+}
+
 // errors for light on/off routes
 const (
 	ErrorNotCalibrated = "Robot has not been calibrated"
@@ -183,11 +239,16 @@ const (
 func setSwitch(w http.ResponseWriter, db *sql.DB, robotID int, setOn bool, force bool) {
 	// get switch status from database
 	var (
+		rID          int
 		isOn         bool
 		isCalibrated bool
+		onAngle      int
+		offAngle     int
+		restAngle    int
 	)
-	row := db.QueryRow("SELECT isOn isCalibrated FROM switches WHERE robotId = $1", robotID)
-	err := row.Scan(&isOn, &isCalibrated)
+
+	row := db.QueryRow("SELECT robotId, isOn, isCalibrated, onAngle, offAngle, restAngle FROM switches")
+	err := row.Scan(&rID, &isOn, &isCalibrated, &onAngle, &offAngle, &restAngle)
 	if err != nil {
 		log.Printf("Failed to scan database: %v", err)
 		httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -212,11 +273,28 @@ func setSwitch(w http.ResponseWriter, db *sql.DB, robotID int, setOn bool, force
 		}
 	}
 
-	// TODO: send servo commands
+	targetAngle := 0
+	if setOn {
+		targetAngle = onAngle
+	} else {
+		targetAngle = offAngle
+	}
 
-	w.WriteHeader(http.StatusNotImplemented)
+	// send servo commands
+	if ok := setServo(w, targetAngle); !ok {
+		return
+	}
+	time.Sleep(time.Second)
+	if ok := setServo(w, restAngle); !ok {
+		return
+	}
 
-	// TODO: check servo commands are success then update database
+	// update database
+	if ok := setIsOn(w, db, robotID, true); !ok {
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }
 
 type onSwitchBody struct {
@@ -233,12 +311,15 @@ func onHandler(db *sql.DB) httprouter.Handle {
 			return
 		}
 
-		// decode body
 		var onSwitchBody onSwitchBody
-		err = json.NewDecoder(r.Body).Decode(&onSwitchBody)
-		if err != nil {
-			httpWriteError(w, ErrorInvalidJSON, http.StatusBadRequest)
-			return
+
+		if r.Body != nil {
+			// decode body
+			err = json.NewDecoder(r.Body).Decode(&onSwitchBody)
+			if err != nil {
+				httpWriteError(w, ErrorInvalidJSON, http.StatusBadRequest)
+				return
+			}
 		}
 
 		// update switch
@@ -262,14 +343,19 @@ func offHandler(db *sql.DB) httprouter.Handle {
 
 		// decode body
 		var offSwitchBody offSwitchBody
-		err = json.NewDecoder(r.Body).Decode(&offSwitchBody)
-		if err != nil {
-			httpWriteError(w, ErrorInvalidJSON, http.StatusBadRequest)
-			return
+		if r.Body != nil {
+			err = json.NewDecoder(r.Body).Decode(&offSwitchBody)
+			if err != nil {
+				httpWriteError(w, ErrorInvalidJSON, http.StatusBadRequest)
+				return
+			}
 		}
 
 		// update switch
 		setSwitch(w, db, robotID, false, offSwitchBody.Force)
+
+		// update database
+		setIsOn(w, db, robotID, false)
 	}
 }
 

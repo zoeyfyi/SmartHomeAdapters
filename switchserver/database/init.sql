@@ -10,3 +10,6 @@ CREATE TABLE switches (
     -- Weather the robot has been calibrated
     isCalibrated boolean not null
 );
+
+-- TODO: move into test database
+INSERT INTO switches (robotId, isOn, onAngle, offAngle, restAngle, isCalibrated) VALUES (9999, false, 90, 0, 45, true);
