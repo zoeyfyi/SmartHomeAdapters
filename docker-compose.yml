@@ -81,6 +81,11 @@ services:
     restart: always
     ports:
       - 8082:80
+    environment:
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=password
+      - DB_DATABASE=postgres
+      - DB_URL=switchdb
 
 volumes:
   portainer_data:

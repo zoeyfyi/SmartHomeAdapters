@@ -17,3 +17,6 @@ clientserver
 
 # Docker generated file (Windows)
 docker
+
+# optional vendor folder
+vendor/

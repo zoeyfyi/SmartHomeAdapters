@@ -79,7 +79,28 @@ services:
       - 9200:8080
     environment:
       - VIRTUAL_HOST=info.api.halspals.co.uk
-
+  switchdb:
+    build: 
+      context: ./switchserver/database
+    restart: always
+    environment:
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - switchdb_data:/var/lib/postgresql/data
+  switchserver:
+    build: 
+      context: ./switchserver
+    depends_on:
+      - switchdb
+    restart: always
+    ports:
+      - 8082:80
+    environment:
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=password
+      - DB_DATABASE=postgres
+      - DB_URL=switchdb
+      
 volumes:
   portainer_data:
   userdb_data:
