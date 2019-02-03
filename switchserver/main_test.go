@@ -13,9 +13,21 @@ import (
 var db = getDb()
 
 func clearDatabase(t *testing.T) {
-	_, err := db.Exec("DELETE FROM switches")
+	_, err := db.Exec("DELETE FROM switches WHERE robotId != 9999")
 	if err != nil {
 		t.Errorf("Error clearing database: %v", err)
+	}
+}
+
+type roundTripFunc func(req *http.Request) *http.Response
+
+func (f roundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
+	return f(req), nil
+}
+
+func testClient(fn roundTripFunc) *http.Client {
+	return &http.Client{
+		Transport: roundTripFunc(fn),
 	}
 }
 
@@ -170,6 +182,54 @@ func TestRemoveSwitchDoesntExist(t *testing.T) {
 
 	if restError.Error != ErrorRobotNotRegistered {
 		t.Errorf("Error differs. Expected \"%s\", Got: \"%s\"", ErrorRobotNotRegistered, restError)
+	}
+
+}
+
+func TestTurnSwitchOnOff(t *testing.T) {
+	cases := []struct {
+		path             string
+		expectedRequests []string
+	}{
+		{
+			"/9999/on",
+			[]string{"robotserver/servo/90", "robotserver/servo/45"},
+		},
+		{
+			"/9999/off",
+			[]string{"robotserver/servo/0", "robotserver/servo/45"},
+		},
+	}
+
+	for _, c := range cases {
+		clearDatabase(t)
+
+		client = testClient(func(req *http.Request) *http.Response {
+			if req.URL.String() != c.expectedRequests[0] {
+				t.Errorf("Expected request \"%s\", actual request \"%s\"", c.expectedRequests[0], req.URL.String())
+			}
+
+			// pop first request of slice
+			c.expectedRequests = c.expectedRequests[1:]
+
+			return &http.Response{
+				StatusCode: 200,
+				Body:       nil,
+				Header:     make(http.Header),
+			}
+		})
+
+		req, err := http.NewRequest("PATCH", c.path, nil)
+		if err != nil {
+			t.Errorf("Error: %v", err)
+		}
+
+		rr := httptest.NewRecorder()
+		createRouter(db).ServeHTTP(rr, req)
+
+		if status := rr.Code; status != http.StatusOK {
+			t.Errorf("Status code differs. Expected \"%d\", Got \"%d\" %+v", http.StatusOK, status, rr)
+		}
 	}
 
 }
