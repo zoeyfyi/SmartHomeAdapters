@@ -247,7 +247,7 @@ func setSwitch(w http.ResponseWriter, db *sql.DB, robotID int, setOn bool, force
 		restAngle    int
 	)
 
-	row := db.QueryRow("SELECT robotId, isOn, isCalibrated, onAngle, offAngle, restAngle FROM switches")
+	row := db.QueryRow("SELECT robotId, isOn, isCalibrated, onAngle, offAngle, restAngle FROM switches WHERE robotId = $1", robotID)
 	err := row.Scan(&rID, &isOn, &isCalibrated, &onAngle, &offAngle, &restAngle)
 	if err != nil {
 		log.Printf("Failed to scan database: %v", err)
@@ -258,6 +258,7 @@ func setSwitch(w http.ResponseWriter, db *sql.DB, robotID int, setOn bool, force
 	// check if it has been calibrated
 	if !isCalibrated {
 		httpWriteError(w, ErrorNotCalibrated, http.StatusBadRequest)
+		return
 	}
 
 	// check if the light is already on

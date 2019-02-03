@@ -13,7 +13,7 @@ import (
 var db = getDb()
 
 func clearDatabase(t *testing.T) {
-	_, err := db.Exec("DELETE FROM switches WHERE robotId != 9999")
+	_, err := db.Exec("DELETE FROM switches WHERE robotId < 9000")
 	if err != nil {
 		t.Errorf("Error clearing database: %v", err)
 	}
@@ -218,6 +218,9 @@ func TestTurnSwitchOnOff(t *testing.T) {
 				Header:     make(http.Header),
 			}
 		})
+		defer func() {
+			client = http.DefaultClient
+		}()
 
 		req, err := http.NewRequest("PATCH", c.path, nil)
 		if err != nil {
@@ -229,6 +232,45 @@ func TestTurnSwitchOnOff(t *testing.T) {
 
 		if status := rr.Code; status != http.StatusOK {
 			t.Errorf("Status code differs. Expected \"%d\", Got \"%d\" %+v", http.StatusOK, status, rr)
+		}
+	}
+
+}
+
+func TestTurnSwitchOnOffFailure(t *testing.T) {
+	cases := []struct {
+		path          string
+		expectedCode  int
+		expectedError string
+	}{
+		{"/9998/on", http.StatusBadRequest, ErrorNotCalibrated},
+		{"/9997/on", http.StatusBadRequest, ErrorSwitchOn},
+		{"/9999/off", http.StatusBadRequest, ErrorSwitchOff},
+	}
+
+	for _, c := range cases {
+		clearDatabase(t)
+
+		req, err := http.NewRequest("PATCH", c.path, nil)
+		if err != nil {
+			t.Errorf("Error: %v", err)
+		}
+
+		rr := httptest.NewRecorder()
+		createRouter(db).ServeHTTP(rr, req)
+
+		if status := rr.Code; status != c.expectedCode {
+			t.Errorf("Status code differs. Expected \"%d\", Got \"%d\" %+v", c.expectedCode, status, rr)
+		}
+
+		var restError restError
+		err = json.NewDecoder(rr.Body).Decode(&restError)
+		if err != nil {
+			t.Errorf("Could not read error json: %v", err)
+		}
+
+		if restError.Error != c.expectedError {
+			t.Errorf("Error differs. Expected \"%s\", Got: \"%s\"", c.expectedError, restError.Error)
 		}
 	}
 
