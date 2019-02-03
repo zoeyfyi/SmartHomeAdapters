@@ -7,6 +7,7 @@ import android.view.View
 import kotlinx.android.synthetic.main.activity_register_user.*
 import org.jetbrains.anko.*
 import org.jetbrains.anko.design.snackbar
+import org.json.JSONException
 import org.json.JSONObject
 import java.net.HttpURLConnection
 
@@ -152,16 +153,18 @@ class RegisterUserActivity : AppCompatActivity(), RESTResponseListener {
     override fun handleRESTResponse(responseCode: Int, response: String, requestType: String) {
         Log.d(tag, "Auth response: $responseCode; $response")
         val responseJSON = JSONObject(response)
+        val token: String? = try {
+            responseJSON.getString("token")
+        } catch (e: JSONException) {
+            null
+        }
 
         when(requestType) {
             RESTRequest.LOGIN_TYPE -> {
-                if (responseCode < HttpURLConnection.HTTP_BAD_REQUEST) {
+                if (responseCode < HttpURLConnection.HTTP_BAD_REQUEST && token != null) {
                     // We have heard back from a login we requested after registering
-                    val token = responseJSON.getString("token")
-                    if (token != null) {
-                        toast("Signed in")
-                        startActivity(intentFor<MainActivity>("token" to token).clearTask().newTask())
-                    }
+                    toast("Signed in")
+                    startActivity(intentFor<MainActivity>("token" to token).clearTask().newTask())
                 } else {
                     snackbar_layout.snackbar("Registered account but failed to sign in")
                     register_button.isEnabled = true
