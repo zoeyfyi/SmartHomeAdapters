@@ -24,12 +24,36 @@
 	\cellcolor{blue!25}\large
 	\textbf{What were your goals?}
 	\\ \hline
-	\vtop to 60mm{
-%  some text some text some text some text
-%  some text some text some text some text
-%  some text some text some text some text
-%  some text some text some text some text 
-  }
+		Here is a summary of are goals for demo 1 from are project plan.
+
+		\begin{itemize}
+			\item Web server 
+				\begin{itemize}
+					\item Register user with email and password
+					\item Authenticate the user and return token
+					\item Store the state of the switch
+					\item Endpoint for turning light on/off
+					\item Endpoint for retrieving a list of robots
+					\item Establish WebSocket with robot
+					\item Send servo commands on light on/off request
+				\end{itemize}
+			\item Android
+				\begin{itemize}
+					\item Login/register UI
+					\item Send auth token in REST requests
+					\item UI to display a list of robots
+					\item Light switch toggle UI
+					\item Send light on/off request
+				\end{itemize}
+			\item Robot
+				\begin{itemize}
+					\item Establish websocket with server
+					\item Receive servo commands
+					\item Construct the LEGO switch gripper
+					\item Connect the servo to Arduino
+					\item Create temporary client on DICE to forward servo commands (since the Arduino we have doesn’t have a Wifi chip)
+				\end{itemize}
+		\end{itemize}
   \\
   \hline
 \end{tabular}
