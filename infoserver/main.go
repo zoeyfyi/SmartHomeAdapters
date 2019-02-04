@@ -1,14 +1,16 @@
 package main
 
 import (
+	"bytes"
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"github.com/julienschmidt/httprouter"
-	_ "github.com/lib/pq"
 	"log"
 	"net/http"
 	"os"
+
+	"github.com/julienschmidt/httprouter"
+	_ "github.com/lib/pq"
 )
 
 var (
@@ -224,10 +226,77 @@ func listRobotHandler(db *sql.DB) httprouter.Handle {
 	})
 }
 
+// proxy forwards the request to a different url
+func proxy(method string, url string, w http.ResponseWriter, r *http.Request) {
+	req, err := http.NewRequest(method, url, r.Body)
+	if err != nil {
+		log.Printf("Error creating request: %v", err)
+		httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		log.Printf("Error executing request: %v", err)
+		httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(resp.StatusCode)
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(resp.Body)
+	w.Write(buf.Bytes())
+}
+
+// errors for toggle robot route
+const (
+	ErrNotTogglable = "This robot is not togglable"
+)
+
+func toggleRobotHandler(db *sql.DB) httprouter.Handle {
+	return httprouter.Handle(func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+		log.Println(r.URL.String())
+		w.Header().Set("Content-Type", "application/json")
+
+		robotID := ps.ByName("robotId")
+		value := ps.ByName("value")
+
+		// get robot type
+		var robotType string
+		row := db.QueryRow("SELECT robotType FROM toggleRobots WHERE serial = $1", robotID)
+		err := row.Scan(&robotType)
+		if err != nil {
+			log.Printf("Failed to retrive list of robots: %v", err)
+			httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		}
+
+		// forward request to relevent service
+		switch robotType {
+		case "switch":
+			switch value {
+			case "true":
+				url := fmt.Sprintf("http://switchserver/%s/on", robotID)
+				proxy(http.MethodPatch, url, w, r)
+				return
+			case "false":
+				url := fmt.Sprintf("http://switchserver/%s/off", robotID)
+				proxy(http.MethodPatch, url, w, r)
+				return
+			}
+		default:
+			log.Printf("robot type \"%s\" is not toggelable", robotType)
+			httpWriteError(w, ErrNotTogglable, http.StatusBadRequest)
+			return
+		}
+
+	})
+}
+
 func createRouter(db *sql.DB) *httprouter.Router {
 	router := httprouter.New()
 	router.GET("/robot/:robotId", queryRobotHandler(db))
 	router.GET("/robots", listRobotHandler(db))
+	router.PATCH("/robot/:robotId/toggle/:value", toggleRobotHandler(db))
 
 	return router
 }
@@ -248,7 +317,7 @@ func main() {
 	log.Printf("Connected to database: %+v\n", db.Stats())
 
 	// start server
-	if err := http.ListenAndServe(":8080", createRouter(db)); err != nil {
+	if err := http.ListenAndServe(":80", createRouter(db)); err != nil {
 		panic(err)
 	}
 }

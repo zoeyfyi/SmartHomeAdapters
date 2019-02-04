@@ -133,7 +133,7 @@ func createRouter() *httprouter.Router {
 
 func main() {
 	// start server
-	if err := http.ListenAndServe(":8080", createRouter()); err != nil {
+	if err := http.ListenAndServe(":80", createRouter()); err != nil {
 		panic(err)
 	}
 }
