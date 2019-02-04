@@ -12,7 +12,7 @@ import retrofit2.http.POST
 interface RestApiService {
 
     @POST("register")
-    fun registerUser(user: User): Observable<Token>
+    fun registerUser(@Body user: User): Observable<User>
 
     @POST("login")
     fun loginUser(@Body user: User): Observable<Token>

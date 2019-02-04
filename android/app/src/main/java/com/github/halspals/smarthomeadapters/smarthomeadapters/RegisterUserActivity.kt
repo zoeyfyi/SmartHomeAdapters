@@ -4,19 +4,29 @@ import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import com.github.halspals.smarthomeadapters.smarthomeadapters.model.User
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.Disposable
+import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_register_user.*
 import org.jetbrains.anko.*
 import org.jetbrains.anko.design.snackbar
 import org.json.JSONException
 import org.json.JSONObject
+import retrofit2.HttpException
 import java.net.HttpURLConnection
 
-class RegisterUserActivity : AppCompatActivity(), RESTResponseListener {
+class RegisterUserActivity : AppCompatActivity() {
 
     private val tag = "RegisterUserActivity"
 
-    private lateinit var email: String
-    private lateinit var password: String
+    private lateinit var user: User
+
+    private val restApiService by lazy {
+        RestApiService.create()
+    }
+
+    private var disposable: Disposable? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -28,7 +38,21 @@ class RegisterUserActivity : AppCompatActivity(), RESTResponseListener {
         register_button.setOnClickListener { _ ->
             register_button.isEnabled = false
             progressBar.visibility = View.VISIBLE
-            registerNewUser()
+
+            val email = email_input.text.toString()
+            val password = password_input.text.toString()
+            val confirmedPassword = confirm_password_input.text.toString()
+
+            val inputsOK = checkEmailInput(email)
+                    && checkPasswordInput(password)
+                    && checkConfirmPasswordInput(password, confirmedPassword)
+
+            if (inputsOK) {
+                registerNewUser(User(email, password))
+            } else {
+                register_button.isEnabled = true
+                progressBar.visibility = View.GONE
+            }
         }
 
 
@@ -68,28 +92,80 @@ class RegisterUserActivity : AppCompatActivity(), RESTResponseListener {
      * First makes sure that the inputs are valid.
      *
      */
-    private fun registerNewUser() {
-        progressBar.visibility = View.VISIBLE
-
-        val email = email_input.text.toString()
-        val password = password_input.text.toString()
-        val confirmedPassword = confirm_password_input.text.toString()
-
-        val inputsOK = checkEmailInput(email)
-                && checkPasswordInput(password)
-                && checkConfirmPasswordInput(password, confirmedPassword)
-
-        if (inputsOK) {
-            this.email = email
-            this.password = password
-            RESTRequestTask(this).execute(RESTRequest.REGISTER(email, password))
-        } else {
-            register_button.isEnabled = true
-            progressBar.visibility = View.GONE
-        }
-
+    private fun registerNewUser(user: User) {
+        disposable = restApiService.registerUser(user)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                        { user_confirmation ->
+                            assert(user == user_confirmation) { "Returned user doesn't equal expected user. " +
+                                "Expected {$user}, received {$user_confirmation}" }
+                            toast("Registered; now signing you in...")
+                            signInUser(user) },
+                        { error -> handleLoginError(error) }
+                )
     }
 
+    /**
+     * WIP: Get the email and password given, validate them, and then
+     * try to authenticate the user.
+     *
+     * @return whether the inputs are valid and the authentication was successful
+     */
+    private fun signInUser(user: User) {
+        disposable = restApiService.loginUser(user)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                        { token -> saveTokenAndMoveToMain(token.token) },
+                        { error -> handleLoginError(error) }
+                )
+    }
+
+    /**
+     * WIP: Saves the token and starts a [MainActivity].
+     * Currently only keeps token in memory, passing it as an extra to the activity;
+     * when we have time this should be changed to saving the token in Account Manager.
+     *
+     * @param token the authorization token received from the server
+     */
+    private fun saveTokenAndMoveToMain(token: String) {
+        Log.d(tag, "Succeeded in receiving token, starting MainActivity")
+        // TODO token should be saved in Account Manager for the user
+        toast("Signed in")
+        startActivity(intentFor<MainActivity>("token" to token).clearTask().newTask())
+    }
+
+    /**
+     * Handles an error received by [signInUser], displaying the message to the user.
+     *
+     * @param error the error received from the api call
+     */
+    private fun handleLoginError(error: Throwable) {
+        // There was an error; if the server gave an error message in JSON format,
+        // try to extract it
+        val errorString: String? = if (error is HttpException) {
+            try {
+                JSONObject(error.response().errorBody()?.string()).getString("error")
+            } catch (e: JSONException) {
+                error.message.toString()
+            }
+        } else {
+            // If the error is not an HttpException we will have to make to
+            // with its error message
+            error.message.toString()
+        }
+
+        // Display the error to the user
+        Log.d(tag, "Login failed: $errorString")
+        if (errorString != null) {
+            snackbar_layout.snackbar(errorString)
+        }
+
+        // Allow the user to try again
+        register_button.isEnabled = true
+        progressBar.visibility = View.GONE
+    }
     /**
      * Makes sure the given email is valid, setting an error to [email_input] if not.
      *
@@ -149,42 +225,8 @@ class RegisterUserActivity : AppCompatActivity(), RESTResponseListener {
         return confirmedPwIsValid
     }
 
-
-    override fun handleRESTResponse(responseCode: Int, response: String, requestType: String) {
-        Log.d(tag, "Auth response: $responseCode; $response")
-        val responseJSON = JSONObject(response)
-        val token: String? = try {
-            responseJSON.getString("token")
-        } catch (e: JSONException) {
-            null
-        }
-
-        when(requestType) {
-            RESTRequest.LOGIN_TYPE -> {
-                if (responseCode < HttpURLConnection.HTTP_BAD_REQUEST && token != null) {
-                    // We have heard back from a login we requested after registering
-                    toast("Signed in")
-                    startActivity(intentFor<MainActivity>("token" to token).clearTask().newTask())
-                } else {
-                    snackbar_layout.snackbar("Registered account but failed to sign in")
-                    register_button.isEnabled = true
-                    progressBar.visibility = View.GONE
-                }
-            }
-
-            RESTRequest.REGISTER_TYPE -> {
-                if (responseCode < HttpURLConnection.HTTP_BAD_REQUEST) {
-                    // TODO do we wanna check that the email in the response matches
-                    // the one we sent?
-                    toast("Registered; now signing you in...")
-                    RESTRequestTask(this).execute(RESTRequest.LOGIN(email, password))
-                } else {
-                    val errorMsg = responseJSON.getString("error")
-                    snackbar_layout.snackbar(errorMsg)
-                    register_button.isEnabled = true
-                    progressBar.visibility = View.GONE
-                }
-            }
-        }
+    override fun onPause() {
+        super.onPause()
+        disposable?.dispose()
     }
 }

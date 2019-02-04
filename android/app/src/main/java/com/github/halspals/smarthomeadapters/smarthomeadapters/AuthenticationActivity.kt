@@ -35,6 +35,7 @@ class AuthenticationActivity : AppCompatActivity() {
         sign_in_button.setOnClickListener { _ ->
 
             sign_in_button.isEnabled = false
+            login_progress_bar.visibility = View.VISIBLE
 
             val email = email_input.text.toString()
             val password = password_input.text.toString()
