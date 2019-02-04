@@ -85,6 +85,8 @@ class AuthenticationActivity : AppCompatActivity() {
      * WIP: Saves the token and starts a [MainActivity].
      * Currently only keeps token in memory, passing it as an extra to the activity;
      * when we have time this should be changed to saving the token in Account Manager.
+     *
+     * @param token the authorization token received from the server
      */
     private fun saveTokenAndMoveToMain(token: String) {
         Log.d(tag, "Succeeded in receiving token, starting MainActivity")
@@ -95,6 +97,8 @@ class AuthenticationActivity : AppCompatActivity() {
 
     /**
      * Handles an error received by [signInUser], displaying the message to the user.
+     *
+     * @param error the error received from the api call
      */
     private fun handleLoginError(error: Throwable) {
         // There was an error; if the server gave an error message in JSON format,
