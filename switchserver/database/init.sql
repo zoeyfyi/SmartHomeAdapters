@@ -1,6 +1,6 @@
 CREATE TABLE switches (
     -- ID of the robot
-    robotId int not null unique,
+    serial text not null unique,
     -- Weather the switch is on or off
     isOn boolean not null,
     -- Angles to set servo too
@@ -12,6 +12,8 @@ CREATE TABLE switches (
 );
 
 -- TODO: move into test database
-INSERT INTO switches (robotId, isOn, onAngle, offAngle, restAngle, isCalibrated) VALUES (9999, false, 90, 0, 45, true);
-INSERT INTO switches (robotId, isOn, onAngle, offAngle, restAngle, isCalibrated) VALUES (9998, false, 0, 0, 0, false);
-INSERT INTO switches (robotId, isOn, onAngle, offAngle, restAngle, isCalibrated) VALUES (9997, true, 90, 0, 45, true);
+INSERT INTO switches (serial, isOn, onAngle, offAngle, restAngle, isCalibrated) VALUES ('9999', false, 90, 0, 45, true);
+INSERT INTO switches (serial, isOn, onAngle, offAngle, restAngle, isCalibrated) VALUES ('9998', false, 0, 0, 0, false);
+INSERT INTO switches (serial, isOn, onAngle, offAngle, restAngle, isCalibrated) VALUES ('9997', true, 90, 0, 45, true);
+
+INSERT INTO switches (serial, isOn, onAngle, offAngle, restAngle, isCalibrated) VALUES ('123abc', false, 90, 0, 45, true);

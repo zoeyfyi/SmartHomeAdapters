@@ -8,7 +8,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/julienschmidt/httprouter"
@@ -54,12 +53,12 @@ func getDb() *sql.DB {
 }
 
 type switchRobot struct {
-	RobotID      int  `json:"robotId"`
-	IsOn         bool `json:"isOn"`
-	IsCalibrated bool `json:"isCalibrated"`
-	OnAngle      int  `json:"onAngle"`
-	OffAngle     int  `json:"offAngle"`
-	RestAngle    int  `json:"restAngle"`
+	RobotID      string `json:"robotId"`
+	IsOn         bool   `json:"isOn"`
+	IsCalibrated bool   `json:"isCalibrated"`
+	OnAngle      int    `json:"onAngle"`
+	OffAngle     int    `json:"offAngle"`
+	RestAngle    int    `json:"restAngle"`
 }
 
 type restError struct {
@@ -76,7 +75,6 @@ const (
 	ErrorInvalidJSON     = "Invalid JSON"
 	ErrorIsOnMissing     = "Field \"isOn\" missing"
 	ErrorRobotRegistered = "Robot is already registered"
-	ErrorInvalidRobotID  = "Invalid robot ID"
 )
 
 type addSwitchBody struct {
@@ -100,21 +98,14 @@ func addSwitchHandler(db *sql.DB) httprouter.Handle {
 			return
 		}
 
-		// parse robot ID
-		robotID, err := strconv.Atoi(p.ByName("id"))
-		if err != nil {
-			httpWriteError(w, ErrorInvalidRobotID, http.StatusBadRequest)
-			return
-		}
-
 		switchRobot := switchRobot{
-			RobotID: robotID,
+			RobotID: p.ByName("id"),
 			IsOn:    *addSwitchBody.IsOn,
 		}
 
 		// insert into database
 		_, err = db.Exec(
-			"INSERT INTO switches(robotId, isOn, onAngle, offAngle, restAngle, isCalibrated) VALUES($1, $2, $3, $4, $5, $6)",
+			"INSERT INTO switches(serial, isOn, onAngle, offAngle, restAngle, isCalibrated) VALUES($1, $2, $3, $4, $5, $6)",
 			switchRobot.RobotID,
 			switchRobot.IsOn,
 			switchRobot.OnAngle,
@@ -147,15 +138,10 @@ const (
 // removeSwitchHandler unregisters a robot as a switch
 func removeSwitchHandler(db *sql.DB) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-		// parse robot ID
-		robotID, err := strconv.Atoi(p.ByName("id"))
-		if err != nil {
-			httpWriteError(w, ErrorInvalidRobotID, http.StatusBadRequest)
-			return
-		}
+		robotID := p.ByName("id")
 
 		// insert into database
-		result, err := db.Exec("DELETE FROM switches WHERE robotId = $1", robotID)
+		result, err := db.Exec("DELETE FROM switches WHERE serial = $1", robotID)
 		if err != nil {
 			log.Printf("Failed to insert user into database: %v", err)
 			httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -179,7 +165,7 @@ func removeSwitchHandler(db *sql.DB) httprouter.Handle {
 
 func setServo(w http.ResponseWriter, angle int) bool {
 	// send servo commands
-	url := fmt.Sprintf("robotserver/servo/%d", angle)
+	url := fmt.Sprintf("http://robotserver/servo/%d", angle)
 	req, err := http.NewRequest(http.MethodPut, url, nil)
 	if err != nil {
 		log.Printf("Error creating request: %v", err)
@@ -204,8 +190,8 @@ func setServo(w http.ResponseWriter, angle int) bool {
 	return true
 }
 
-func setIsOn(w http.ResponseWriter, db *sql.DB, robotID int, isOn bool) bool {
-	res, err := db.Exec("UPDATE switches SET isOn = $1 WHERE robotId = $2", isOn, robotID)
+func setIsOn(w http.ResponseWriter, db *sql.DB, robotID string, isOn bool) bool {
+	res, err := db.Exec("UPDATE switches SET isOn = $1 WHERE serial = $2", isOn, robotID)
 	if err != nil {
 		log.Printf("Failed to update database: %v", err)
 		httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -236,10 +222,9 @@ const (
 	ErrorSwitchOff     = "Switch is already off (use force to override)"
 )
 
-func setSwitch(w http.ResponseWriter, db *sql.DB, robotID int, setOn bool, force bool) {
+func setSwitch(w http.ResponseWriter, db *sql.DB, robotID string, setOn bool, force bool) {
 	// get switch status from database
 	var (
-		rID          int
 		isOn         bool
 		isCalibrated bool
 		onAngle      int
@@ -247,8 +232,8 @@ func setSwitch(w http.ResponseWriter, db *sql.DB, robotID int, setOn bool, force
 		restAngle    int
 	)
 
-	row := db.QueryRow("SELECT robotId, isOn, isCalibrated, onAngle, offAngle, restAngle FROM switches WHERE robotId = $1", robotID)
-	err := row.Scan(&rID, &isOn, &isCalibrated, &onAngle, &offAngle, &restAngle)
+	row := db.QueryRow("SELECT isOn, isCalibrated, onAngle, offAngle, restAngle FROM switches WHERE serial = $1", robotID)
+	err := row.Scan(&isOn, &isCalibrated, &onAngle, &offAngle, &restAngle)
 	if err != nil {
 		log.Printf("Failed to scan database: %v", err)
 		httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -305,18 +290,16 @@ type onSwitchBody struct {
 
 func onHandler(db *sql.DB) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+		log.Println("on handler")
+
 		// parse robot ID
-		robotID, err := strconv.Atoi(p.ByName("id"))
-		if err != nil {
-			httpWriteError(w, ErrorInvalidRobotID, http.StatusBadRequest)
-			return
-		}
+		robotID := p.ByName("id")
 
 		var onSwitchBody onSwitchBody
 
 		if r.Body != nil {
 			// decode body
-			err = json.NewDecoder(r.Body).Decode(&onSwitchBody)
+			err := json.NewDecoder(r.Body).Decode(&onSwitchBody)
 			if err != nil {
 				httpWriteError(w, ErrorInvalidJSON, http.StatusBadRequest)
 				return
@@ -336,16 +319,12 @@ type offSwitchBody struct {
 func offHandler(db *sql.DB) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 		// parse robot ID
-		robotID, err := strconv.Atoi(p.ByName("id"))
-		if err != nil {
-			httpWriteError(w, ErrorInvalidRobotID, http.StatusBadRequest)
-			return
-		}
+		robotID := p.ByName("id")
 
 		// decode body
 		var offSwitchBody offSwitchBody
 		if r.Body != nil {
-			err = json.NewDecoder(r.Body).Decode(&offSwitchBody)
+			err := json.NewDecoder(r.Body).Decode(&offSwitchBody)
 			if err != nil {
 				httpWriteError(w, ErrorInvalidJSON, http.StatusBadRequest)
 				return
