@@ -1,9 +1,11 @@
 package com.github.halspals.smarthomeadapters.smarthomeadapters
 
+import android.content.Context
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.view.inputmethod.InputMethodManager
 import com.github.halspals.smarthomeadapters.smarthomeadapters.model.User
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
@@ -14,16 +16,13 @@ import org.jetbrains.anko.design.snackbar
 import org.json.JSONException
 import org.json.JSONObject
 import retrofit2.HttpException
-import java.net.HttpURLConnection
 
 class RegisterUserActivity : AppCompatActivity() {
 
     private val tag = "RegisterUserActivity"
 
-    private lateinit var user: User
-
     private val restApiService by lazy {
-        RestApiService.create()
+        RestApiService.new()
     }
 
     private var disposable: Disposable? = null
@@ -36,6 +35,13 @@ class RegisterUserActivity : AppCompatActivity() {
             Set up the click events for the buttons.
          */
         register_button.setOnClickListener { _ ->
+
+            // Dismiss the keyboard
+            val inputMethodManager = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+            val currentView = currentFocus ?: View(this)
+            inputMethodManager.hideSoftInputFromWindow(currentView.windowToken, 0)
+
+            // Signal to the user that we are waiting for a remote call
             register_button.isEnabled = false
             progressBar.visibility = View.VISIBLE
 

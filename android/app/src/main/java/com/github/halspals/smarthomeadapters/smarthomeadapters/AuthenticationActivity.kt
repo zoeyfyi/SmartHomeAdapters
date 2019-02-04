@@ -1,9 +1,11 @@
 package com.github.halspals.smarthomeadapters.smarthomeadapters
 
+import android.content.Context
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.view.inputmethod.InputMethodManager
 import com.github.halspals.smarthomeadapters.smarthomeadapters.model.User
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
@@ -20,10 +22,10 @@ class AuthenticationActivity : AppCompatActivity() {
     private val tag = "AuthenticationActivity"
 
     private val restApiService by lazy {
-        RestApiService.create()
+        RestApiService.new()
     }
 
-    private var disposable: Disposable? = null
+    private var rxDisposable: Disposable? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,6 +36,12 @@ class AuthenticationActivity : AppCompatActivity() {
          */
         sign_in_button.setOnClickListener { _ ->
 
+            // Dismiss the keyboard
+            val inputMethodManager = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+            val currentView = currentFocus ?: View(this)
+            inputMethodManager.hideSoftInputFromWindow(currentView.windowToken, 0)
+
+            // Signal to the user that we are waiting for an async call
             sign_in_button.isEnabled = false
             login_progress_bar.visibility = View.VISIBLE
 
@@ -73,7 +81,7 @@ class AuthenticationActivity : AppCompatActivity() {
      * @return whether the inputs are valid and the authentication was successful
      */
     private fun signInUser(user: User) {
-        disposable = restApiService.loginUser(user)
+        rxDisposable = restApiService.loginUser(user)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
@@ -169,6 +177,6 @@ class AuthenticationActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
-        disposable?.dispose()
+        rxDisposable?.dispose()
     }
 }

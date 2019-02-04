@@ -18,7 +18,7 @@ interface RestApiService {
     fun loginUser(@Body user: User): Observable<Token>
 
     companion object {
-        fun create(): RestApiService {
+        fun new(): RestApiService {
             return Retrofit.Builder()
                     .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
                     .addConverterFactory(GsonConverterFactory.create())
