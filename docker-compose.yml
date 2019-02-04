@@ -59,7 +59,7 @@ services:
       - infodb
     restart: always
     ports:
-      - 9200:8080
+      - 9200:80
     environment:
       - DB_USERNAME=postgres
       - DB_PASSWORD=password
@@ -86,7 +86,12 @@ services:
       - DB_PASSWORD=password
       - DB_DATABASE=postgres
       - DB_URL=switchdb
-
+  robotserver:
+    build:
+      context: ./robotserver
+    restart: always
+    ports:
+      - 8083:80
 volumes:
   portainer_data:
   userdb_data:
