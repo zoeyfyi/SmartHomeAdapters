@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -50,6 +51,15 @@ func loginHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	proxy(http.MethodGet, "http://userserver/login", w, r)
 }
 
+func robotsHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	proxy(http.MethodGet, "http://infoserver/robots", w, r)
+}
+
+func robotHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	url := fmt.Sprintf("http://infoserver/robot/%s", ps.ByName("id"))
+	proxy(http.MethodGet, url, w, r)
+}
+
 func createRouter() *httprouter.Router {
 	router := httprouter.New()
 
@@ -57,6 +67,8 @@ func createRouter() *httprouter.Router {
 	router.GET("/ping", pingHandler)
 	router.POST("/register", registerHandler)
 	router.POST("/login", loginHandler)
+	router.GET("/robots", robotsHandler)
+	router.GET("/robot/:id", robotHandler)
 
 	return router
 }
