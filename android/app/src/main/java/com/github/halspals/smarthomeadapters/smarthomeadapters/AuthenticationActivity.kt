@@ -1,27 +1,29 @@
 package com.github.halspals.smarthomeadapters.smarthomeadapters
 
-import android.content.Context
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
-import android.security.keystore.KeyGenParameterSpec
-import android.security.keystore.KeyProperties
-import android.util.Base64
 import android.util.Log
 import android.view.View
+import com.github.halspals.smarthomeadapters.smarthomeadapters.model.User
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.Disposable
+import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_authentication.*
 import org.jetbrains.anko.*
 import org.jetbrains.anko.design.snackbar
+import org.json.JSONException
 import org.json.JSONObject
-import java.net.HttpURLConnection
-import java.security.KeyStore
-import javax.crypto.Cipher
-import javax.crypto.KeyGenerator
-import javax.crypto.SecretKey
-import javax.crypto.spec.GCMParameterSpec
+import retrofit2.HttpException
 
-class AuthenticationActivity : AppCompatActivity(), RESTResponseListener {
+class AuthenticationActivity : AppCompatActivity() {
 
     private val tag = "AuthenticationActivity"
+
+    private val restApiService by lazy {
+        RestApiService.create()
+    }
+
+    private var disposable: Disposable? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,9 +33,16 @@ class AuthenticationActivity : AppCompatActivity(), RESTResponseListener {
             Set up appropriate listeners for button click events
          */
         sign_in_button.setOnClickListener { _ ->
+
             sign_in_button.isEnabled = false
 
-            signInUser()
+            val email = email_input.text.toString()
+            val password = password_input.text.toString()
+            val inputsOK = checkEmailInput(email) && checkPasswordInput(password)
+
+            if (inputsOK) {
+                signInUser(User(email, password))
+            }
         }
 
         register_button.setOnClickListener { _ ->
@@ -62,22 +71,55 @@ class AuthenticationActivity : AppCompatActivity(), RESTResponseListener {
      *
      * @return whether the inputs are valid and the authentication was successful
      */
-    private fun signInUser() {
-        login_progress_bar.visibility = View.VISIBLE
+    private fun signInUser(user: User) {
+        disposable = restApiService.loginUser(user)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                        { token -> saveTokenAndMoveToMain(token.token) },
+                        { error -> handleLoginError(error) }
+                )
+    }
 
-        val email = email_input.text.toString()
-        val password = password_input.text.toString()
-        val inputsOK = checkEmailInput(email) && checkPasswordInput(password)
+    /**
+     * WIP: Saves the token and starts a [MainActivity].
+     * Currently only keeps token in memory, passing it as an extra to the activity;
+     * when we have time this should be changed to saving the token in Account Manager.
+     */
+    private fun saveTokenAndMoveToMain(token: String) {
+        Log.d(tag, "Succeeded in receiving token, starting MainActivity")
+        // TODO token should be saved in Account Manager for the user
+        toast("Signed in")
+        startActivity(intentFor<MainActivity>("token" to token).clearTask().newTask())
+    }
 
-        if (inputsOK) {
-            RESTRequestTask(this).execute(RESTRequest.LOGIN(email, password))
+    /**
+     * Handles an error received by [signInUser], displaying the message to the user.
+     */
+    private fun handleLoginError(error: Throwable) {
+        // There was an error; if the server gave an error message in JSON format,
+        // try to extract it
+        val errorString: String? = if (error is HttpException) {
+            try {
+                JSONObject(error.response().errorBody()?.string()).getString("error")
+            } catch (e: JSONException) {
+                error.message.toString()
+            }
         } else {
-            login_progress_bar.visibility = View.GONE
-            snackbar_layout.snackbar("Failed to sign you in!")
-            Log.w(tag, "Sign-in failed.")
-            sign_in_button.isEnabled = true
+            // If the error is not an HttpException we will have to make to
+            // with its error message
+            error.message.toString()
         }
 
+        // Display the error to the user
+        Log.d(tag, "Login failed: $errorString")
+        if (errorString != null) {
+            snackbar_layout.snackbar(errorString)
+        }
+
+        // Allow the user to try again
+        login_progress_bar.visibility = View.GONE
+        sign_in_button.isEnabled = true
     }
 
     /**
@@ -120,31 +162,8 @@ class AuthenticationActivity : AppCompatActivity(), RESTResponseListener {
         return pwIsValid
     }
 
-    override fun handleRESTResponse(responseCode: Int, response: String, requestType: String) {
-
-        if (requestType != RESTRequest.LOGIN_TYPE) {
-            // Only expect to hear back from login events
-            return
-        }
-
-        val responseJSON = JSONObject(response)
-        if (responseCode < HttpURLConnection.HTTP_BAD_REQUEST) {
-            // Save the token which we received securely
-            val token = responseJSON.getString("token")
-            if (token == null) {
-                Log.e(tag, "Login was successful but did not receive a token")
-                return
-            }
-
-
-            toast("Signed in")
-            Log.d(tag, "Starting MainActivity")
-            startActivity(intentFor<MainActivity>("token" to token).clearTask().newTask())
-        } else {
-            val errorMsg = responseJSON.getString("error")
-            snackbar_layout.snackbar(errorMsg)
-            login_progress_bar.visibility = View.GONE
-            sign_in_button.isEnabled = true
-        }
+    override fun onPause() {
+        super.onPause()
+        disposable?.dispose()
     }
 }
