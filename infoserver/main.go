@@ -232,12 +232,14 @@ func proxy(method string, url string, w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("Error creating request: %v", err)
 		httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
 	}
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		log.Printf("Error executing request: %v", err)
 		httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
 	}
 
 	w.WriteHeader(resp.StatusCode)
@@ -262,7 +264,7 @@ func toggleRobotHandler(db *sql.DB) httprouter.Handle {
 		// get robot type
 		var robotType string
 		row := db.QueryRow("SELECT robotType FROM toggleRobots WHERE serial = $1", robotID)
-		err := row.Scan(&robotID)
+		err := row.Scan(&robotType)
 		if err != nil {
 			log.Printf("Failed to retrive list of robots: %v", err)
 			httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -273,18 +275,20 @@ func toggleRobotHandler(db *sql.DB) httprouter.Handle {
 		case "switch":
 			switch value {
 			case "true":
-				url := fmt.Sprintf("http://lightserver/%s/on", robotID)
-				proxy(http.MethodPut, url, w, r)
+				url := fmt.Sprintf("http://switchserver/%s/on", robotID)
+				proxy(http.MethodPatch, url, w, r)
+				return
 			case "false":
-				url := fmt.Sprintf("http://lightserver/%s/off", robotID)
-				proxy(http.MethodPut, url, w, r)
+				url := fmt.Sprintf("http://switchserver/%s/off", robotID)
+				proxy(http.MethodPatch, url, w, r)
+				return
 			}
 		default:
+			log.Printf("robot type \"%s\" is not toggelable", robotType)
 			httpWriteError(w, ErrNotTogglable, http.StatusBadRequest)
 			return
 		}
 
-		w.WriteHeader(http.StatusOK)
 	})
 }
 
@@ -292,7 +296,7 @@ func createRouter(db *sql.DB) *httprouter.Router {
 	router := httprouter.New()
 	router.GET("/robot/:robotId", queryRobotHandler(db))
 	router.GET("/robots", listRobotHandler(db))
-	router.PUT("/robot/:robotId/toggle/:value", toggleRobotHandler(db))
+	router.PATCH("/robot/:robotId/toggle/:value", toggleRobotHandler(db))
 
 	return router
 }
@@ -313,7 +317,7 @@ func main() {
 	log.Printf("Connected to database: %+v\n", db.Stats())
 
 	// start server
-	if err := http.ListenAndServe(":8080", createRouter(db)); err != nil {
+	if err := http.ListenAndServe(":80", createRouter(db)); err != nil {
 		panic(err)
 	}
 }

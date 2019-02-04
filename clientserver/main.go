@@ -60,6 +60,11 @@ func robotHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 	proxy(http.MethodGet, url, w, r)
 }
 
+func toggleHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	url := fmt.Sprintf("http://infoserver/robot/%s/toggle/%s", ps.ByName("id"), ps.ByName("value"))
+	proxy(http.MethodPatch, url, w, r)
+}
+
 func createRouter() *httprouter.Router {
 	router := httprouter.New()
 
@@ -69,6 +74,7 @@ func createRouter() *httprouter.Router {
 	router.POST("/login", loginHandler)
 	router.GET("/robots", robotsHandler)
 	router.GET("/robot/:id", robotHandler)
+	router.PATCH("/robot/:id/toggle/:value", toggleHandler)
 
 	return router
 }
