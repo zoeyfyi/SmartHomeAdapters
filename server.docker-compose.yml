@@ -108,3 +108,4 @@ volumes:
   portainer_data:
   userdb_data:
   infodb_data:
+  switchdb_data:
