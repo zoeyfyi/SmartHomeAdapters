@@ -33,11 +33,11 @@ func TestConnectToWebSocket(t *testing.T) {
 	s := newServer(t)
 	defer s.Server.Close()
 
-	ws, _, err := websocket.DefaultDialer.Dial(s.URL+"/connect", nil)
+	_, _, err := websocket.DefaultDialer.Dial(s.URL+"/connect", nil)
 	if err != nil {
 		t.Fatalf("Error dialing: %v", err)
 	}
-	defer ws.Close()
+	defer func() { socket = nil }()
 }
 
 func TestSendLEDCommand(t *testing.T) {

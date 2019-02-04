@@ -58,6 +58,7 @@ const (
 func sendMessage(w http.ResponseWriter, msg string) {
 	if socket == nil {
 		// socket was never opened
+		log.Println("Socket never opened")
 		httpWriteError(w, ErrNotConnected, http.StatusServiceUnavailable)
 		return
 	}
@@ -66,6 +67,7 @@ func sendMessage(w http.ResponseWriter, msg string) {
 	if err := socket.WriteMessage(websocket.TextMessage, []byte(msg)); err != nil {
 		if _, ok := err.(*websocket.CloseError); ok {
 			// socket was closed
+			log.Println("Socket closed")
 			httpWriteError(w, ErrNotConnected, http.StatusServiceUnavailable)
 		} else {
 			// unknown error
