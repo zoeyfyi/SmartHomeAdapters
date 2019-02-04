@@ -60,7 +60,7 @@ services:
       context: ./robotserver
     restart: always
     ports:
-      - 9100:8080
+      - 9100:80
     environment:
       - VIRTUAL_HOST=robot.halspals.co.uk
   infodb:
