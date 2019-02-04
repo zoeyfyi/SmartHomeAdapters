@@ -61,8 +61,9 @@ class RegisterNewUserTest {
 
         textInputEditText3.perform(replaceText("testtest\$111"))
 
-
         appCompatButton2.perform(click())
+
+        Thread.sleep(5000)
 
         Intents.intended(IntentMatchers.hasComponent(MainActivity::class.java.name))
     }
