@@ -4,7 +4,7 @@ import org.json.JSONObject
 
 sealed class RESTRequest() {
 
-    protected val baseURL = "http://10.0.2.2"
+    protected val baseURL = "http://client.api.halspals.co.uk"
     abstract val endpoint: String
     abstract val requestMethod: String
     abstract val data: String
