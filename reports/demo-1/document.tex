@@ -1,0 +1,157 @@
+\documentclass[a4paper]{article}
+\usepackage{array}  
+\usepackage[table]{xcolor}% http://ctan.org/pkg/xcolor
+\usepackage{geometry}
+\geometry{margin=1.25in}
+\usepackage{hhline}
+\usepackage{environ}
+ %\geometry{
+ %a4paper,z
+ %total={170mm,257mm},
+ %left=40mm,
+ %right=40mm
+ %}
+ \newcommand{\colWidth}{141mm}
+
+\begin{document} 
+\section*{Demo day: \textit{(demo number)} Group \textit{(group number)}}
+
+% ------------GOALS----------
+
+\begin{center}
+\begin{tabular}{|p{\colWidth}|}
+	\hline
+	\cellcolor{blue!25}\large
+	\textbf{What were your goals?}
+	\\ \hline
+		Here is a summary of are goals for demo 1 from are project plan.
+
+		\begin{itemize}
+			\item Web server 
+				\begin{itemize}
+					\item Register user with email and password
+					\item Authenticate the user and return token
+					\item Store the state of the switch
+					\item Endpoint for turning light on/off
+					\item Endpoint for retrieving a list of robots
+					\item Establish WebSocket with robot
+					\item Send servo commands on light on/off request
+				\end{itemize}
+			\item Android
+				\begin{itemize}
+					\item Login/register UI
+					\item Send auth token in REST requests
+					\item UI to display a list of robots
+					\item Light switch toggle UI
+					\item Send light on/off request
+				\end{itemize}
+			\item Robot
+				\begin{itemize}
+					\item Establish websocket with server
+					\item Receive servo commands
+					\item Construct the LEGO switch gripper
+					\item Connect the servo to Arduino
+					\item Create temporary client on DICE to forward servo commands (since the Arduino we have doesn’t have a Wifi chip)
+				\end{itemize}
+		\end{itemize}
+  \\
+  \hline
+\end{tabular}
+\vskip 5mm
+
+% ------------ORGANISATION----------
+
+\begin{tabular}{|p{\colWidth}|}
+	\hline
+	\cellcolor{blue!25}\large
+	\textbf{Summarise how your group organised the workload to achieve your goals.}
+	\\ \hline
+	\vtop to 120mm{
+%  some text some text some text some text
+%  some text some text some text some text
+%  some text some text some text some text
+%  some text some text some text some text 
+  }
+  \\
+  \hline
+\end{tabular}
+\vskip 5mm
+
+% ------------ACHIEVEMENTS----------
+
+\begin{tabular}{|p{\colWidth}|}
+	\hline
+	\cellcolor{blue!25}\large
+	\textbf{What were your main achievements?}
+	\\ \hline
+	\vtop to 95mm{
+%  some text some text some text some text
+%  some text some text some text some text
+
+%  some text some text some text some text
+%  some text some text some text some text 
+  }
+  \\
+  \hline
+\end{tabular}
+\vskip 5mm
+
+% ------------NOT ACHIEVED----------
+
+\begin{tabular}{|p{\colWidth}|}
+	\hline
+	\cellcolor{blue!25}\large
+	\textbf{What did you not achieve? Briefly explain why.}
+	\\ \hline
+	\vtop to 95mm{
+%  some text some text some text some text
+%  some text some text some text some text
+
+%  some text some text some text some text
+%  some text some text some text some text 
+  }
+  \\
+  \hline
+\end{tabular}
+\vskip 5mm
+
+% ------------QUANTITIVE----------
+
+\begin{tabular}{|p{\colWidth}|}
+	\hline
+	\cellcolor{blue!25}\large
+	\textbf{Include any quantitative data you have collected (this can be a graph/table with a few words)}
+	\\ \hline
+	\vtop to 135mm{
+%  some text some text some text some text
+%  some text some text some text some text
+
+%  some text some text some text some text
+%  some text some text some text some text 
+  }
+  \\
+  \hline
+\end{tabular}
+\vskip 5mm
+
+% ------------NEXT STEPS----------
+
+\begin{tabular}{|p{\colWidth}|}
+	\hline
+	\cellcolor{blue!25}\large
+	\textbf{Say briefly what changes you will make to your plan for the next demo.}
+	\\ \hline
+	\vtop to 45mm{
+%  some text some text some text some text
+%  some text some text some text some text
+
+%  some text some text some text some text
+%  some text some text some text some text 
+  }
+  \\
+  \hline
+\end{tabular}
+
+\end{center}
+  
+\end{document}
