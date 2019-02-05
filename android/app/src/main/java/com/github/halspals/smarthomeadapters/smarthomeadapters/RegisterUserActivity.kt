@@ -135,7 +135,7 @@ class RegisterUserActivity : AppCompatActivity() {
             override fun onResponse(call: Call<Token>, response: Response<Token>) {
                 val token = response.body()
                 if (response.isSuccessful && token != null) {
-                    saveTokenAndMoveToMain(response.body()!!.token)
+                    saveTokenAndMoveToMain(token.token)
                 } else {
                     val error = try {
                         JSONObject(response.errorBody()?.string()).getString("error")
