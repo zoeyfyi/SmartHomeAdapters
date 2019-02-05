@@ -6,16 +6,17 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.view.inputmethod.InputMethodManager
+import com.github.halspals.smarthomeadapters.smarthomeadapters.model.Token
 import com.github.halspals.smarthomeadapters.smarthomeadapters.model.User
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.disposables.Disposable
-import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_register_user.*
 import org.jetbrains.anko.*
 import org.jetbrains.anko.design.snackbar
 import org.json.JSONException
 import org.json.JSONObject
+import retrofit2.Call
+import retrofit2.Callback
 import retrofit2.HttpException
+import retrofit2.Response
 
 class RegisterUserActivity : AppCompatActivity() {
 
@@ -24,8 +25,6 @@ class RegisterUserActivity : AppCompatActivity() {
     private val restApiService by lazy {
         RestApiService.new()
     }
-
-    private var disposable: Disposable? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -94,38 +93,42 @@ class RegisterUserActivity : AppCompatActivity() {
     }
 
     /**
-     * Gets the input email and password and registers a new user with the web service.
-     * First makes sure that the inputs are valid.
+     * Makes a REST call to register the given user.
+     *
+     * @param user the user to register an account for
      *
      */
     private fun registerNewUser(user: User) {
-        disposable = restApiService.registerUser(user)
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(
-                        { user_confirmation ->
-                            assert(user == user_confirmation) { "Returned user doesn't equal expected user. " +
-                                "Expected {$user}, received {$user_confirmation}" }
-                            toast("Registered; now signing you in...")
-                            signInUser(user) },
-                        { error -> handleLoginError(error) }
-                )
+        restApiService.registerUser(user).enqueue(object : Callback<User> {
+            override fun onResponse(call: Call<User>, response: Response<User>) {
+                val responseUser = response.body()
+                assert(user == responseUser) { "Returned user doesn't equal expected user. " +
+                        "Expected {$user}, received {$responseUser}"
+                }
+                signInUser(user)
+            }
+
+            override fun onFailure(call: Call<User>, error: Throwable) {
+                handleLoginError(error)
+            }
+        })
     }
 
     /**
-     * WIP: Get the email and password given, validate them, and then
-     * try to authenticate the user.
+     * Makes a REST call to sign in the given user.
      *
-     * @return whether the inputs are valid and the authentication was successful
+     * @param user the user to sign in
      */
     private fun signInUser(user: User) {
-        disposable = restApiService.loginUser(user)
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(
-                        { token -> saveTokenAndMoveToMain(token.token) },
-                        { error -> handleLoginError(error) }
-                )
+        restApiService.loginUser(user).enqueue(object: Callback<Token> {
+            override fun onResponse(call: Call<Token>, response: Response<Token>) {
+                saveTokenAndMoveToMain(response.body()!!.token)
+            }
+
+            override fun onFailure(call: Call<Token>, error: Throwable) {
+                handleLoginError(error)
+            }
+        })
     }
 
     /**
@@ -229,10 +232,5 @@ class RegisterUserActivity : AppCompatActivity() {
         }
 
         return confirmedPwIsValid
-    }
-
-    override fun onPause() {
-        super.onPause()
-        disposable?.dispose()
     }
 }

@@ -6,16 +6,17 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.view.inputmethod.InputMethodManager
+import com.github.halspals.smarthomeadapters.smarthomeadapters.model.Token
 import com.github.halspals.smarthomeadapters.smarthomeadapters.model.User
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.disposables.Disposable
-import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_authentication.*
 import org.jetbrains.anko.*
 import org.jetbrains.anko.design.snackbar
 import org.json.JSONException
 import org.json.JSONObject
+import retrofit2.Call
+import retrofit2.Callback
 import retrofit2.HttpException
+import retrofit2.Response
 
 class AuthenticationActivity : AppCompatActivity() {
 
@@ -24,8 +25,6 @@ class AuthenticationActivity : AppCompatActivity() {
     private val restApiService by lazy {
         RestApiService.new()
     }
-
-    private var rxDisposable: Disposable? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -75,19 +74,20 @@ class AuthenticationActivity : AppCompatActivity() {
     }
 
     /**
-     * WIP: Get the email and password given, validate them, and then
-     * try to authenticate the user.
+     * Makes a REST call to sign in the given user.
      *
-     * @return whether the inputs are valid and the authentication was successful
+     * @param user the user to sign in
      */
     private fun signInUser(user: User) {
-        rxDisposable = restApiService.loginUser(user)
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(
-                        { token -> saveTokenAndMoveToMain(token.token) },
-                        { error -> handleLoginError(error) }
-                )
+        restApiService.loginUser(user).enqueue(object: Callback<Token> {
+            override fun onResponse(call: Call<Token>, response: Response<Token>) {
+                saveTokenAndMoveToMain(response.body()!!.token)
+            }
+
+            override fun onFailure(call: Call<Token>, error: Throwable) {
+                handleLoginError(error)
+            }
+        })
     }
 
     /**
@@ -173,10 +173,5 @@ class AuthenticationActivity : AppCompatActivity() {
         }
 
         return pwIsValid
-    }
-
-    override fun onPause() {
-        super.onPause()
-        rxDisposable?.dispose()
     }
 }
