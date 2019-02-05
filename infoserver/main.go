@@ -13,6 +13,8 @@ import (
 	_ "github.com/lib/pq"
 )
 
+var client = http.DefaultClient
+
 var (
 	username = os.Getenv("DB_USERNAME")
 	password = os.Getenv("DB_PASSWORD")
@@ -43,7 +45,7 @@ type Robot struct {
 	Nickname      string `json:"nickname"`
 	RobotType     string `json:"robotType"`
 	InterfaceType string `json:"interfaceType"`
-	RobotStatus   Status `json:"status"`
+	RobotStatus   Status `json:"status,omitempty"`
 }
 
 func connectionStr() string {
@@ -154,7 +156,7 @@ func queryRobotHandler(db *sql.DB) httprouter.Handle {
 				httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			}
 
-			resp, err := http.DefaultClient.Do(req)
+			resp, err := client.Do(req)
 			if err != nil {
 				log.Printf("Error executing request: %v", err)
 				httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -167,14 +169,19 @@ func queryRobotHandler(db *sql.DB) httprouter.Handle {
 
 			log.Printf("Status: %+v", buf.String())
 
+			var status Status
+			if isOn, ok := info["isOn"].(bool); ok {
+				status = ToggleStatus{
+					Value: isOn,
+				}
+			}
+
 			json.NewEncoder(w).Encode(&Robot{
 				ID:            serial,
 				Nickname:      nickname,
 				RobotType:     robotType,
 				InterfaceType: "toggle",
-				RobotStatus: ToggleStatus{
-					Value: info["isOn"].(bool),
-				},
+				RobotStatus:   status,
 			})
 		default:
 			// TODO

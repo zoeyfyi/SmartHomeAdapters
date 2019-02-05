@@ -1,11 +1,25 @@
 package main
 
 import (
+	"bytes"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 )
+
+type roundTripFunc func(req *http.Request) *http.Response
+
+func (f roundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
+	return f(req), nil
+}
+
+func testClient(fn roundTripFunc) *http.Client {
+	return &http.Client{
+		Transport: roundTripFunc(fn),
+	}
+}
 
 type testServer struct {
 	Handler http.Handler
@@ -24,9 +38,29 @@ func newServer(t *testing.T) *testServer {
 
 func TestRobots(t *testing.T) {
 
-	responseSubset := "[{\"id\":\"123abc\",\"nickname\":\"testLightbot\",\"robotType\":\"switch\",\"interface\":" +
-		"{\"type\":\"toggle\"}},{\"id\":\"T2D2\",\"nickname\":\"testThermoBot\",\"robotType\":" +
-		"\"thermostat\",\"interface\":{\"type\":\"range\",\"min\":0,\"max\":100}}]"
+	expectedRequests := []string{"switchserver/123abc"}
+
+	client = testClient(func(req *http.Request) *http.Response {
+		if req.URL.String() != expectedRequests[0] {
+			t.Errorf("Expected request \"%s\", actual request \"%s\"", expectedRequests[0], req.URL.String())
+		}
+
+		// pop first request of slice
+		expectedRequests = expectedRequests[1:]
+
+		return &http.Response{
+			StatusCode: 200,
+			Body:       ioutil.NopCloser(bytes.NewBufferString("{\"IsOn\":false}")),
+			Header:     make(http.Header),
+		}
+	})
+	defer func() {
+		client = http.DefaultClient
+	}()
+
+	responseSubset := "[{\"id\":\"123abc\",\"nickname\":\"testLightbot\",\"robotType\":\"switch\",\"interfaceType\":" +
+		"\"toggle\"},{\"id\":\"T2D2\",\"nickname\":\"testThermoBot\",\"robotType\":" +
+		"\"thermostat\",\"interfaceType\":\"range\"}]"
 
 	s := newServer(t)
 	defer s.Server.Close()
@@ -51,8 +85,28 @@ func TestRobots(t *testing.T) {
 
 func TestValidRobotId(t *testing.T) {
 
-	responseSubset := "{\"id\":\"123abc\",\"nickname\":\"testLightbot\",\"robotType\":\"switch\",\"interface\":" +
-		"{\"type\":\"toggle\"}}"
+	expectedRequests := []string{"http://switchserver/123abc"}
+
+	client = testClient(func(req *http.Request) *http.Response {
+		if req.URL.String() != expectedRequests[0] {
+			t.Errorf("Expected request \"%s\", actual request \"%s\"", expectedRequests[0], req.URL.String())
+		}
+
+		// pop first request of slice
+		expectedRequests = expectedRequests[1:]
+
+		return &http.Response{
+			StatusCode: 200,
+			Body:       ioutil.NopCloser(bytes.NewBufferString("{\"IsOn\":false}")),
+			Header:     make(http.Header),
+		}
+	})
+	defer func() {
+		client = http.DefaultClient
+	}()
+
+	responseSubset := "{\"id\":\"123abc\",\"nickname\":\"testLightbot\",\"robotType\":\"switch\",\"interfaceType\":" +
+		"\"toggle\"}"
 
 	s := newServer(t)
 	defer s.Server.Close()
