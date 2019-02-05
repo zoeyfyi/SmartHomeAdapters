@@ -20,7 +20,7 @@ def on_message(ws, msg):
 
 ws = websocket.WebSocket()
 ws.on_open = on_open
-ws = websocket.WebSocketApp("ws://0.0.0.0:8080/connect",
+ws = websocket.WebSocketApp("ws://robot.halspals.co.uk/connect",
                               on_message = on_message,
                               on_error = on_error,
                               on_close = on_close)
