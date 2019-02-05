@@ -15,7 +15,6 @@ import org.json.JSONException
 import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Callback
-import retrofit2.HttpException
 import retrofit2.Response
 
 class RegisterUserActivity : AppCompatActivity() {
@@ -102,14 +101,26 @@ class RegisterUserActivity : AppCompatActivity() {
         restApiService.registerUser(user).enqueue(object : Callback<User> {
             override fun onResponse(call: Call<User>, response: Response<User>) {
                 val responseUser = response.body()
-                assert(user == responseUser) { "Returned user doesn't equal expected user. " +
-                        "Expected {$user}, received {$responseUser}"
+                if (response.isSuccessful) {
+                    assert(user == responseUser) {
+                        "Returned user doesn't equal expected user. " +
+                                "Expected {$user}, received {$responseUser}"
+                    }
+                    toast("Registered; now signing you in...")
+                    signInUser(user)
+                } else {
+                    val error = try {
+                        JSONObject(response.errorBody()?.string()).getString("error")
+                    } catch (e: JSONException) {
+                        response.message()
+                    }
+
+                    handleCallbackError(error, enableFurtherRegistration = true)
                 }
-                signInUser(user)
             }
 
             override fun onFailure(call: Call<User>, error: Throwable) {
-                handleLoginError(error)
+                handleCallbackError(error.message, enableFurtherRegistration = true)
             }
         })
     }
@@ -122,11 +133,22 @@ class RegisterUserActivity : AppCompatActivity() {
     private fun signInUser(user: User) {
         restApiService.loginUser(user).enqueue(object: Callback<Token> {
             override fun onResponse(call: Call<Token>, response: Response<Token>) {
-                saveTokenAndMoveToMain(response.body()!!.token)
+                val token = response.body()
+                if (response.isSuccessful && token != null) {
+                    saveTokenAndMoveToMain(response.body()!!.token)
+                } else {
+                    val error = try {
+                        JSONObject(response.errorBody()?.string()).getString("error")
+                    } catch (e: JSONException) {
+                        response.message()
+                    }
+
+                    handleCallbackError(error)
+                }
             }
 
             override fun onFailure(call: Call<Token>, error: Throwable) {
-                handleLoginError(error)
+                handleCallbackError(error.message)
             }
         })
     }
@@ -149,32 +171,22 @@ class RegisterUserActivity : AppCompatActivity() {
      * Handles an error received by [signInUser], displaying the message to the user.
      *
      * @param error the error received from the api call
+     * @param whether to allow the user to press register again
      */
-    private fun handleLoginError(error: Throwable) {
-        // There was an error; if the server gave an error message in JSON format,
-        // try to extract it
-        val errorString: String? = if (error is HttpException) {
-            try {
-                JSONObject(error.response().errorBody()?.string()).getString("error")
-            } catch (e: JSONException) {
-                error.message.toString()
-            }
-        } else {
-            // If the error is not an HttpException we will have to make to
-            // with its error message
-            error.message.toString()
-        }
+    private fun handleCallbackError(error: String?, enableFurtherRegistration: Boolean = false) {
 
         // Display the error to the user
-        Log.d(tag, "Login failed: $errorString")
-        if (errorString != null) {
-            snackbar_layout.snackbar(errorString)
+        Log.d(tag, "Login failed: $error")
+        if (error != null) {
+            snackbar_layout.snackbar(error)
+        } else {
+            Log.w(tag, "Error message was null")
         }
 
-        // Allow the user to try again
-        register_button.isEnabled = true
+        register_button.isEnabled = enableFurtherRegistration
         progressBar.visibility = View.GONE
     }
+
     /**
      * Makes sure the given email is valid, setting an error to [email_input] if not.
      *

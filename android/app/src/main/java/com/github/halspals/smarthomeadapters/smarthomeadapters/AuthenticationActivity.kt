@@ -84,11 +84,22 @@ class AuthenticationActivity : AppCompatActivity() {
     private fun signInUser(user: User) {
         restApiService.loginUser(user).enqueue(object: Callback<Token> {
             override fun onResponse(call: Call<Token>, response: Response<Token>) {
-                saveTokenAndMoveToMain(response.body()!!.token)
+                val token = response.body()
+                if (response.isSuccessful && token != null) {
+                    saveTokenAndMoveToMain(response.body()!!.token)
+                } else {
+                    val error = try {
+                        JSONObject(response.errorBody()?.string()).getString("error")
+                    } catch (e: JSONException) {
+                        response.message()
+                    }
+
+                    handleLoginError(error)
+                }
             }
 
             override fun onFailure(call: Call<Token>, error: Throwable) {
-                handleLoginError(error)
+                handleLoginError(error.message)
             }
         })
     }
@@ -112,25 +123,14 @@ class AuthenticationActivity : AppCompatActivity() {
      *
      * @param error the error received from the api call
      */
-    private fun handleLoginError(error: Throwable) {
-        // There was an error; if the server gave an error message in JSON format,
-        // try to extract it
-        val errorString: String? = if (error is HttpException) {
-            try {
-                JSONObject(error.response().errorBody()?.string()).getString("error")
-            } catch (e: JSONException) {
-                error.message.toString()
-            }
-        } else {
-            // If the error is not an HttpException we will have to make to
-            // with its error message
-            error.message.toString()
-        }
+    private fun handleLoginError(error: String?) {
 
         // Display the error to the user
-        Log.d(tag, "Login failed: $errorString")
-        if (errorString != null) {
-            snackbar_layout.snackbar(errorString)
+        Log.d(tag, "Login failed: $error")
+        if (error != null) {
+            snackbar_layout.snackbar(error)
+        } else {
+            Log.w(tag, "Error message was null")
         }
 
         // Allow the user to try again
