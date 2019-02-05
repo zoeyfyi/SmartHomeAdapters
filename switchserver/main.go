@@ -344,20 +344,30 @@ func getSwitchHandler(db *sql.DB) httprouter.Handle {
 		// parse robot ID
 		robotID := p.ByName("id")
 
-		var isOn bool
-		row := db.QueryRow("SELECT isOn FROM switches WHERE serial = $1", robotID)
+		var (
+			isOn         bool
+			isCalibrated bool
+			onAngle      int
+			offAngle     int
+			restAngle    int
+		)
 
-		err := row.Scan(&isOn)
+		row := db.QueryRow("SELECT isOn, isCalibrated, onAngle, offAngle, restAngle FROM switches WHERE serial = $1", robotID)
+		err := row.Scan(&isOn, &isCalibrated, &onAngle, &offAngle, &restAngle)
 		if err != nil {
 			log.Printf("Failed to scan database: %v", err)
 			httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
 
-		json.NewEncoder(w).Encode(&struct {
-			ToggleValue bool
-		}{
-			ToggleValue: isOn,
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(&switchRobot{
+			RobotID:      robotID,
+			IsOn:         isOn,
+			IsCalibrated: isCalibrated,
+			OnAngle:      onAngle,
+			OffAngle:     offAngle,
+			RestAngle:    restAngle,
 		})
 	}
 }
