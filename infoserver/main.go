@@ -13,6 +13,8 @@ import (
 	_ "github.com/lib/pq"
 )
 
+var client = http.DefaultClient
+
 var (
 	username = os.Getenv("DB_USERNAME")
 	password = os.Getenv("DB_PASSWORD")
@@ -20,22 +22,30 @@ var (
 	url      = os.Getenv("DB_URL")
 )
 
-type RobotInterface interface {
-}
-type TriggerInterface struct {
-	InterfaceType string `json:"type"`
-}
-type RangeInterface struct {
-	InterfaceType string `json:"type"`
-	Min           int    `json:"min"`
-	Max           int    `json:"max"`
+type Status interface {
+	status()
 }
 
-type Response struct {
-	Id             string `json:"id"`
-	Nickname       string `json:"nickname"`
-	RobotType      string `json:"robotType"`
-	RobotInterface `json:"interface"`
+type ToggleStatus struct {
+	Value bool `json:"value"`
+}
+
+func (s ToggleStatus) status() {}
+
+type RangeStatus struct {
+	Min     int `json:"min"`
+	Max     int `json:"max"`
+	Current int `json:"current"`
+}
+
+func (s RangeStatus) status() {}
+
+type Robot struct {
+	ID            string `json:"id"`
+	Nickname      string `json:"nickname"`
+	RobotType     string `json:"robotType"`
+	InterfaceType string `json:"interfaceType"`
+	RobotStatus   Status `json:"status,omitempty"`
 }
 
 func connectionStr() string {
@@ -76,10 +86,8 @@ func httpWriteError(w http.ResponseWriter, msg string, code int) {
 
 func queryRobotHandler(db *sql.DB) httprouter.Handle {
 	return httprouter.Handle(func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-
 		// get user-supplied ID parameter
-
-		robotId := ps.ByName("robotId")
+		robotID := ps.ByName("robotId")
 
 		var (
 			serial    string
@@ -91,15 +99,15 @@ func queryRobotHandler(db *sql.DB) httprouter.Handle {
 
 		w.Header().Set("Content-Type", "application/json")
 
-		log.Println("/robot/" + robotId)
+		log.Println("/robot/" + robotID)
 
 		// query toggleRobots table for matching robots
-		rows, err := db.Query("SELECT * FROM toggleRobots WHERE serial = $1", robotId)
+		rows, err := db.Query("SELECT * FROM toggleRobots WHERE serial = $1", robotID)
 
 		// initialise counter
 		found := false
 		if err != nil {
-			log.Printf("Failed to retrive robot %s: %v", robotId, err)
+			log.Printf("Failed to retrive robot %s: %v", robotID, err)
 			httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		}
 
@@ -107,42 +115,26 @@ func queryRobotHandler(db *sql.DB) httprouter.Handle {
 			// read from table and write response
 			found = true
 			err := rows.Scan(&serial, &nickname, &robotType)
-			robotInterface := TriggerInterface{"toggle"}
-			resp := &Response{
-				Id:             serial,
-				Nickname:       nickname,
-				RobotType:      robotType,
-				RobotInterface: robotInterface,
-			}
-			json.NewEncoder(w).Encode(resp)
 			if err != nil {
-				log.Printf("Failed to scan robot %s: %v", robotId, err)
+				log.Printf("Failed to scan robot %s: %v", robotID, err)
 				httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			}
 		}
 
 		// if the robot was not found in toggleRobots, search rangeRobots
 		if found == false {
-			rows, err := db.Query("SELECT * FROM rangeRobots WHERE serial = $1", robotId)
+			rows, err := db.Query("SELECT * FROM rangeRobots WHERE serial = $1", robotID)
 
 			if err != nil {
-				log.Printf("Failed to retrive robot %s: %v", robotId, err)
+				log.Printf("Failed to retrive robot %s: %v", robotID, err)
 				httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			}
 
 			for rows.Next() {
 				found = true
 				err := rows.Scan(&serial, &nickname, &robotType, &minimum, &maximum)
-				robotInterface := RangeInterface{"range", minimum, maximum}
-				resp := &Response{
-					Id:             serial,
-					Nickname:       nickname,
-					RobotType:      robotType,
-					RobotInterface: robotInterface,
-				}
-				json.NewEncoder(w).Encode(resp)
 				if err != nil {
-					log.Printf("Failed to scan robot %s: %v", robotId, err)
+					log.Printf("Failed to scan robot %s: %v", robotID, err)
 					httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 				}
 			}
@@ -152,6 +144,47 @@ func queryRobotHandler(db *sql.DB) httprouter.Handle {
 		// if no robots were found, return nil
 		if found == false {
 			json.NewEncoder(w).Encode("No robot with that ID")
+		}
+
+		// get the status of the robot
+		switch robotType {
+		case "switch":
+			url := fmt.Sprintf("http://switchserver/%s", robotID)
+			req, err := http.NewRequest(http.MethodGet, url, nil)
+			if err != nil {
+				log.Printf("Error creating request: %v", err)
+				httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			}
+
+			resp, err := client.Do(req)
+			if err != nil {
+				log.Printf("Error executing request: %v", err)
+				httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			}
+
+			buf := new(bytes.Buffer)
+			buf.ReadFrom(resp.Body)
+			var info map[string]interface{}
+			json.Unmarshal(buf.Bytes(), &info)
+
+			log.Printf("Status: %+v", buf.String())
+
+			var status Status
+			if isOn, ok := info["isOn"].(bool); ok {
+				status = ToggleStatus{
+					Value: isOn,
+				}
+			}
+
+			json.NewEncoder(w).Encode(&Robot{
+				ID:            serial,
+				Nickname:      nickname,
+				RobotType:     robotType,
+				InterfaceType: "toggle",
+				RobotStatus:   status,
+			})
+		default:
+			// TODO
 		}
 
 	})
@@ -179,7 +212,7 @@ func listRobotHandler(db *sql.DB) httprouter.Handle {
 		)
 		// iterate through rows
 
-		robots := []*Response{}
+		robots := []*Robot{}
 
 		for rows.Next() {
 			err := rows.Scan(&serial, &nickname, &robotType)
@@ -188,12 +221,11 @@ func listRobotHandler(db *sql.DB) httprouter.Handle {
 				httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			}
 
-			robotInterface := TriggerInterface{"toggle"}
-			resp := &Response{
-				Id:             serial,
-				Nickname:       nickname,
-				RobotType:      robotType,
-				RobotInterface: robotInterface,
+			resp := &Robot{
+				ID:            serial,
+				Nickname:      nickname,
+				RobotType:     robotType,
+				InterfaceType: "toggle",
 			}
 			robots = append(robots, resp)
 		}
@@ -210,13 +242,12 @@ func listRobotHandler(db *sql.DB) httprouter.Handle {
 				log.Printf("Failed to scan row of range table: %v", err)
 				httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			}
-			robotInterface := RangeInterface{"range", minimum, maximum}
 
-			resp := &Response{
-				Id:             serial,
-				Nickname:       nickname,
-				RobotType:      robotType,
-				RobotInterface: robotInterface,
+			resp := &Robot{
+				ID:            serial,
+				Nickname:      nickname,
+				RobotType:     robotType,
+				InterfaceType: "range",
 			}
 			robots = append(robots, resp)
 		}
