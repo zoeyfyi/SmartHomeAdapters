@@ -1,17 +1,30 @@
 package com.github.halspals.smarthomeadapters.smarthomeadapters
 
+import android.content.Context
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.View
-import android.widget.Button
+import android.view.inputmethod.InputMethodManager
+import com.github.halspals.smarthomeadapters.smarthomeadapters.model.Token
+import com.github.halspals.smarthomeadapters.smarthomeadapters.model.User
 import kotlinx.android.synthetic.main.activity_authentication.*
 import org.jetbrains.anko.*
 import org.jetbrains.anko.design.snackbar
+import org.json.JSONException
+import org.json.JSONObject
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.HttpException
+import retrofit2.Response
 
 class AuthenticationActivity : AppCompatActivity() {
 
     private val tag = "AuthenticationActivity"
+
+    private val restApiService by lazy {
+        RestApiService.new()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -21,17 +34,25 @@ class AuthenticationActivity : AppCompatActivity() {
             Set up appropriate listeners for button click events
          */
         sign_in_button.setOnClickListener { _ ->
-            sign_in_button.isEnabled = false
 
-            if (signInUser()) {
-                toast("Signed in")
-                Log.d(tag, "Starting MainActivity")
-                startActivity(intentFor<MainActivity>().clearTask().newTask())
+            // Dismiss the keyboard
+            val inputMethodManager = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+            val currentView = currentFocus ?: View(this)
+            inputMethodManager.hideSoftInputFromWindow(currentView.windowToken, 0)
+
+            // Signal to the user that we are waiting for an async call
+            sign_in_button.isEnabled = false
+            login_progress_bar.visibility = View.VISIBLE
+
+            val email = email_input.text.toString()
+            val password = password_input.text.toString()
+            val inputsOK = checkEmailInput(email) && checkPasswordInput(password)
+
+            if (inputsOK) {
+                signInUser(User(email, password))
             } else {
-                // TODO this should use the error message received by the server
-                snackbar_layout.snackbar("Failed to sign you in!")
-                Log.w(tag, "Sign-in failed.")
                 sign_in_button.isEnabled = true
+                login_progress_bar.visibility = View.GONE
             }
         }
 
@@ -44,41 +65,88 @@ class AuthenticationActivity : AppCompatActivity() {
         email_input.setOnFocusChangeListener { _, hasFocus ->
             if (!hasFocus) {
                 // The email input has dropped focus; check its validity.
-                checkEmailInput()
+                checkEmailInput(email_input.text.toString())
             }
         }
         password_input.setOnFocusChangeListener { _, hasFocus ->
             if (!hasFocus) {
                 // The password input has dropped focus; check its validity.
-                checkPasswordInput()
+                checkPasswordInput(password_input.text.toString())
             }
         }
     }
 
     /**
-     * WIP: Get the email and password given, validate them, and then
-     * try to authenticate the user.
+     * Makes a REST call to sign in the given user.
      *
-     * @return whether the inputs are valid and the authentication was successful
+     * @param user the user to sign in
      */
-    private fun signInUser(): Boolean {
-        login_progress_bar.visibility = View.VISIBLE
-        // TODO make this authenticate with web server
-        val signInOK = checkEmailInput() && checkPasswordInput()
-        login_progress_bar.visibility = View.GONE
-        return signInOK
+    private fun signInUser(user: User) {
+        restApiService.loginUser(user).enqueue(object: Callback<Token> {
+            override fun onResponse(call: Call<Token>, response: Response<Token>) {
+                val token = response.body()
+                if (response.isSuccessful && token != null) {
+                    saveTokenAndMoveToMain(token.token)
+                } else {
+                    val error = try {
+                        JSONObject(response.errorBody()?.string()).getString("error")
+                    } catch (e: JSONException) {
+                        response.message()
+                    }
+
+                    handleLoginError(error)
+                }
+            }
+
+            override fun onFailure(call: Call<Token>, error: Throwable) {
+                handleLoginError(error.message)
+            }
+        })
     }
 
     /**
-     * Gets the email from the [email_input] and checks that it is a valid email string.
-     * Sets errors on [email_input] as appropriate.
+     * WIP: Saves the token and starts a [MainActivity].
+     * Currently only keeps token in memory, passing it as an extra to the activity;
+     * when we have time this should be changed to saving the token in Account Manager.
      *
+     * @param token the authorization token received from the server
+     */
+    private fun saveTokenAndMoveToMain(token: String) {
+        Log.d(tag, "Succeeded in receiving token, starting MainActivity")
+        // TODO token should be saved in Account Manager for the user
+        toast("Signed in")
+        startActivity(intentFor<MainActivity>("token" to token).clearTask().newTask())
+    }
+
+    /**
+     * Handles an error received by [signInUser], displaying the message to the user.
+     *
+     * @param error the error received from the api call
+     */
+    private fun handleLoginError(error: String?) {
+
+        // Display the error to the user
+        Log.d(tag, "Login failed: $error")
+        if (error != null) {
+            snackbar_layout.snackbar(error)
+        } else {
+            Log.w(tag, "Error message was null")
+        }
+
+        // Allow the user to try again
+        login_progress_bar.visibility = View.GONE
+        sign_in_button.isEnabled = true
+    }
+
+    /**
+     * Makes sure the given email is valid, setting an error to [email_input] if not.
+     *
+     * @param email the email to check for validity
      * @return whether the given email is a valid one
      */
-    private fun checkEmailInput(): Boolean {
-        val email = email_input.text
-        val emailIsValid = !email.isNullOrEmpty()
-                           && android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
+    private fun checkEmailInput(email: String): Boolean {
+
+        val emailIsValid = android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
 
         if (!emailIsValid) {
             email_input.error = "Invalid email address"
@@ -91,18 +159,18 @@ class AuthenticationActivity : AppCompatActivity() {
 
 
     /**
-     * WIP: Gets the password from [password_input] and checks that it is valid.
-     * Currently only checks that it is not null or empty.
-     * Sets errors on [password_input] as appropriate.
+     * Checks the validity of the password (>= 8 chars).
+     * Sets an error to [password_input] if it is not valid.
      *
+     * @param password the password to check
      * @return whether the password is a valid one
      */
-    private fun checkPasswordInput(): Boolean {
+    private fun checkPasswordInput(password: String): Boolean {
         // TODO we can add more checks here like password length etc
-        val pwIsValid = !password_input.text.isNullOrEmpty()
+        val pwIsValid = password.length >= 8
 
         if (!pwIsValid) {
-            password_input.error = "Invalid password"
+            password_input.error = "Must be at least 8 characters long"
         } else {
             password_input.error = null
         }

@@ -35,7 +35,7 @@ class RegisterNewUserTest {
 
 
         val appCompatButton2 = onView(
-                allOf(withId(R.id.send_email_button), withText("Confirm email"),
+                allOf(withId(R.id.register_button),
                         isDisplayed()))
         appCompatButton2.perform(click())
 
@@ -61,21 +61,9 @@ class RegisterNewUserTest {
 
         textInputEditText3.perform(replaceText("testtest\$111"))
 
-
         appCompatButton2.perform(click())
 
-        Thread.sleep(2000)
-
-        val appCompatEditText = onView(
-                allOf(withId(R.id.activation_code_input),
-                        isDisplayed()))
-        appCompatEditText.perform(replaceText("123456"))
-
-
-        val appCompatButton6 = onView(
-                allOf(withId(R.id.verify_code_button), withText("Verify"),
-                        isDisplayed()))
-        appCompatButton6.perform(click())
+        Thread.sleep(5000)
 
         Intents.intended(IntentMatchers.hasComponent(MainActivity::class.java.name))
     }
