@@ -21,10 +21,11 @@ var (
 )
 
 type Robot struct {
-	ID            string `json:"id"`
-	Nickname      string `json:"nickname"`
-	RobotType     string `json:"robotType"`
-	InterfaceType string `json:"interfaceType"`
+	ID            string      `json:"id"`
+	Nickname      string      `json:"nickname"`
+	RobotType     string      `json:"robotType"`
+	InterfaceType string      `json:"interfaceType"`
+	Status        interface{} `json:"Status"`
 }
 
 func connectionStr() string {
@@ -65,9 +66,7 @@ func httpWriteError(w http.ResponseWriter, msg string, code int) {
 
 func queryRobotHandler(db *sql.DB) httprouter.Handle {
 	return httprouter.Handle(func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-
 		// get user-supplied ID parameter
-
 		robotID := ps.ByName("robotId")
 
 		var (
@@ -96,13 +95,6 @@ func queryRobotHandler(db *sql.DB) httprouter.Handle {
 			// read from table and write response
 			found = true
 			err := rows.Scan(&serial, &nickname, &robotType)
-			resp := &Robot{
-				ID:            serial,
-				Nickname:      nickname,
-				RobotType:     robotType,
-				InterfaceType: "toggle",
-			}
-			json.NewEncoder(w).Encode(resp)
 			if err != nil {
 				log.Printf("Failed to scan robot %s: %v", robotID, err)
 				httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -121,13 +113,6 @@ func queryRobotHandler(db *sql.DB) httprouter.Handle {
 			for rows.Next() {
 				found = true
 				err := rows.Scan(&serial, &nickname, &robotType, &minimum, &maximum)
-				resp := &Robot{
-					ID:            serial,
-					Nickname:      nickname,
-					RobotType:     robotType,
-					InterfaceType: "range",
-				}
-				json.NewEncoder(w).Encode(resp)
 				if err != nil {
 					log.Printf("Failed to scan robot %s: %v", robotID, err)
 					httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -139,6 +124,40 @@ func queryRobotHandler(db *sql.DB) httprouter.Handle {
 		// if no robots were found, return nil
 		if found == false {
 			json.NewEncoder(w).Encode("No robot with that ID")
+		}
+
+		// get the status of the robot
+		switch robotType {
+		case "switch":
+			url := fmt.Sprintf("http://switchserver/%s", robotID)
+			req, err := http.NewRequest(http.MethodGet, url, nil)
+			if err != nil {
+				log.Printf("Error creating request: %v", err)
+				httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			}
+
+			resp, err := http.DefaultClient.Do(req)
+			if err != nil {
+				log.Printf("Error executing request: %v", err)
+				httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			}
+
+			buf := new(bytes.Buffer)
+			buf.ReadFrom(resp.Body)
+			var status interface{}
+			json.Unmarshal(buf.Bytes(), &status)
+
+			log.Printf("Status: %+v", buf.String())
+
+			json.NewEncoder(w).Encode(&Robot{
+				ID:            serial,
+				Nickname:      nickname,
+				RobotType:     robotType,
+				InterfaceType: "toggle",
+				Status:        status,
+			})
+		default:
+			// TODO
 		}
 
 	})
