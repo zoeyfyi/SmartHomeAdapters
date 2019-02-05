@@ -15,6 +15,10 @@ class MainActivity :
         BottomNavigationView.OnNavigationItemSelectedListener
 {
 
+    internal val restApiService by lazy {
+        RestApiService.new()
+    }
+
     private val tag = "MainActivity"
 
     private var authenticationToken: String? = null

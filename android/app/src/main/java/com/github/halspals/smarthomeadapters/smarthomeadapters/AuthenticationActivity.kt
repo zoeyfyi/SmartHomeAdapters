@@ -88,12 +88,7 @@ class AuthenticationActivity : AppCompatActivity() {
                 if (response.isSuccessful && token != null) {
                     saveTokenAndMoveToMain(token.token)
                 } else {
-                    val error = try {
-                        JSONObject(response.errorBody()?.string()).getString("error")
-                    } catch (e: JSONException) {
-                        response.message()
-                    }
-
+                    val error = RestApiService.extractErrorFromResponse(response)
                     handleLoginError(error)
                 }
             }

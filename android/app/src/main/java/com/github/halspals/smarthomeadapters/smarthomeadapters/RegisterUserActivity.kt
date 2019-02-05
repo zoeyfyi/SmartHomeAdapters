@@ -109,12 +109,7 @@ class RegisterUserActivity : AppCompatActivity() {
                     toast("Registered; now signing you in...")
                     signInUser(user)
                 } else {
-                    val error = try {
-                        JSONObject(response.errorBody()?.string()).getString("error")
-                    } catch (e: JSONException) {
-                        response.message()
-                    }
-
+                    val error = RestApiService.extractErrorFromResponse(response)
                     handleCallbackError(error, enableFurtherRegistration = true)
                 }
             }
@@ -137,12 +132,7 @@ class RegisterUserActivity : AppCompatActivity() {
                 if (response.isSuccessful && token != null) {
                     saveTokenAndMoveToMain(token.token)
                 } else {
-                    val error = try {
-                        JSONObject(response.errorBody()?.string()).getString("error")
-                    } catch (e: JSONException) {
-                        response.message()
-                    }
-
+                    val error = RestApiService.extractErrorFromResponse(response)
                     handleCallbackError(error)
                 }
             }
@@ -168,7 +158,7 @@ class RegisterUserActivity : AppCompatActivity() {
     }
 
     /**
-     * Handles an error received by [signInUser], displaying the message to the user.
+     * Handles an error received by an api call, displaying the message to the user.
      *
      * @param error the error received from the api call
      * @param whether to allow the user to press register again
