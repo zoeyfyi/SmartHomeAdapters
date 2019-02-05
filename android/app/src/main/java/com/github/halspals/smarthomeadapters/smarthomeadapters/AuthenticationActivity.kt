@@ -50,6 +50,9 @@ class AuthenticationActivity : AppCompatActivity() {
 
             if (inputsOK) {
                 signInUser(User(email, password))
+            } else {
+                sign_in_button.isEnabled = true
+                login_progress_bar.visibility = View.GONE
             }
         }
 
