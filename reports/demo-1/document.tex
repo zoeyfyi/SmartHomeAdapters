@@ -24,7 +24,7 @@
 	\cellcolor{blue!25}\large
 	\textbf{What were your goals?}
 	\\ \hline
-		Here is a summary of are goals for demo 1 from are project plan.
+		Here is a summary of our goals for demo 1, as discussed in the project plan.
 
 		\begin{itemize}
 			\item Web server 
@@ -51,7 +51,7 @@
 					\item Receive servo commands
 					\item Construct the LEGO switch gripper
 					\item Connect the servo to Arduino
-					\item Create temporary client on DICE to forward servo commands (since the Arduino we have doesn’t have a Wifi chip)
+					\item Create temporary client on DICE to forward servo commands (since the Arduino we have doesn’t have a WiFi chip)
 				\end{itemize}
 		\end{itemize}
   \\
@@ -67,13 +67,16 @@
 	\textbf{Summarise how your group organised the workload to achieve your goals.}
 	\\ \hline
 	\vtop to 120mm{
-		We split into 3 teams corresponding to the components of the project: web server, android and robot.
-		\newline\newline
-		The robot team is comprised of Luke, Spencer, Han, Wang and Sameer. The team spent most of the time iterating on the LEGO frame to hold the electronics. Ben was responsible for the code to receive messages and drive the servo, aswell as the robot client to relay messages from the webserver.
-		\newline\newline
-		Theo and Ben worked on the android app. Theo created the authentication UI and Ben worked on the robot and robot list UI.
-		\newline\newline
+		We have largely split into 3 teams corresponding to the components of the project --- web server, android app, and robot --- however there was some overlap due to some members having more time and experience than others, allowing them to help out wherever was needed.
+
+		The robot team is comprised of Luke, Spencer, Han, Wang and Sameer. The team spent most of the time iterating on the LEGO frame to hold the electronics. Ben was responsible for the code to receive messages and drive the servo, aswell as the robot client to relay messages from the webserver. 
+
+		Theo and Ben worked on the android app. Theo created the authentication UI and the backend for communicating with the REST API, whilst Ben worked on the robot and robot list UIs. There was a lot of collaborative work between them, discussing libraries to use and possible implementations whilst also reviewing each other's code. 
+
 		The web server team is Ben and Gwion. They built the infustructure that we will need in order to deliver the more complex features in later demos. Ben completed the robot server (sends commands to robot via a web socket), user server (registration, login and authentication), switch server (recording the state of the switch) and client server (REST API that the android app works with). Gwion was responsible for the info server (infomation about the robot, e.g. its nickname, the owner, etc).
+
+		In order to be able to adjust worloads according to everyone's progress we used the \textit{Projects} feature on GitHub; with milestones set up for the demo we could easily see where we were making progress and where we needed to focus more of our efforts.
+		We also discussed progress in our weekly meetings with Rusab, and used Slack to discuss any questions or issues.
 	}
   \\
   \hline
@@ -89,9 +92,9 @@
 	\\ \hline
 	\vtop to 95mm{
 		\begin{itemize}
-			\item There was alot of communication between Ben, Gwion and Theo as we iterated on the REST API. It was great moment when we finnaly integrated the app and the client web server, they both worked with minimal issues.
-			\item The microservice model means we have many small systems that are well tested, on the other hand there are many more systems to integrate. It was an important milestone when the switch endpoints were finished since it required communication between 4 seperate services.
-			\item We did not expect building the lego grip would be as difficult as it had been. We gained alot more confidence in our system once it was finnaly finished.
+			\item There was a lot of communication between Ben, Gwion and Theo as we iterated on the REST API. It was a great moment when we finally managed to integrate the app and the client web server, bringing the entire infrastructure together.
+			\item Since we went with a microservice model for the web server, we have many small systems that are well tested. However this also meant that there were many more systems to integrate; it was an important milestone when the switch endpoints were finished since it required communication between 4 seperate services.
+			\item We did not expect building the LEGO grip to be as difficult as it has been. We gained a lot more confidence in our system once it was finally finished, as it is quite important for our product to be able to interact with the real world consistently.
 		\end{itemize}
 	}
   \\
@@ -107,11 +110,7 @@
 	\textbf{What did you not achieve? Briefly explain why.}
 	\\ \hline
 	\vtop to 95mm{
-%  some text some text some text some text
-%  some text some text some text some text
-
-%  some text some text some text some text
-%  some text some text some text some text 
+%  Hopefully nothing :)
   }
   \\
   \hline
@@ -126,11 +125,7 @@
 	\textbf{Include any quantitative data you have collected (this can be a graph/table with a few words)}
 	\\ \hline
 	\vtop to 135mm{
-%  some text some text some text some text
-%  some text some text some text some text
-
-%  some text some text some text some text
-%  some text some text some text some text 
+%  IDEAS: Success rate, server stress load, could just include data on how many tests we have etc.
   }
   \\
   \hline
@@ -145,8 +140,8 @@
 	\textbf{Say briefly what changes you will make to your plan for the next demo.}
 	\\ \hline
 	\vtop to 45mm{
-		We did not expect the lego gripper to be as difficult to construct as it was. With this in mind we will want to start prototyping the thermostat grip as soon as possible. If the 3D printed switch grip is finished within the first week we may want to refocus our efforts from LEGO to 3D printing the thermostat grip.
-  }
+		We did not expect the LEGO gripper to be as difficult to construct as it was --- with this in mind we will want to start prototyping the thermostat grip as soon as possible. If the 3D printed switch grip is finished within the first week we may want to refocus our efforts from LEGO to 3D printing the thermostat grip.
+  	}
   \\
   \hline
 \end{tabular}
