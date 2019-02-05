@@ -20,12 +20,30 @@ var (
 	url      = os.Getenv("DB_URL")
 )
 
+type Status interface {
+	status()
+}
+
+type ToggleStatus struct {
+	Value bool `json:"value"`
+}
+
+func (s ToggleStatus) status() {}
+
+type RangeStatus struct {
+	Min     int `json:"min"`
+	Max     int `json:"max"`
+	Current int `json:"current"`
+}
+
+func (s RangeStatus) status() {}
+
 type Robot struct {
-	ID            string      `json:"id"`
-	Nickname      string      `json:"nickname"`
-	RobotType     string      `json:"robotType"`
-	InterfaceType string      `json:"interfaceType"`
-	Status        interface{} `json:"Status"`
+	ID            string `json:"id"`
+	Nickname      string `json:"nickname"`
+	RobotType     string `json:"robotType"`
+	InterfaceType string `json:"interfaceType"`
+	RobotStatus   Status `json:"status"`
 }
 
 func connectionStr() string {
@@ -144,8 +162,8 @@ func queryRobotHandler(db *sql.DB) httprouter.Handle {
 
 			buf := new(bytes.Buffer)
 			buf.ReadFrom(resp.Body)
-			var status interface{}
-			json.Unmarshal(buf.Bytes(), &status)
+			var info map[string]interface{}
+			json.Unmarshal(buf.Bytes(), &info)
 
 			log.Printf("Status: %+v", buf.String())
 
@@ -154,7 +172,9 @@ func queryRobotHandler(db *sql.DB) httprouter.Handle {
 				Nickname:      nickname,
 				RobotType:     robotType,
 				InterfaceType: "toggle",
-				Status:        status,
+				RobotStatus: ToggleStatus{
+					Value: info["isOn"].(bool),
+				},
 			})
 		default:
 			// TODO
