@@ -1,6 +1,7 @@
 package com.github.halspals.smarthomeadapters.smarthomeadapters
 
 
+import android.content.Context
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.util.Log
@@ -9,8 +10,13 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import com.github.halspals.smarthomeadapters.smarthomeadapters.model.Robot
-import com.github.halspals.smarthomeadapters.smarthomeadapters.model.RobotInterface
+import kotlinx.android.synthetic.main.activity_authentication.*
+import okhttp3.ResponseBody
+import org.jetbrains.anko.design.snackbar
 import org.jetbrains.anko.toast
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 class RobotFragment : Fragment() {
 
@@ -56,18 +62,6 @@ class RobotFragment : Fragment() {
         switch.visibility = View.INVISIBLE
         seekBar.visibility = View.INVISIBLE
 
-        switch.setOnCheckedChangeListener { _, isOn ->
-            onSwitch(isOn)
-        }
-
-        seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                onSeek(progress)
-            }
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
-        })
-
         fetchRobot()
     }
 
@@ -79,20 +73,17 @@ class RobotFragment : Fragment() {
         // TODO: fetch robot from server
         // TODO: remove test code
 
-        // odd id -> range, even id -> switch
-        val isToggle = robotId.toIntOrNull()?.rem(2) == 0
-        val robotInterface = if (isToggle) {
-            RobotInterface.Toggle(false)
-        } else {
-            RobotInterface.Range(5, 0, 10)
-        }
+        (activity as MainActivity).restApiService.getRobot(robotId).enqueue(object: Callback<Robot> {
+            override fun onFailure(call: Call<Robot>, t: Throwable) {
+                Log.e(fTag, t.message)
+            }
 
-        onReceiveRobot(Robot(
-            id = "123",
-            nickname = "Robot 123",
-            iconDrawable = R.drawable.basic_lightbulb,
-            robotInterface = robotInterface
-        ))
+            override fun onResponse(call: Call<Robot>, response: Response<Robot>) {
+                Log.d(fTag, "received")
+                Log.d(fTag, "body: ${response.body()}")
+                onReceiveRobot(response.body()!!)
+            }
+        })
     }
 
     /**
@@ -101,22 +92,37 @@ class RobotFragment : Fragment() {
      * @param robot the robot
      */
     private fun onReceiveRobot(robot: Robot) {
+        Log.d(fTag, "receive propagating")
         this.robot = robot
+
+        Log.d(fTag, robot.toString())
 
         progressBar.visibility = View.INVISIBLE
         switch.visibility = View.INVISIBLE
         seekBar.visibility = View.INVISIBLE
 
-        when(robot.robotInterface) {
-            is RobotInterface.Toggle -> {
+        when(robot.robotInterfaceType) {
+            "toggle" -> {
                 switch.visibility = View.VISIBLE
-                switch.isChecked = robot.robotInterface.isOn
+                switch.isChecked = robot.robotStatus.value
+
+                switch.setOnCheckedChangeListener { _, isOn ->
+                    onSwitch(isOn)
+                }
             }
-            is RobotInterface.Range -> {
+            "range" -> {
                 seekBar.visibility = View.VISIBLE
-                seekBar.max = robot.robotInterface.max
-                seekBar.min = robot.robotInterface.min
-                seekBar.progress = robot.robotInterface.value
+                seekBar.max = robot.robotStatus.max
+                seekBar.min = robot.robotStatus.min
+                seekBar.progress = robot.robotStatus.current
+
+                seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+                    override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                        onSeek(progress)
+                    }
+                    override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+                    override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+                })
             }
         }
     }
@@ -128,13 +134,36 @@ class RobotFragment : Fragment() {
      */
     private fun onSwitch(isOn: Boolean) {
         Log.d(fTag, "onSwitch($isOn)")
-        // TODO: send update to server
+
+        // Send the update to the server
+        (activity as MainActivity).restApiService.robotToggle(robotId, isOn, mapOf()).enqueue(object: Callback<ResponseBody> {
+            override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
+                if (response.isSuccessful) {
+                    (activity as Context).toast("Success")
+                    Log.d(fTag, "Server accepted setting switch to $isOn")
+                } else {
+                    val error = RestApiService.extractErrorFromResponse(response)
+                    Log.e(fTag, "Getting the robot was unsuccessful, error: $error")
+                    if (error != null) {
+                        snackbar_layout.snackbar(error)
+                    }
+                }
+            }
+
+            override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                val error = t.message
+                Log.e(fTag, "Robot get FAILED, error: $error")
+                if (error != null) {
+                    snackbar_layout.snackbar(error)
+                }
+            }
+        })
     }
 
     /**
      * onSeek is called whenever the seek bar changes states
      *
-     * @param value value of seek bar
+     * @param value current of seek bar
      */
     private fun onSeek(value: Int) {
         Log.d(fTag, "onSeek($value)")
