@@ -339,12 +339,36 @@ func offHandler(db *sql.DB) httprouter.Handle {
 	}
 }
 
+func getSwitchHandler(db *sql.DB) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+		// parse robot ID
+		robotID := p.ByName("id")
+
+		var isOn bool
+		row := db.QueryRow("SELECT isOn FROM switches WHERE serial = $1", robotID)
+
+		err := row.Scan(&isOn)
+		if err != nil {
+			log.Printf("Failed to scan database: %v", err)
+			httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+
+		json.NewEncoder(w).Encode(&struct {
+			ToggleValue bool
+		}{
+			ToggleValue: isOn,
+		})
+	}
+}
+
 func createRouter(db *sql.DB) *httprouter.Router {
 	router := httprouter.New()
 
 	// register routes
 	router.POST("/:id", addSwitchHandler(db))
 	router.DELETE("/:id", removeSwitchHandler(db))
+	router.GET("/:id", getSwitchHandler(db))
 	router.PATCH("/:id/on", onHandler(db))
 	router.PATCH("/:id/off", offHandler(db))
 
