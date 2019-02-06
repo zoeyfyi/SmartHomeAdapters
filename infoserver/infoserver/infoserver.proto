@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+service InfoServer {
+    rpc GetRobot (RobotQuery) returns (Robot) {}
+}
+
+message RobotQuery {
+    string id = 1;
+}
+
+message Robot {
+    string id = 1;
+    string nickname = 2;
+    string robotType = 3;
+    string interfaceType = 4;
+
+    oneof robotStatus {
+        ToggleStatus toggleStatus = 5;
+        RangeStatus rangeStatus = 6;
+    };
+}
+
+message ToggleStatus {
+    bool value = 1;
+}
+
+message RangeStatus {
+    int64 max = 1;
+    int64 min = 2;
+    int64 current = 3;
+}
