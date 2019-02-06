@@ -69,11 +69,11 @@
 	\vtop to 120mm{
 		We have largely split into 3 teams corresponding to the components of the project --- web server, android app, and robot --- however there was some overlap due to some members having more time and experience than others, allowing them to help out wherever was needed.
 
-		The robot team is comprised of Luke, Spencer, Han, Wang and Sameer. The team spent most of the time iterating on the LEGO frame to hold the electronics. Ben was responsible for the code to receive messages and drive the servo, aswell as the robot client to relay messages from the webserver. 
-
-		Theo and Ben worked on the android app. Theo created the authentication UI and the backend for communicating with the REST API, whilst Ben worked on the robot and robot list UIs. There was a lot of collaborative work between them, discussing libraries to use and possible implementations whilst also reviewing each other's code. 
-
-		The web server team is Ben and Gwion. They built the infustructure that we will need in order to deliver the more complex features in later demos. Ben completed the robot server (sends commands to robot via a web socket), user server (registration, login and authentication), switch server (recording the state of the switch) and client server (REST API that the android app works with). Gwion was responsible for the info server (infomation about the robot, e.g. its nickname, the owner, etc).
+		\begin{itemize}
+		\item The robot team is comprised of Luke, Spencer, Han, Wang and Sameer. The team spent most of the time iterating on the LEGO frame to hold the electronics. Ben was responsible for the code to receive messages and drive the servo, as well as the robot client to relay messages from the webserver.
+		\item Theo and Ben worked on the android app. Theo created the authentication UI and the backend for communicating with the REST API, whilst Ben worked on the robot and robot list UIs. There was a lot of collaborative work between them, discussing libraries to use and possible implementations whilst also reviewing each other's code. 
+		\item The web server team is Ben and Gwion. They built the infustructure that we will need in order to deliver the more complex features in later demos. Ben completed the robot server (sends commands to robot via a web socket), user server (registration, login and authentication), switch server (recording the state of the switch) and client server (REST API that the android app works with). Gwion was responsible for the info server (infomation about the robot, e.g. its nickname, the owner, etc).
+		\end{itemize}
 
 		In order to be able to adjust worloads according to everyone's progress we used the \textit{Projects} feature on GitHub; with milestones set up for the demo we could easily see where we were making progress and where we needed to focus more of our efforts.
 		We also discussed progress in our weekly meetings with Rusab, and used Slack to discuss any questions or issues.
@@ -94,7 +94,7 @@
 		\begin{itemize}
 			\item There was a lot of communication between Ben, Gwion and Theo as we iterated on the REST API. It was a great moment when we finally managed to integrate the app and the client web server, bringing the entire infrastructure together.
 			\item Since we went with a microservice model for the web server, we have many small systems that are well tested. However this also meant that there were many more systems to integrate; it was an important milestone when the switch endpoints were finished since it required communication between 4 seperate services.
-			\item We did not expect building the LEGO grip to be as difficult as it has been. We gained a lot more confidence in our system once it was finally finished, as it is quite important for our product to be able to interact with the real world consistently.
+			\item We did not expect building the LEGO grip to be as difficult as it has been. Though we were hoping to have a more impressive robot by now, we are glad that we managed to produce something which shows how the whole system -- from app to client server to robot server to switch server to robot -- ultimately affects the physical world.
 		\end{itemize}
 	}
   \\
@@ -110,7 +110,17 @@
 	\textbf{What did you not achieve? Briefly explain why.}
 	\\ \hline
 	\vtop to 95mm{
-%  Hopefully nothing :)
+		Our only failure was that we did not manage to produce a robot which could stick on top of a real light switch on a wall.
+		This was mainly due to two reasons:
+		\begin{enumerate}
+			\item Constructing the device using LEGO proved even more difficult than we had expected, resulting in a rather clunky, large robot which was heavier than we had anticipated.
+			\item We had underestimated the force with which the robot itself would be pushed back when pushing against the light switch; as this worked to push the robot away from the wall, it was difficult to make it stay in place. 
+		\end{enumerate}
+		The problem was made worse because of the fact that we are using a temporary platform for the robot, with a full Arduino Uno rather than the ESP8266s we intend to use for the final product, and with suboptimal servos.
+
+		\vspace{2.5mm}
+
+		Ultimately we hope to address the above by 3D-printing as many parts as is possible and moving to the intended platform ASAP.
   }
   \\
   \hline
@@ -140,7 +150,11 @@
 	\textbf{Say briefly what changes you will make to your plan for the next demo.}
 	\\ \hline
 	\vtop to 45mm{
-		We did not expect the LEGO gripper to be as difficult to construct as it was --- with this in mind we will want to start prototyping the thermostat grip as soon as possible. If the 3D printed switch grip is finished within the first week we may want to refocus our efforts from LEGO to 3D printing the thermostat grip.
+		Considering the difficulty we've experienced in producing the physical device, we want to start prototyping the thermostat grip as soon as possible. If the 3D printed switch grip is finished within the first week we may want to refocus our efforts from LEGO to 3D printing the thermostat grip.
+
+		\vspace{2.5mm}
+
+		The building regulations prohibiting wireless access points, which we were previously unaware of, also mean that we need to come up with an alternative way of connecting/registering new robots to the user's account.
   	}
   \\
   \hline
