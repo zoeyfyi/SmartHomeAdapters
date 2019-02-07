@@ -68,7 +68,7 @@ func (s *server) GetRobot(ctx context.Context, query *infoserver.RobotQuery) (*i
 		url := fmt.Sprintf("http://switchserver/%s", query.Id)
 
 		// send request
-		req, err := http.NewRequest(http.MethodPut, url, nil)
+		req, err := http.NewRequest(http.MethodGet, url, nil)
 		if err != nil {
 			log.Printf("Error creating request: %v", err)
 			return nil, err

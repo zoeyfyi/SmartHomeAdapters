@@ -1,6 +1,8 @@
 package infoserver
 
-import fmt "fmt"
+import (
+	"fmt"
+)
 
 type RobotNotFoundError struct {
 	ID string

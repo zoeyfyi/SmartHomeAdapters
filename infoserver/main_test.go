@@ -1,156 +1,184 @@
 package main
 
 import (
-	"bytes"
-	"io/ioutil"
-	"net/http"
-	"net/http/httptest"
-	"strings"
+	"context"
+	"io"
+	"log"
+	"net"
+	"os"
+	"reflect"
 	"testing"
+	"time"
+
+	"google.golang.org/grpc/status"
+	"google.golang.org/grpc/test/bufconn"
+	gock "gopkg.in/h2non/gock.v1"
+
+	"github.com/golang/protobuf/ptypes/empty"
+	_ "github.com/lib/pq"
+	"github.com/mrbenshef/SmartHomeAdapters/infoserver/infoserver"
+	"google.golang.org/grpc"
 )
 
-type roundTripFunc func(req *http.Request) *http.Response
+var lis *bufconn.Listener
 
-func (f roundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
-	return f(req), nil
-}
-
-func testClient(fn roundTripFunc) *http.Client {
-	return &http.Client{
-		Transport: roundTripFunc(fn),
-	}
-}
-
-type testServer struct {
-	Handler http.Handler
-	Server  *httptest.Server
-	URL     string
-}
-
-func newServer(t *testing.T) *testServer {
-	var server testServer
-	db := getDb()
-	server.Handler = createRouter(db)
-	server.Server = httptest.NewServer(server.Handler)
-	server.URL = server.Server.URL
-	return &server
-}
-
-func TestRobots(t *testing.T) {
-
-	expectedRequests := []string{"switchserver/123abc"}
-
-	client = testClient(func(req *http.Request) *http.Response {
-		if req.URL.String() != expectedRequests[0] {
-			t.Errorf("Expected request \"%s\", actual request \"%s\"", expectedRequests[0], req.URL.String())
-		}
-
-		// pop first request of slice
-		expectedRequests = expectedRequests[1:]
-
-		return &http.Response{
-			StatusCode: 200,
-			Body:       ioutil.NopCloser(bytes.NewBufferString("{\"IsOn\":false}")),
-			Header:     make(http.Header),
-		}
+func TestMain(m *testing.M) {
+	// start test gRPC server
+	lis = bufconn.Listen(1024 * 1024)
+	s := grpc.NewServer()
+	infoserver.RegisterInfoServerServer(s, &server{
+		DB: getDb(),
 	})
-	defer func() {
-		client = http.DefaultClient
+	go func() {
+		if err := s.Serve(lis); err != nil {
+			log.Fatalf("Server exited with error: %v", err)
+		}
 	}()
 
-	responseSubset := "[{\"id\":\"123abc\",\"nickname\":\"testLightbot\",\"robotType\":\"switch\",\"interfaceType\":" +
-		"\"toggle\"},{\"id\":\"T2D2\",\"nickname\":\"testThermoBot\",\"robotType\":" +
-		"\"thermostat\",\"interfaceType\":\"range\"}]"
+	os.Exit(m.Run())
+}
 
-	s := newServer(t)
-	defer s.Server.Close()
+func bufDialer(string, time.Duration) (net.Conn, error) {
+	return lis.Dial()
+}
+func TestGetRobots(t *testing.T) {
+	expectedRobots := []*infoserver.Robot{
+		&infoserver.Robot{
+			Id:            "123abc",
+			Nickname:      "testLightbot",
+			RobotType:     "switch",
+			InterfaceType: "toggle",
+		},
+		&infoserver.Robot{
+			Id:            "T2D2",
+			Nickname:      "testThermoBot",
+			RobotType:     "thermostat",
+			InterfaceType: "range",
+		},
+	}
 
-	req, err := http.NewRequest("GET", s.URL+"/robots", nil)
-
+	ctx := context.Background()
+	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithDialer(bufDialer), grpc.WithInsecure())
 	if err != nil {
-		t.Errorf("Error: %v", err)
+		t.Fatalf("Failed to dial bufnet: %v", err)
 	}
-	rr := httptest.NewRecorder()
+	defer conn.Close()
 
-	s.Handler.ServeHTTP(rr, req)
-
-	if status := rr.Code; status != http.StatusOK {
-		t.Errorf("Status code differs. Expected \"%d\", Got \"%d\"", http.StatusOK, status)
+	client := infoserver.NewInfoServerClient(conn)
+	stream, err := client.GetRobots(context.Background(), &empty.Empty{})
+	if err != nil {
+		t.Fatalf("Could not get robots: %v", err)
 	}
 
-	if !strings.Contains(rr.Body.String(), responseSubset) {
-		t.Errorf("Body differs. Expected at least \"%s\", Got: \"%s\"", responseSubset, rr.Body.String())
+	var robots []*infoserver.Robot
+	for {
+		robot, err := stream.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			t.Fatalf("Failed to receive robot: %v", err)
+		}
+		robots = append(robots, robot)
+	}
+
+	if !reflect.DeepEqual(robots, expectedRobots) {
+		t.Fatalf("Expected: %+v, Got: %+v", expectedRobots, robots)
 	}
 }
 
-func TestValidRobotId(t *testing.T) {
+func TestGetRobotWithValidID(t *testing.T) {
+	cases := []struct {
+		id            string
+		expectedRobot *infoserver.Robot
+		gockSetup     func()
+	}{
+		{
+			id: "123abc",
+			expectedRobot: &infoserver.Robot{
+				Id:            "123abc",
+				Nickname:      "testLightbot",
+				RobotType:     "switch",
+				InterfaceType: "toggle",
+				RobotStatus: &infoserver.Robot_ToggleStatus{
+					ToggleStatus: &infoserver.ToggleStatus{
+						Value: false,
+					},
+				},
+			},
+			gockSetup: func() {
+				gock.New("http://switchserver").
+					Get("/123abc").
+					Reply(200).
+					JSON(map[string]interface{}{"isOn": false})
+			},
+		},
+		{
+			id: "123abc",
+			expectedRobot: &infoserver.Robot{
+				Id:            "123abc",
+				Nickname:      "testLightbot",
+				RobotType:     "switch",
+				InterfaceType: "toggle",
+				RobotStatus: &infoserver.Robot_ToggleStatus{
+					ToggleStatus: &infoserver.ToggleStatus{
+						Value: true,
+					},
+				},
+			},
+			gockSetup: func() {
+				gock.New("http://switchserver").
+					Get("/123abc").
+					Reply(200).
+					JSON(map[string]interface{}{"isOn": true})
+			},
+		},
+	}
 
-	expectedRequests := []string{"http://switchserver/123abc"}
+	for _, c := range cases {
+		c.gockSetup()
+		defer gock.Off()
 
-	client = testClient(func(req *http.Request) *http.Response {
-		if req.URL.String() != expectedRequests[0] {
-			t.Errorf("Expected request \"%s\", actual request \"%s\"", expectedRequests[0], req.URL.String())
+		ctx := context.Background()
+		conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithDialer(bufDialer), grpc.WithInsecure())
+		if err != nil {
+			t.Fatalf("Failed to dial bufnet: %v", err)
+		}
+		defer conn.Close()
+
+		client := infoserver.NewInfoServerClient(conn)
+		robot, err := client.GetRobot(context.Background(), &infoserver.RobotQuery{Id: c.id})
+		if err != nil {
+			t.Fatalf("Could not get robot: %v", err)
 		}
 
-		// pop first request of slice
-		expectedRequests = expectedRequests[1:]
-
-		return &http.Response{
-			StatusCode: 200,
-			Body:       ioutil.NopCloser(bytes.NewBufferString("{\"IsOn\":false}")),
-			Header:     make(http.Header),
+		if !reflect.DeepEqual(robot, c.expectedRobot) {
+			t.Fatalf("Expected: %+v, Got: %+v", c.expectedRobot, robot)
 		}
-	})
-	defer func() {
-		client = http.DefaultClient
-	}()
-
-	responseSubset := "{\"id\":\"123abc\",\"nickname\":\"testLightbot\",\"robotType\":\"switch\",\"interfaceType\":" +
-		"\"toggle\"}"
-
-	s := newServer(t)
-	defer s.Server.Close()
-
-	req, err := http.NewRequest("GET", s.URL+"/robot/123abc", nil)
-
-	if err != nil {
-		t.Errorf("Error: %v", err)
-	}
-	rr := httptest.NewRecorder()
-
-	s.Handler.ServeHTTP(rr, req)
-
-	if status := rr.Code; status != http.StatusOK {
-		t.Errorf("Status code differs. Expected \"%d\", Got \"%d\"", http.StatusOK, status)
-	}
-
-	if !strings.Contains(rr.Body.String(), responseSubset) {
-		t.Errorf("Body differs. Expected at least \"%s\", Got: \"%s\"", responseSubset, rr.Body.String())
 	}
 }
 
-func TestInValidRobotId(t *testing.T) {
-
-	response := "\"No robot with that ID\""
-
-	s := newServer(t)
-	defer s.Server.Close()
-
-	req, err := http.NewRequest("GET", s.URL+"/robot/definitelynotalegitrobot", nil)
-
+func TestGetRobotWithInvalidID(t *testing.T) {
+	ctx := context.Background()
+	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithDialer(bufDialer), grpc.WithInsecure())
 	if err != nil {
-		t.Errorf("Error: %v", err)
+		t.Fatalf("Failed to dial bufnet: %v", err)
 	}
-	rr := httptest.NewRecorder()
+	defer conn.Close()
 
-	s.Handler.ServeHTTP(rr, req)
+	client := infoserver.NewInfoServerClient(conn)
+	robot, err := client.GetRobot(context.Background(), &infoserver.RobotQuery{Id: "invalidid"})
 
-	if status := rr.Code; status != http.StatusOK {
-		t.Errorf("Status code differs. Expected \"%d\", Got \"%d\"", http.StatusOK, status)
-	}
-
-	if !strings.Contains(rr.Body.String(), response) {
-		t.Errorf("Body differs. Expected at least \"%s\", Got: \"%s\"", response, rr.Body.String())
+	status, ok := status.FromError(err)
+	if !ok {
+		t.Fatalf("Expected grpc status error, got %v %T", err, err)
 	}
 
+	if status.Message() != "No robot with ID \"invalidid\"" {
+		t.Errorf("Expected \"No robot with ID \"invalidid\"\" error message, got: %s", status.Message())
+	}
+
+	if robot != nil {
+		t.Errorf("Robot was not nil")
+	}
 }
