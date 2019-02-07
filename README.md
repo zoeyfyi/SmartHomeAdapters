@@ -6,7 +6,7 @@
 
 ### [Web Server](webserver/README.md)
 
-Receives sensor data and sends servo commands to robots. Exposes a REST API consumed by the android app (and other integrations).
+Receives sensor data and sends servo commands to robots. Exposes a REST API consumed by the android app (and other integrations). To start the servers, install docker and docker-compose then run `docker-compose up`.
 
 ### [Android App](android/README.md)
 

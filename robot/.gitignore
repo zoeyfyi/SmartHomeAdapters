@@ -1,0 +1,2 @@
+# Ignore wifi credentials
+esp8266/wifi.h
