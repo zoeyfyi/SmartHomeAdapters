@@ -1,0 +1,111 @@
+version: '3'
+
+services:
+  # reverse proxy
+  nginx-proxy:
+    image: jwilder/nginx-proxy
+    ports:
+      - 80:80
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+  # database managment
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
+    environment:
+      - VIRTUAL_HOST=adminer.halspals.co.uk
+  # container management
+  portainer:
+    image: portainer/portainer
+    command: -H unix:///var/run/docker.sock
+    restart: always
+    ports:
+      - 8090:9000
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    environment:
+      - VIRTUAL_HOST=portainer.halspals.co.uk
+  userdb:
+    build: 
+      context: ./userserver/database
+    restart: always
+    environment:
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - userdb_data:/var/lib/postgresql/data
+  userserver:
+    build: 
+      context: ./userserver
+    depends_on:
+      - userdb
+    restart: always
+    environment:
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=password
+      - DB_DATABASE=postgres
+      - DB_URL=userdb
+  clientserver:
+    build: 
+      context: ./clientserver
+    restart: always
+    ports:
+      - 9000:80
+    environment:
+      - VIRTUAL_HOST=client.api.halspals.co.uk
+  robotserver:
+    build:
+      context: ./robotserver
+    restart: always
+    ports:
+      - 9100:80
+    environment:
+      - VIRTUAL_HOST=robot.halspals.co.uk
+  infodb:
+    build:
+      context: ./infoserver/database
+    restart: always
+    environment:
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - infodb_data:/var/lib/postgresql/data
+  infoserver:
+    build: 
+      context: ./infoserver
+    restart: always
+    ports:
+      - 9200:8080
+    environment:
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=password
+      - DB_DATABASE=postgres
+      - DB_URL=infodb
+  switchdb:
+    build: 
+      context: ./switchserver/database
+    restart: always
+    environment:
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - switchdb_data:/var/lib/postgresql/data
+  switchserver:
+    build: 
+      context: ./switchserver
+    depends_on:
+      - switchdb
+    restart: always
+    ports:
+      - 8082:80
+    environment:
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=password
+      - DB_DATABASE=postgres
+      - DB_URL=switchdb
+      
+volumes:
+  portainer_data:
+  userdb_data:
+  infodb_data:
+  switchdb_data:
