@@ -5,10 +5,17 @@ import "google/protobuf/empty.proto";
 service InfoServer {
     rpc GetRobot (RobotQuery) returns (Robot) {}
     rpc GetRobots (google.protobuf.Empty) returns (stream Robot) {}
+    rpc ToggleRobot (ToggleRequest) returns (google.protobuf.Empty) {}
 }
 
 message RobotQuery {
     string id = 1;
+}
+
+message ToggleRequest {
+    string id = 1;
+    bool value = 2;
+    bool force = 3;
 }
 
 message Robot {

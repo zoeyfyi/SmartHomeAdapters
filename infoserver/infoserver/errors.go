@@ -23,3 +23,20 @@ type InvalidRobotTypeError struct {
 func (e *InvalidRobotTypeError) Error() string {
 	return fmt.Sprintf("Invalid robot type \"%s\"", e.Type)
 }
+
+type RobotNotTogglableError struct {
+	ID   string
+	Type string
+}
+
+func (e *RobotNotTogglableError) Error() string {
+	return fmt.Sprintf("Robot \"%s\" of type \"%s\" cannot be toggled", e.ID, e.Type)
+}
+
+type ToggleRequestFailed struct {
+	Message string
+}
+
+func (e *ToggleRequestFailed) Error() string {
+	return fmt.Sprintf("Toggle request failed: %s", e.Message)
+}
