@@ -27,32 +27,6 @@ var (
 	url      = os.Getenv("DB_URL")
 )
 
-type Status interface {
-	status()
-}
-
-type ToggleStatus struct {
-	Value bool `json:"value"`
-}
-
-func (s ToggleStatus) status() {}
-
-type RangeStatus struct {
-	Min     int `json:"min"`
-	Max     int `json:"max"`
-	Current int `json:"current"`
-}
-
-func (s RangeStatus) status() {}
-
-type Robot struct {
-	ID            string `json:"id"`
-	Nickname      string `json:"nickname"`
-	RobotType     string `json:"robotType"`
-	InterfaceType string `json:"interfaceType"`
-	RobotStatus   Status `json:"status,omitempty"`
-}
-
 type server struct {
 	DB *sql.DB
 }
@@ -307,7 +281,6 @@ func getDb() *sql.DB {
 	if err != nil {
 		log.Fatalf("Failed to connect to postgres: %v", err)
 	}
-
 	return db
 }
 
