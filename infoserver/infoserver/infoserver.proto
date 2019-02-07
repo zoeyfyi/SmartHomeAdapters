@@ -1,7 +1,10 @@
 syntax = "proto3";
 
+import "google/protobuf/empty.proto";
+
 service InfoServer {
     rpc GetRobot (RobotQuery) returns (Robot) {}
+    rpc GetRobots (google.protobuf.Empty) returns (stream Robot) {}
 }
 
 message RobotQuery {

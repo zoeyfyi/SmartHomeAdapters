@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/julienschmidt/httprouter"
 	_ "github.com/lib/pq"
 	"github.com/mrbenshef/SmartHomeAdapters/infoserver/infoserver"
@@ -156,6 +157,69 @@ func (s *server) GetRobot(ctx context.Context, query *infoserver.RobotQuery) (*i
 	}
 }
 
+func (s *server) GetRobots(_ *empty.Empty, stream infoserver.InfoServer_GetRobotsServer) error {
+	log.Println("getting robots")
+
+	// Query database for robots
+	rows, err := s.DB.Query("SELECT * FROM toggleRobots")
+	if err != nil {
+		log.Printf("Failed to retrive list of robots: %v", err)
+		return err
+	}
+
+	var (
+		serial    string
+		nickname  string
+		robotType string
+		minimum   int
+		maximum   int
+	)
+
+	for rows.Next() {
+		err := rows.Scan(&serial, &nickname, &robotType)
+		if err != nil {
+			log.Printf("Failed to scan row of toggle table: %v", err)
+			return err
+		}
+
+		err = stream.Send(&infoserver.Robot{
+			Id:            serial,
+			Nickname:      nickname,
+			RobotType:     robotType,
+			InterfaceType: "toggle",
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	rows, err = s.DB.Query("SELECT * FROM rangeRobots")
+	if err != nil {
+		log.Printf("Failed to retrive list of robots: %v", err)
+		return err
+	}
+
+	for rows.Next() {
+		err := rows.Scan(&serial, &nickname, &robotType, &minimum, &maximum)
+		if err != nil {
+			log.Printf("Failed to scan row of range table: %v", err)
+			return err
+		}
+
+		err = stream.Send(&infoserver.Robot{
+			Id:            serial,
+			Nickname:      nickname,
+			RobotType:     robotType,
+			InterfaceType: "range",
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func connectionStr() string {
 	if username == "" {
 		username = "postgres"
@@ -190,73 +254,6 @@ type restError struct {
 func httpWriteError(w http.ResponseWriter, msg string, code int) {
 	w.WriteHeader(http.StatusBadRequest)
 	json.NewEncoder(w).Encode(restError{msg})
-}
-
-func listRobotHandler(db *sql.DB) httprouter.Handle {
-	return httprouter.Handle(func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-
-		w.Header().Set("Content-Type", "application/json")
-
-		log.Println("/robots")
-
-		// Query database for robots
-		rows, err := db.Query("SELECT * FROM toggleRobots")
-		if err != nil {
-			log.Printf("Failed to retrive list of robots: %v", err)
-			httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		}
-		var (
-			serial    string
-			nickname  string
-			robotType string
-			minimum   int
-			maximum   int
-		)
-		// iterate through rows
-
-		robots := []*Robot{}
-
-		for rows.Next() {
-			err := rows.Scan(&serial, &nickname, &robotType)
-			if err != nil {
-				log.Printf("Failed to scan row of toggle table: %v", err)
-				httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-			}
-
-			resp := &Robot{
-				ID:            serial,
-				Nickname:      nickname,
-				RobotType:     robotType,
-				InterfaceType: "toggle",
-			}
-			robots = append(robots, resp)
-		}
-
-		rows, err = db.Query("SELECT * FROM rangeRobots")
-		if err != nil {
-			log.Printf("Failed to retrive list of robots: %v", err)
-			httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		}
-
-		for rows.Next() {
-			err := rows.Scan(&serial, &nickname, &robotType, &minimum, &maximum)
-			if err != nil {
-				log.Printf("Failed to scan row of range table: %v", err)
-				httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-			}
-
-			resp := &Robot{
-				ID:            serial,
-				Nickname:      nickname,
-				RobotType:     robotType,
-				InterfaceType: "range",
-			}
-			robots = append(robots, resp)
-		}
-
-		json.NewEncoder(w).Encode(robots)
-
-	})
 }
 
 // proxy forwards the request to a different url
@@ -327,7 +324,6 @@ func toggleRobotHandler(db *sql.DB) httprouter.Handle {
 
 func createRouter(db *sql.DB) *httprouter.Router {
 	router := httprouter.New()
-	router.GET("/robots", listRobotHandler(db))
 	router.PATCH("/robot/:robotId/toggle/:value", toggleRobotHandler(db))
 
 	return router
