@@ -10,10 +10,16 @@ func (e *RobotNotFoundError) Error() string {
 	return fmt.Sprintf("No robot with ID \"%s\"", e.ID)
 }
 
-type FailedRetreiveStatusError struct{}
+type StatusRequestFailed struct {
+	Message string
+}
 
-func (e *FailedRetreiveStatusError) Error() string {
-	return "Failed to retrive status of robot"
+func (e *StatusRequestFailed) Error() string {
+	if e.Message == "" {
+		return "Failed to retrive status of robot"
+	} else {
+		return fmt.Sprintf("Failed to retrive status of robot: %s", e.Message)
+	}
 }
 
 type InvalidRobotTypeError struct {

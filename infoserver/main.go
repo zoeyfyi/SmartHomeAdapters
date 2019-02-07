@@ -69,77 +69,69 @@ func (s *server) GetRobot(ctx context.Context, query *infoserver.RobotQuery) (*i
 	log.Println("getting robot with id: " + query.Id)
 
 	// query toggleRobots table for matching robots
-	rows, err := s.DB.Query("SELECT * FROM toggleRobots WHERE serial = $1", query.Id)
-	if err != nil {
-		log.Printf("Failed to retrive robot %s: %v", query.Id, err)
-		return nil, err
-	}
-
-	found := false
-
-	for rows.Next() {
-		// read from table and write response
-		found = true
-		err := rows.Scan(&serial, &nickname, &robotType)
-		if err != nil {
-			log.Printf("Failed to scan robot %s: %v", query.Id, err)
-			return nil, err
-		}
-	}
-
-	// if the robot was not found in toggleRobots, search rangeRobots
-	if found == false {
-		rows, err := s.DB.Query("SELECT * FROM rangeRobots WHERE serial = $1", query.Id)
-
-		if err != nil {
+	row := s.DB.QueryRow("SELECT * FROM toggleRobots WHERE serial = $1", query.Id)
+	err := row.Scan(&serial, &nickname, &robotType)
+	if err == sql.ErrNoRows {
+		// not in toggleRobots, try rangeRobots
+		row := s.DB.QueryRow("SELECT * FROM rangeRobots WHERE serial = $1", query.Id)
+		err := row.Scan(&serial, &nickname, &robotType, &minimum, &maximum)
+		if err == sql.ErrNoRows {
+			// not there either
+			return nil, &infoserver.RobotNotFoundError{ID: query.Id}
+		} else if err != nil {
 			log.Printf("Failed to retrive robot %s: %v", query.Id, err)
 			return nil, err
 		}
-
-		for rows.Next() {
-			found = true
-			err := rows.Scan(&serial, &nickname, &robotType, &minimum, &maximum)
-			if err != nil {
-				log.Printf("Failed to scan robot %s: %v", query.Id, err)
-				return nil, err
-			}
-		}
-
-	}
-
-	// if no robots were found, return nil
-	if found == false {
-		return nil, &infoserver.RobotNotFoundError{ID: query.Id}
+	} else if err != nil {
+		log.Printf("Failed to retrive robot %s: %v", query.Id, err)
+		return nil, err
 	}
 
 	// get the status of the robot
 	switch robotType {
 	case "switch":
+		// TODO: get url from config (https://github.com/mrbenshef/SmartHomeAdapters/issues/79)
 		url := fmt.Sprintf("http://switchserver/%s", query.Id)
-		req, err := http.NewRequest(http.MethodGet, url, nil)
+
+		// send request
+		req, err := http.NewRequest(http.MethodPut, url, nil)
 		if err != nil {
 			log.Printf("Error creating request: %v", err)
 			return nil, err
 		}
-
-		resp, err := client.Do(req)
+		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
 			log.Printf("Error executing request: %v", err)
 			return nil, err
 		}
 
+		// read responce
+		isSuccessfull := resp.StatusCode >= 200 && resp.StatusCode < 300
+		if !isSuccessfull {
+			// try to parse body
+			buf := new(bytes.Buffer)
+			_, err := buf.ReadFrom(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+
+			// return error with message from request
+			return nil, &infoserver.StatusRequestFailed{
+				Message: buf.String(),
+			}
+		}
+
+		// read status infomation
 		buf := new(bytes.Buffer)
 		buf.ReadFrom(resp.Body)
 		var info map[string]interface{}
 		json.Unmarshal(buf.Bytes(), &info)
-
-		log.Printf("Status: %+v", buf.String())
-
 		isOn, ok := info["isOn"].(bool)
 		if !ok {
-			return nil, &infoserver.FailedRetreiveStatusError{}
+			return nil, &infoserver.StatusRequestFailed{}
 		}
 
+		// return robot with status infomation
 		return &infoserver.Robot{
 			Id:            serial,
 			Nickname:      nickname,
