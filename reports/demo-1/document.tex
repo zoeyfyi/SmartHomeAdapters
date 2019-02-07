@@ -135,7 +135,17 @@
 	\textbf{Include any quantitative data you have collected (this can be a graph/table with a few words)}
 	\\ \hline
 	\vtop to 135mm{
-%  IDEAS: Success rate, server stress load, could just include data on how many tests we have etc.
+		\begin{tabular}{ c | c }
+			Average login response time & 1992 ms \\
+			Login/register throughput & 2.0/sec \\
+			Request to get all robots avg. response time & 48ms \\
+			Request to get all robots throughput & 80.6/sec \\
+			Request to get one robot and its interface type avg. response time & 50ms \\
+			Throughput of the above requests & 77.6/sec
+		\end{tabular}
+
+		In testing, the robot successfully turned the light on and off 100 times, taking an average of 2.77s.
+
   }
   \\
   \hline
