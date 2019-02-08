@@ -76,7 +76,7 @@ func (s *server) GetRobot(ctx context.Context, query *infoserver.RobotQuery) (*i
 		err := row.Scan(&serial, &nickname, &robotType, &minimum, &maximum)
 		if err == sql.ErrNoRows {
 			// not there either
-			return nil, newInvalidRobotTypeError(query.Id)
+			return nil, newRobotNotFoundError(query.Id)
 		} else if err != nil {
 			log.Printf("Failed to retrive robot %s: %v", query.Id, err)
 			return nil, err
