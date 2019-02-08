@@ -166,8 +166,16 @@ func robotsHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 }
 
 func robotHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	url := fmt.Sprintf("http://infoserver/robot/%s", ps.ByName("id"))
-	proxy(http.MethodGet, url, w, r)
+	id := ps.ByName("id")
+
+	robot, err := infoserverClient.GetRobot(context.Background(), &infoserver.RobotQuery{Id: id})
+	if err != nil {
+		HTTPError(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(robot)
 }
 
 func toggleHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
