@@ -41,6 +41,7 @@ func TestMain(m *testing.M) {
 func bufDialer(string, time.Duration) (net.Conn, error) {
 	return lis.Dial()
 }
+
 func TestGetRobots(t *testing.T) {
 	expectedRobots := []*infoserver.Robot{
 		&infoserver.Robot{
