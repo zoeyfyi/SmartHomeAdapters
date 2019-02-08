@@ -134,7 +134,26 @@ type Robot struct {
 	Nickname      string `json:"nickname"`
 	RobotType     string `json:"robotType"`
 	InterfaceType string `json:"interfaceType"`
+	Status        Status `json:"status,omitempty"`
 }
+
+type Status interface {
+	status()
+}
+
+type ToggleStatus struct {
+	Value bool `json:"value"`
+}
+
+func (s ToggleStatus) status() {}
+
+type RangeStatus struct {
+	Min     int `json:"min"`
+	Max     int `json:"max"`
+	Current int `json:"current"`
+}
+
+func (s RangeStatus) status() {}
 
 func robotsHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	stream, err := infoserverClient.GetRobots(context.Background(), &empty.Empty{})
@@ -174,8 +193,31 @@ func robotHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 		return
 	}
 
+	// convert robot status
+	var status Status
+	switch robotStatus := robot.RobotStatus.(type) {
+	case *infoserver.Robot_ToggleStatus:
+		status = ToggleStatus{
+			Value: robotStatus.ToggleStatus.Value,
+		}
+	case *infoserver.Robot_RangeStatus:
+		status = RangeStatus{
+			Min:     int(robotStatus.RangeStatus.Min),
+			Max:     int(robotStatus.RangeStatus.Max),
+			Current: int(robotStatus.RangeStatus.Current),
+		}
+	default:
+		panic(fmt.Sprintf("%T is not a valid robot status", robotStatus))
+	}
+
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(robot)
+	json.NewEncoder(w).Encode(Robot{
+		ID:            robot.Id,
+		Nickname:      robot.Nickname,
+		RobotType:     robot.RobotType,
+		InterfaceType: robot.InterfaceType,
+		Status:        status,
+	})
 }
 
 func toggleHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
