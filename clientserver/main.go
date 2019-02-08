@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/julienschmidt/httprouter"
@@ -221,8 +223,23 @@ func robotHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 }
 
 func toggleHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	url := fmt.Sprintf("http://infoserver/robot/%s/toggle/%s", ps.ByName("id"), ps.ByName("value"))
-	proxy(http.MethodPatch, url, w, r)
+	id := ps.ByName("id")
+	value := ps.ByName("value")
+
+	toggleValue, err := strconv.ParseBool(value)
+	if err != nil {
+		HTTPError(w, errors.New("Toggle value is not a boolean, should be either \"true\" or \"false\""))
+		return
+	}
+
+	_, err = infoserverClient.ToggleRobot(context.Background(), &infoserver.ToggleRequest{
+		Id:    id,
+		Value: toggleValue,
+	})
+	if err != nil {
+		HTTPError(w, err)
+		return
+	}
 }
 
 func createRouter() *httprouter.Router {

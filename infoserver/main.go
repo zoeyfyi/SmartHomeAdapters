@@ -243,7 +243,7 @@ func (s *server) ToggleRobot(ctx context.Context, request *infoserver.ToggleRequ
 		}
 
 		// send request
-		req, err := http.NewRequest(http.MethodPut, url, buffer)
+		req, err := http.NewRequest(http.MethodPatch, url, buffer)
 		if err != nil {
 			log.Printf("Error creating request: %v", err)
 			return nil, err
