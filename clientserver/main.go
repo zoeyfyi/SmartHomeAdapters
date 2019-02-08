@@ -13,11 +13,80 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"github.com/mrbenshef/SmartHomeAdapters/infoserver/infoserver"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 var (
 	infoserverClient infoserver.InfoServerClient
 )
+
+// HTTPStatusFromCode converts a gRPC error code into the corresponding HTTP response status.
+func HTTPStatusFromCode(code codes.Code) int {
+	switch code {
+	case codes.OK:
+		return http.StatusOK
+	case codes.Canceled:
+		return http.StatusRequestTimeout
+	case codes.Unknown:
+		return http.StatusInternalServerError
+	case codes.InvalidArgument:
+		return http.StatusBadRequest
+	case codes.DeadlineExceeded:
+		return http.StatusGatewayTimeout
+	case codes.NotFound:
+		return http.StatusNotFound
+	case codes.AlreadyExists:
+		return http.StatusConflict
+	case codes.PermissionDenied:
+		return http.StatusForbidden
+	case codes.Unauthenticated:
+		return http.StatusUnauthorized
+	case codes.ResourceExhausted:
+		return http.StatusTooManyRequests
+	case codes.FailedPrecondition:
+		return http.StatusPreconditionFailed
+	case codes.Aborted:
+		return http.StatusConflict
+	case codes.OutOfRange:
+		return http.StatusBadRequest
+	case codes.Unimplemented:
+		return http.StatusNotImplemented
+	case codes.Internal:
+		return http.StatusInternalServerError
+	case codes.Unavailable:
+		return http.StatusServiceUnavailable
+	case codes.DataLoss:
+		return http.StatusInternalServerError
+	}
+
+	log.Printf("Unknown gRPC error code: %v", code)
+	return http.StatusInternalServerError
+}
+
+type ErrorResponce struct {
+	Error  string `json:"error"`
+	Code   int    `json:"code"`
+	Status int    `json:"status"`
+}
+
+// HTTPError transforms an error into a JSON responce
+func HTTPError(w http.ResponseWriter, err error) {
+	s, ok := status.FromError(err)
+	if !ok {
+		s = status.New(codes.Unknown, err.Error())
+	}
+
+	code := int(s.Code())
+	status := HTTPStatusFromCode(s.Code())
+
+	w.WriteHeader(status)
+	json.NewEncoder(w).Encode(ErrorResponce{
+		Error:  s.Message(),
+		Code:   code,
+		Status: status,
+	})
+}
 
 type restError struct {
 	Error string `json:"error"`
@@ -60,10 +129,6 @@ func loginHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	proxy(http.MethodGet, "http://userserver/login", w, r)
 }
 
-type Error struct {
-	Error string `json:"error"`
-}
-
 type Robot struct {
 	ID            string `json:"id"`
 	Nickname      string `json:"nickname"`
@@ -74,7 +139,7 @@ type Robot struct {
 func robotsHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	stream, err := infoserverClient.GetRobots(context.Background(), &empty.Empty{})
 	if err != nil {
-		json.NewEncoder(w).Encode(Error{err.Error()})
+		HTTPError(w, err)
 		return
 	}
 
@@ -85,7 +150,7 @@ func robotsHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 			break
 		}
 		if err != nil {
-			json.NewEncoder(w).Encode(Error{err.Error()})
+			HTTPError(w, err)
 			return
 		}
 		robots = append(robots, Robot{
@@ -96,6 +161,7 @@ func robotsHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 		})
 	}
 
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(robots)
 }
 

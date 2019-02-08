@@ -16,6 +16,8 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/mrbenshef/SmartHomeAdapters/infoserver/infoserver"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 var client = http.DefaultClient
@@ -29,6 +31,29 @@ var (
 
 type server struct {
 	DB *sql.DB
+}
+
+func newRobotNotFoundError(id string) error {
+	return status.Newf(codes.NotFound, "No robot with ID \"%s\"", id).Err()
+}
+
+func newStatusRequestFailed(message string) error {
+	if message == "" {
+		return status.New(codes.Internal, "Failed to retrive status of robot").Err()
+	}
+	return status.Newf(codes.Internal, "Failed to retrive status of robot: %s", message).Err()
+}
+
+func newInvalidRobotTypeError(robotType string) error {
+	return status.Newf(codes.InvalidArgument, "Invalid robot type \"%s\"", robotType).Err()
+}
+
+func newRobotNotTogglableError(id string, robotType string) error {
+	return status.Newf(codes.InvalidArgument, "Robot \"%s\" of type \"%s\" cannot be toggled", id, robotType).Err()
+}
+
+func newToggleRequestFailed(message string) error {
+	return status.Newf(codes.Internal, "Toggle request failed: %s", message).Err()
 }
 
 func (s *server) GetRobot(ctx context.Context, query *infoserver.RobotQuery) (*infoserver.Robot, error) {
@@ -51,7 +76,7 @@ func (s *server) GetRobot(ctx context.Context, query *infoserver.RobotQuery) (*i
 		err := row.Scan(&serial, &nickname, &robotType, &minimum, &maximum)
 		if err == sql.ErrNoRows {
 			// not there either
-			return nil, &infoserver.RobotNotFoundError{ID: query.Id}
+			return nil, newInvalidRobotTypeError(query.Id)
 		} else if err != nil {
 			log.Printf("Failed to retrive robot %s: %v", query.Id, err)
 			return nil, err
@@ -90,9 +115,7 @@ func (s *server) GetRobot(ctx context.Context, query *infoserver.RobotQuery) (*i
 			}
 
 			// return error with message from request
-			return nil, &infoserver.StatusRequestFailed{
-				Message: buf.String(),
-			}
+			return nil, newStatusRequestFailed(buf.String())
 		}
 
 		// read status infomation
@@ -102,7 +125,7 @@ func (s *server) GetRobot(ctx context.Context, query *infoserver.RobotQuery) (*i
 		json.Unmarshal(buf.Bytes(), &info)
 		isOn, ok := info["isOn"].(bool)
 		if !ok {
-			return nil, &infoserver.StatusRequestFailed{}
+			return nil, newStatusRequestFailed("")
 		}
 
 		// return robot with status infomation
@@ -118,7 +141,7 @@ func (s *server) GetRobot(ctx context.Context, query *infoserver.RobotQuery) (*i
 			},
 		}, nil
 	default:
-		return nil, &infoserver.InvalidRobotTypeError{Type: robotType}
+		return nil, newInvalidRobotTypeError(robotType)
 	}
 }
 
@@ -242,17 +265,12 @@ func (s *server) ToggleRobot(ctx context.Context, request *infoserver.ToggleRequ
 			}
 
 			// return error with message from request
-			return nil, &infoserver.ToggleRequestFailed{
-				Message: buf.String(),
-			}
+			return nil, newToggleRequestFailed(buf.String())
 		}
 
 	default:
 		log.Printf("robot type \"%s\" is not toggelable", robotType)
-		return nil, &infoserver.RobotNotTogglableError{
-			ID:   request.Id,
-			Type: robotType,
-		}
+		return nil, newRobotNotTogglableError(request.Id, robotType)
 	}
 
 	return &empty.Empty{}, nil
