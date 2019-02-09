@@ -36,7 +36,7 @@ class MainActivity :
         startFragment(RobotsFragment())
 
         // Get the token for the current session
-        authenticationToken = intent.getStringExtra("token")
+        authenticationToken = intent.getStringExtra(ACCESS_TOKEN_KEY)
         Log.d(tag, "token: $authenticationToken")
     }
 

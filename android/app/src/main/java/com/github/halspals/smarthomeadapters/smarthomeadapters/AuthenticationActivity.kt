@@ -107,11 +107,11 @@ class AuthenticationActivity : AppCompatActivity() {
 
         val prefs = getSharedPreferences(SHARED_PREFERENCES_FILE, Context.MODE_PRIVATE)
         val editor = prefs.edit()
-        editor.putString("token", token)
+        editor.putString(ACCESS_TOKEN_KEY, token)
         editor.apply()
 
         toast("Signed in")
-        startActivity(intentFor<MainActivity>("token" to token).clearTask().newTask())
+        startActivity(intentFor<MainActivity>(ACCESS_TOKEN_KEY to token).clearTask().newTask())
     }
 
     /**

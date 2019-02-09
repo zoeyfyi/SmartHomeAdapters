@@ -15,13 +15,13 @@ class LaunchActivity : AppCompatActivity() {
 
         val savedToken = fetchSavedAccessToken()
         if (savedToken != null && accessTokenIsValid(savedToken)) {
-            startActivity(intentFor<MainActivity>("token" to savedToken).clearTask().newTask())
+            startActivity(intentFor<MainActivity>(ACCESS_TOKEN_KEY to savedToken).clearTask().newTask())
             overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
         } else {
             val newToken = tryRefreshAccessToken()
             if (newToken != null) {
                 saveAccessToken(newToken)
-                startActivity(intentFor<MainActivity>("token" to savedToken).clearTask().newTask())
+                startActivity(intentFor<MainActivity>(ACCESS_TOKEN_KEY to savedToken).clearTask().newTask())
                 overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
             } else {
                 // The current token is invalid, we tried to generate a new one and failed -- the user
@@ -40,7 +40,7 @@ class LaunchActivity : AppCompatActivity() {
     private fun fetchSavedAccessToken(): String? {
         val prefs = getSharedPreferences(SHARED_PREFERENCES_FILE, Context.MODE_PRIVATE)
 
-        return prefs.getString("token", null)
+        return prefs.getString(ACCESS_TOKEN_KEY, null)
     }
 
     /**
@@ -51,7 +51,7 @@ class LaunchActivity : AppCompatActivity() {
     private fun saveAccessToken(token: String) {
         val prefs = getSharedPreferences(SHARED_PREFERENCES_FILE, Context.MODE_PRIVATE)
         val editor = prefs.edit()
-        editor.putString("token", token)
+        editor.putString(ACCESS_TOKEN_KEY, token)
         editor.apply()
     }
 
