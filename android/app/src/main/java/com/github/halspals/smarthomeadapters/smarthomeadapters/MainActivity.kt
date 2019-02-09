@@ -9,6 +9,9 @@ import android.support.v4.app.FragmentManager
 import android.util.Log
 import android.view.MenuItem
 import kotlinx.android.synthetic.main.activity_main.*
+import org.jetbrains.anko.clearTask
+import org.jetbrains.anko.intentFor
+import org.jetbrains.anko.newTask
 
 class MainActivity :
         AppCompatActivity(),
@@ -77,5 +80,12 @@ class MainActivity :
         }
 
         Log.d(tag, "[startFragment] Committed transaction to fragment")
+    }
+
+    /**
+     * Starts an [AuthenticationActivity], clearing the backstack.
+     */
+    fun moveToAuthenticationActivity() {
+        startActivity(intentFor<AuthenticationActivity>().clearTask().newTask())
     }
 }
