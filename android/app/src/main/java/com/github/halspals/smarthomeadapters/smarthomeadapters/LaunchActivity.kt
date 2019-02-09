@@ -13,14 +13,14 @@ class LaunchActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_launch)
 
-        val savedToken = fetchSavedToken()
-        if (savedToken != null && tokenIsValid(savedToken)) {
+        val savedToken = fetchSavedAccessToken()
+        if (savedToken != null && accessTokenIsValid(savedToken)) {
             startActivity(intentFor<MainActivity>("token" to savedToken).clearTask().newTask())
             overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
         } else {
             val newToken = tryRefreshAccessToken()
             if (newToken != null) {
-                saveToken(newToken)
+                saveAccessToken(newToken)
                 startActivity(intentFor<MainActivity>("token" to savedToken).clearTask().newTask())
                 overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
             } else {
@@ -32,24 +32,43 @@ class LaunchActivity : AppCompatActivity() {
         }
     }
 
-    private fun fetchSavedToken(): String? {
+    /**
+     * Fetches the access token currently stored on the device, if any.
+     *
+     * @return the token retrieved, or null if there was none
+     */
+    private fun fetchSavedAccessToken(): String? {
         val prefs = getSharedPreferences(SHARED_PREFERENCES_FILE, Context.MODE_PRIVATE)
 
         return prefs.getString("token", null)
     }
 
-    private fun saveToken(token: String) {
+    /**
+     * Saves the given access token on the user's device.
+     *
+     * @param token the access token to store
+     */
+    private fun saveAccessToken(token: String) {
         val prefs = getSharedPreferences(SHARED_PREFERENCES_FILE, Context.MODE_PRIVATE)
         val editor = prefs.edit()
         editor.putString("token", token)
         editor.apply()
     }
 
-    private fun tokenIsValid(token: String): Boolean {
+    /**
+     * WIP: Checks the validity of the access token given.
+     * This should communicate with the server to establish the token's validity.
+     */
+    private fun accessTokenIsValid(token: String): Boolean {
         // TODO check with the server if this token should still be valid
         return true
     }
 
+    /**
+     * WIP: Fetches the refresh token and tries to generate a new access token.
+     * Currently only returns null, signifying failure, as there are no refresh tokens
+     * implemented.
+     */
     private fun tryRefreshAccessToken(): String? {
         // TODO fetch the refresh token and try to generate a new access token
         return null
