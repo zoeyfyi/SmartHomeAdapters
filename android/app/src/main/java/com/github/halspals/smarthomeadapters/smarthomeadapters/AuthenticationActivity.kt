@@ -11,11 +11,8 @@ import com.github.halspals.smarthomeadapters.smarthomeadapters.model.User
 import kotlinx.android.synthetic.main.activity_authentication.*
 import org.jetbrains.anko.*
 import org.jetbrains.anko.design.snackbar
-import org.json.JSONException
-import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Callback
-import retrofit2.HttpException
 import retrofit2.Response
 
 class AuthenticationActivity : AppCompatActivity() {
@@ -101,14 +98,18 @@ class AuthenticationActivity : AppCompatActivity() {
 
     /**
      * WIP: Saves the token and starts a [MainActivity].
-     * Currently only keeps token in memory, passing it as an extra to the activity;
-     * when we have time this should be changed to saving the token in Account Manager.
+     * Currently only saves the token in shared prefs, unencrypted.
      *
      * @param token the authorization token received from the server
      */
     private fun saveTokenAndMoveToMain(token: String) {
-        Log.d(tag, "Succeeded in receiving token, starting MainActivity")
-        // TODO token should be saved in Account Manager for the user
+        Log.d(tag, "Succeeded in receiving token, saving and starting MainActivity")
+
+        val prefs = getSharedPreferences(SHARED_PREFERENCES_FILE, Context.MODE_PRIVATE)
+        val editor = prefs.edit()
+        editor.putString("token", token)
+        editor.apply()
+
         toast("Signed in")
         startActivity(intentFor<MainActivity>("token" to token).clearTask().newTask())
     }
