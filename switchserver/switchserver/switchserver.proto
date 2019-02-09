@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+service SwitchServer {
+    rpc AddSwitch(AddSwitchRequest) returns (Switch) {}
+    rpc RemoveSwitch(RemoveSwitchRequest) returns (google.protobuf.Empty) {}
+    rpc GetSwitch(SwitchQuery) returns (Switch) {}
+    rpc SetSwitch(SetSwitchRequest) returns (Switch) {}
+}
+
+message Switch {
+    string id = 1;
+    bool isOn = 2;
+    int64 onAngle = 3;
+    int64 offAngle = 4;
+    int64 restAngle = 5;
+    bool isCalibrated = 6;
+}
+
+message AddSwitchRequest {
+    string id = 1;
+    bool isOn = 2;
+}
+
+message RemoveSwitchRequest {
+    string id = 1;
+}
+
+message SwitchQuery {
+    string id = 1;
+}
+
+message SetSwitchRequest {
+    bool on = 1;
+    bool force = 2;
+}

@@ -1,3 +1,4 @@
+//go:generate protoc --go_out=plugins=grpc:. ./switchserver/switchserver.proto
 package main
 
 import (
@@ -15,6 +16,8 @@ import (
 	_ "github.com/lib/pq"
 )
 
+var client = http.DefaultClient
+
 // database connection infomation
 var (
 	username = os.Getenv("DB_USERNAME")
@@ -22,8 +25,6 @@ var (
 	database = os.Getenv("DB_DATABASE")
 	url      = os.Getenv("DB_URL")
 )
-
-var client = http.DefaultClient
 
 func connectionStr() string {
 	if username == "" {
