@@ -26,10 +26,10 @@ import (
 
 // database connection infomation
 var (
-	username = os.Getenv("DB_USERNAME")
-	password = os.Getenv("DB_PASSWORD")
-	database = os.Getenv("DB_DATABASE")
-	url      = os.Getenv("DB_URL")
+	dbUsername = os.Getenv("DB_USERNAME")
+	dbPassword = os.Getenv("DB_PASSWORD")
+	dbDatabase = os.Getenv("DB_DATABASE")
+	dbURL      = os.Getenv("DB_URL")
 )
 
 // signingKey key for signing json web tokens
@@ -55,15 +55,15 @@ func (s *server) Register(ctx context.Context, request *userserver.RegisterReque
 	if !isEmailValid(request.Email) {
 		return nil, status.Newf(codes.InvalidArgument, "Email \"%s\" is invalid", request.Email).Err()
 	}
-	if password == "" {
+	if request.Password == "" {
 		return nil, status.New(codes.InvalidArgument, "Password is blank").Err()
 	}
-	if len(password) < 8 {
+	if len(request.Password) < 8 {
 		return nil, status.New(codes.InvalidArgument, "Password is less than 8 characters").Err()
 	}
 
 	// hash password
-	hash, err := bcrypt.GenerateFromPassword([]byte(password), 10)
+	hash, err := bcrypt.GenerateFromPassword([]byte(request.Password), 10)
 	if err != nil {
 		return nil, status.New(codes.Internal, "Internal error").Err()
 	}
@@ -99,7 +99,7 @@ func (s *server) Login(ctx context.Context, request *userserver.LoginRequest) (*
 	}
 
 	// check password
-	err = bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	err = bcrypt.CompareHashAndPassword([]byte(hash), []byte(request.Password))
 	if err != nil {
 		if err == bcrypt.ErrMismatchedHashAndPassword {
 			return nil, status.New(codes.InvalidArgument, "Password incorrect").Err()
@@ -159,20 +159,20 @@ func (s *server) Authorize(ctx context.Context, token *userserver.Token) (*users
 }
 
 func connectionStr() string {
-	if username == "" {
-		username = "postgres"
+	if dbUsername == "" {
+		dbUsername = "postgres"
 	}
-	if password == "" {
-		password = "password"
+	if dbPassword == "" {
+		dbPassword = "password"
 	}
-	if url == "" {
-		url = "localhost:5432"
+	if dbURL == "" {
+		dbURL = "localhost:5432"
 	}
-	if database == "" {
-		database = "postgres"
+	if dbDatabase == "" {
+		dbDatabase = "postgres"
 	}
 
-	return fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable", username, password, url, database)
+	return fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable", dbUsername, dbPassword, dbURL, dbDatabase)
 }
 
 func getDb() *sql.DB {

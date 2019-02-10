@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -14,6 +13,7 @@ import (
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/julienschmidt/httprouter"
 	"github.com/mrbenshef/SmartHomeAdapters/infoserver/infoserver"
+	"github.com/mrbenshef/SmartHomeAdapters/userserver/userserver"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -21,6 +21,7 @@ import (
 
 var (
 	infoserverClient infoserver.InfoServerClient
+	userserverClient userserver.UserServerClient
 )
 
 // HTTPStatusFromCode converts a gRPC error code into the corresponding HTTP response status.
@@ -95,45 +96,54 @@ func HTTPError(w http.ResponseWriter, err error) {
 	}
 }
 
-type restError struct {
-	Error string `json:"error"`
-}
-
-func httpWriteError(w http.ResponseWriter, msg string, code int) {
-	w.WriteHeader(http.StatusBadRequest)
-	json.NewEncoder(w).Encode(restError{msg})
-}
-
 func pingHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	w.Write([]byte("pong"))
 }
 
-// proxy forwards the request to a different url
-func proxy(method string, url string, w http.ResponseWriter, r *http.Request) {
-	req, err := http.NewRequest(method, url, r.Body)
-	if err != nil {
-		log.Printf("Error creating request: %v", err)
-		httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-	}
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		log.Printf("Error executing request: %v", err)
-		httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-	}
-
-	w.WriteHeader(resp.StatusCode)
-	buf := new(bytes.Buffer)
-	buf.ReadFrom(resp.Body)
-	w.Write(buf.Bytes())
+type registerBody struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
 func registerHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	proxy(http.MethodPost, "http://userserver/register", w, r)
+	var registerBody registerBody
+	err := json.NewDecoder(r.Body).Decode(&registerBody)
+	if err != nil {
+		log.Printf("Invalid register JSON: %v", err)
+		HTTPError(w, errors.New("Invalid JSON"))
+		return
+	}
+
+	_, err = userserverClient.Register(context.Background(), &userserver.RegisterRequest{
+		Email:    registerBody.Email,
+		Password: registerBody.Password,
+	})
+	if err != nil {
+		HTTPError(w, err)
+	}
+}
+
+type loginBody struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
 func loginHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	proxy(http.MethodGet, "http://userserver/login", w, r)
+	var loginBody loginBody
+	err := json.NewDecoder(r.Body).Decode(&loginBody)
+	if err != nil {
+		log.Printf("Invalid register JSON: %v", err)
+		HTTPError(w, errors.New("Invalid JSON"))
+		return
+	}
+
+	_, err = userserverClient.Login(context.Background(), &userserver.LoginRequest{
+		Email:    loginBody.Email,
+		Password: loginBody.Password,
+	})
+	if err != nil {
+		HTTPError(w, err)
+	}
 }
 
 type Robot struct {
@@ -274,6 +284,14 @@ func main() {
 	}
 	defer infoserverConn.Close()
 	infoserverClient = infoserver.NewInfoServerClient(infoserverConn)
+
+	// connect to userserver
+	userserverConn, err := grpc.Dial("userserver:80", grpc.WithInsecure())
+	if err != nil {
+		panic(err)
+	}
+	defer userserverConn.Close()
+	userserverClient = userserver.NewUserServerClient(userserverConn)
 
 	// start server
 	if err := http.ListenAndServe(":80", createRouter()); err != nil {
