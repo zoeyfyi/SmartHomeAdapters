@@ -2,25 +2,23 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"log"
 	"net"
-	"net/http"
 	"os"
 
 	"github.com/golang/protobuf/ptypes/empty"
 	_ "github.com/lib/pq"
 	"github.com/mrbenshef/SmartHomeAdapters/infoserver/infoserver"
+	"github.com/mrbenshef/SmartHomeAdapters/switchserver/switchserver"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
-var client = http.DefaultClient
+var switchserverClient switchserver.SwitchServerClient
 
 var (
 	username = os.Getenv("DB_USERNAME")
@@ -89,43 +87,11 @@ func (s *server) GetRobot(ctx context.Context, query *infoserver.RobotQuery) (*i
 	// get the status of the robot
 	switch robotType {
 	case "switch":
-		// TODO: get url from config (https://github.com/mrbenshef/SmartHomeAdapters/issues/79)
-		url := fmt.Sprintf("http://switchserver/%s", query.Id)
-
-		// send request
-		req, err := http.NewRequest(http.MethodGet, url, nil)
+		switchRobot, err := switchserverClient.GetSwitch(context.Background(), &switchserver.SwitchQuery{
+			Id: serial,
+		})
 		if err != nil {
-			log.Printf("Error creating request: %v", err)
 			return nil, err
-		}
-		resp, err := http.DefaultClient.Do(req)
-		if err != nil {
-			log.Printf("Error executing request: %v", err)
-			return nil, err
-		}
-
-		// read responce
-		isSuccessfull := resp.StatusCode >= 200 && resp.StatusCode < 300
-		if !isSuccessfull {
-			// try to parse body
-			buf := new(bytes.Buffer)
-			_, err := buf.ReadFrom(resp.Body)
-			if err != nil {
-				return nil, err
-			}
-
-			// return error with message from request
-			return nil, newStatusRequestFailed(buf.String())
-		}
-
-		// read status infomation
-		buf := new(bytes.Buffer)
-		buf.ReadFrom(resp.Body)
-		var info map[string]interface{}
-		json.Unmarshal(buf.Bytes(), &info)
-		isOn, ok := info["isOn"].(bool)
-		if !ok {
-			return nil, newStatusRequestFailed("")
 		}
 
 		// return robot with status infomation
@@ -136,7 +102,7 @@ func (s *server) GetRobot(ctx context.Context, query *infoserver.RobotQuery) (*i
 			InterfaceType: "toggle",
 			RobotStatus: &infoserver.Robot_ToggleStatus{
 				ToggleStatus: &infoserver.ToggleStatus{
-					Value: isOn,
+					Value: switchRobot.IsOn,
 				},
 			},
 		}, nil
@@ -223,49 +189,24 @@ func (s *server) ToggleRobot(ctx context.Context, request *infoserver.ToggleRequ
 	// forward request to relevent service
 	switch robotType {
 	case "switch":
-		// TODO: get url from config (https://github.com/mrbenshef/SmartHomeAdapters/issues/79)
-		var url string
-		if request.Value {
-			url = fmt.Sprintf("http://switchserver/%s/on", request.Id)
-		} else {
-			url = fmt.Sprintf("http://switchserver/%s/off", request.Id)
-		}
-
-		// encode force option
-		buffer := new(bytes.Buffer)
-		err := json.NewEncoder(buffer).Encode(struct {
-			Force bool `json:"force"`
-		}{
+		stream, err := switchserverClient.SetSwitch(context.Background(), &switchserver.SetSwitchRequest{
+			Id:    request.Id,
+			On:    request.Value,
 			Force: request.Force,
 		})
 		if err != nil {
 			return nil, err
 		}
 
-		// send request
-		req, err := http.NewRequest(http.MethodPatch, url, buffer)
-		if err != nil {
-			log.Printf("Error creating request: %v", err)
-			return nil, err
-		}
-		resp, err := http.DefaultClient.Do(req)
-		if err != nil {
-			log.Printf("Error executing request: %v", err)
-			return nil, err
-		}
-
-		// read responce
-		isSuccessfull := resp.StatusCode >= 200 && resp.StatusCode < 300
-		if !isSuccessfull {
-			// try to parse body
-			buf := new(bytes.Buffer)
-			_, err := buf.ReadFrom(resp.Body)
+		for {
+			status, err := stream.Recv()
 			if err != nil {
 				return nil, err
 			}
 
-			// return error with message from request
-			return nil, newToggleRequestFailed(buf.String())
+			if status.Status == switchserver.SetSwitchStatus_DONE {
+				break
+			}
 		}
 
 	default:
@@ -314,13 +255,18 @@ func main() {
 
 	log.Printf("Connected to database: %+v\n", db.Stats())
 
-	grpcServer := grpc.NewServer()
-
-	infoServer := &server{
-		DB: db,
+	// connect to switchserver
+	switchserverConn, err := grpc.Dial("switchserver:80", grpc.WithInsecure())
+	if err != nil {
+		panic(err)
 	}
-	infoserver.RegisterInfoServerServer(grpcServer, infoServer)
+	defer switchserverConn.Close()
+	switchserverClient = switchserver.NewSwitchServerClient(switchserverConn)
 
+	// start grpc server
+	grpcServer := grpc.NewServer()
+	infoServer := &server{DB: db}
+	infoserver.RegisterInfoServerServer(grpcServer, infoServer)
 	lis, err := net.Listen("tcp", ":80")
 	if err != nil {
 		log.Fatalf("Failed to listen: %v", err)

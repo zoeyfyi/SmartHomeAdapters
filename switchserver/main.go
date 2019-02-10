@@ -142,9 +142,12 @@ func (s *server) SetSwitch(request *switchserver.SetSwitchRequest, stream switch
 		angle = robotSwitch.OffAngle
 	}
 
-	robotserverClient.SetServo(context.Background(), &robotserver.ServoRequest{
+	_, err = robotserverClient.SetServo(context.Background(), &robotserver.ServoRequest{
 		Angle: angle,
 	})
+	if err != nil {
+		return err
+	}
 
 	// TODO: replace waiting with message acknowledment
 	stream.Send(&switchserver.SetSwitchStatus{
@@ -156,9 +159,12 @@ func (s *server) SetSwitch(request *switchserver.SetSwitchRequest, stream switch
 	stream.Send(&switchserver.SetSwitchStatus{
 		Status: switchserver.SetSwitchStatus_RETURNING,
 	})
-	robotserverClient.SetServo(context.Background(), &robotserver.ServoRequest{
+	_, err = robotserverClient.SetServo(context.Background(), &robotserver.ServoRequest{
 		Angle: robotSwitch.RestAngle,
 	})
+	if err != nil {
+		return err
+	}
 
 	// done
 	stream.Send(&switchserver.SetSwitchStatus{
@@ -227,7 +233,7 @@ func main() {
 	log.Printf("Connected to database: %+v\n", db.Stats())
 
 	// connect to robotserver
-	robotserverConn, err := grpc.Dial("robotserver:80", grpc.WithInsecure())
+	robotserverConn, err := grpc.Dial("robotserver:8080", grpc.WithInsecure())
 	if err != nil {
 		panic(err)
 	}

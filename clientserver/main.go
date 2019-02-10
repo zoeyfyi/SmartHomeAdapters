@@ -74,6 +74,8 @@ type ErrorResponce struct {
 
 // HTTPError transforms an error into a JSON responce
 func HTTPError(w http.ResponseWriter, err error) {
+	log.Printf("The following error occored: %v", err)
+
 	s, ok := status.FromError(err)
 	if !ok {
 		s = status.New(codes.Unknown, err.Error())
@@ -83,11 +85,14 @@ func HTTPError(w http.ResponseWriter, err error) {
 	status := HTTPStatusFromCode(s.Code())
 
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(ErrorResponce{
+	err = json.NewEncoder(w).Encode(ErrorResponce{
 		Error:  s.Message(),
 		Code:   code,
 		Status: status,
 	})
+	if err != nil {
+		log.Printf("Failed to encode error responce: %v", err)
+	}
 }
 
 type restError struct {
@@ -188,6 +193,7 @@ func robotsHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 
 func robotHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	id := ps.ByName("id")
+	log.Printf("Getting robot with id %s", id)
 
 	robot, err := infoserverClient.GetRobot(context.Background(), &infoserver.RobotQuery{Id: id})
 	if err != nil {
@@ -225,6 +231,8 @@ func robotHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 func toggleHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	id := ps.ByName("id")
 	value := ps.ByName("value")
+
+	log.Printf("Toggling robot %s", id)
 
 	toggleValue, err := strconv.ParseBool(value)
 	if err != nil {
