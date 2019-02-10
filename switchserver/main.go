@@ -57,7 +57,7 @@ func (s *server) AddSwitch(ctx context.Context, request *switchserver.AddSwitchR
 			return nil, status.Newf(codes.AlreadyExists, "Robot \"%s\" is already a registered switch", switchRobot.Id).Err()
 		} else {
 			log.Printf("Failed to insert user into database: %v", err)
-			return nil, status.Newf(codes.Internal, "Could not register robot \"\" as a switch", switchRobot.Id).Err()
+			return nil, status.Newf(codes.Internal, "Could not register robot \"%s\" as a switch", switchRobot.Id).Err()
 		}
 	}
 
@@ -67,7 +67,7 @@ func (s *server) AddSwitch(ctx context.Context, request *switchserver.AddSwitchR
 func (s *server) RemoveSwitch(ctx context.Context, request *switchserver.RemoveSwitchRequest) (*empty.Empty, error) {
 	result, err := s.DB.Exec("DELETE FROM switches WHERE serial = $1", request.Id)
 	if err != nil {
-		return nil, status.Newf(codes.Internal, "Failed to unregister switch \"\"", request.Id).Err()
+		return nil, status.Newf(codes.Internal, "Failed to unregister switch \"%s\"", request.Id).Err()
 	}
 
 	count, err := result.RowsAffected()
@@ -76,7 +76,7 @@ func (s *server) RemoveSwitch(ctx context.Context, request *switchserver.RemoveS
 	}
 
 	if count == 0 {
-		return nil, status.Newf(codes.InvalidArgument, "Robot \"\" is not a switch", request.Id).Err()
+		return nil, status.Newf(codes.InvalidArgument, "Robot \"%s\" is not a switch", request.Id).Err()
 	}
 
 	return &empty.Empty{}, nil
@@ -117,7 +117,12 @@ func (s *server) SetSwitch(request *switchserver.SetSwitchRequest, stream switch
 		return err
 	}
 
-	// check switch state
+	// check calibration
+	if !robotSwitch.IsCalibrated {
+		return status.New(codes.FailedPrecondition, "Switch is not calibrated").Err()
+	}
+
+	// if not force check we are going to a different state
 	if robotSwitch.IsOn == request.On && !request.Force {
 		if robotSwitch.IsOn {
 			return status.New(codes.InvalidArgument, "Switch is already on").Err()
