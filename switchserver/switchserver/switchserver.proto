@@ -6,7 +6,7 @@ service SwitchServer {
     rpc AddSwitch(AddSwitchRequest) returns (Switch) {}
     rpc RemoveSwitch(RemoveSwitchRequest) returns (google.protobuf.Empty) {}
     rpc GetSwitch(SwitchQuery) returns (Switch) {}
-    rpc SetSwitch(SetSwitchRequest) returns (Switch) {}
+    rpc SetSwitch(SetSwitchRequest) returns (stream SetSwitchStatus) {}
 }
 
 message Switch {
@@ -32,6 +32,17 @@ message SwitchQuery {
 }
 
 message SetSwitchRequest {
-    bool on = 1;
-    bool force = 2;
+    string id = 1;
+    bool on = 2;
+    bool force = 3;
+}
+
+message SetSwitchStatus {
+    enum Status {
+        SETTING = 0;
+        WAITING = 1;
+        RETURNING = 2;
+        DONE = 3;
+    }
+    Status status = 1;
 }
