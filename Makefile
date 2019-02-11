@@ -17,10 +17,6 @@ check-arduino-deps:
 # Check all dependencys
 check: check-docker-deps check-go-deps check-arduino-deps
 
-# Vendors all go dependencies
-vendor:
-	@ for SERVER in $(SERVERS); do (cd $$SERVER && go mod vendor); done
-
 # Builds all the servers
 build-go: check-go-deps
 	@ for SERVER in $(SERVERS); do (cd $$SERVER && go generate && go build -o ../build/$$SERVER); done
@@ -32,6 +28,23 @@ build-android:
 
 # Builds everything
 build: build-go build-android
+
+build-clientserver-image:
+	@docker build -f go.Dockerfile -t smarthomeadapters/clientserver clientserver
+
+build-infoserver-image:
+	@docker build -f go.Dockerfile -t smarthomeadapters/infoserver infoserver
+
+build-robotserver-image:
+	@docker build -f go.Dockerfile -t smarthomeadapters/robotserver robotserver
+
+build-switchserver-image:
+	@docker build -f go.Dockerfile -t smarthomeadapters/switchserver switchserver
+
+build-userserver-image:
+	@docker build -f go.Dockerfile -t smarthomeadapters/userserver userserver
+
+build-images: build-clientserver-image build-infoserver-image build-robotserver-image build-switchserver-image build-userserver-image
 
 # Cleans the build folder
 clean:
