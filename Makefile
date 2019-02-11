@@ -9,6 +9,7 @@ check-docker-deps:
 check-go-deps:
 	@which protoc > /dev/null
 	@which protoc-gen-go > /dev/null
+	@which gometalinter > /dev/null
 
 check-arduino-deps:
 	@which arduino > /dev/null
@@ -19,23 +20,23 @@ check: check-docker-deps check-go-deps check-arduino-deps
 # BUILD
 #
 
-build-clientserver:
+build-clientserver: check-go-deps
 	@(cd clientserver && go generate)
 	@(cd clientserver && go build -o ../build/clientserver)
 
-build-infoserver:
+build-infoserver: check-go-deps
 	@(cd infoserver && go generate)
 	@(cd infoserver && go build -o ../build/infoserver)
 
-build-robotserver:
+build-robotserver: check-go-deps
 	@(cd robotserver && go generate)
 	@(cd robotserver && go build -o ../build/robotserver)
 
-build-switchserver:
+build-switchserver: check-go-deps
 	@(cd switchserver && go generate)
 	@(cd switchserver && go build -o ../build/switchserver)
 
-build-userserver:
+build-userserver: check-go-deps
 	@(cd userserver && go generate)
 	@(cd userserver && go build -o ../build/userserver)
 
@@ -72,3 +73,27 @@ docker: docker-clientserver docker-infoserver docker-robotserver docker-switchse
 
 clean:
 	@rm -rf build/*
+
+#
+# LINT
+#
+
+lint-clientserver:
+	@(cd clientserver && gometalinter --enable=gofmt ./...)
+
+lint-infoserver:
+	@(cd infoserver && gometalinter --enable=gofmt ./...)
+
+lint-robotserver:
+	@(cd robotserver && gometalinter --enable=gofmt ./...)
+
+lint-switchserver:
+	@(cd switchserver && gometalinter --enable=gofmt ./...)
+
+lint-userserver:
+	@(cd userserver && gometalinter --enable=gofmt ./...)
+
+lint-android:
+	@(cd android && ./gradlew lint)
+
+lint: lint-clientserver lint-infoserver lint-robotserver lint-switchserver lint-userserver lint-android
