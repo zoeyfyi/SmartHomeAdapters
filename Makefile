@@ -1,3 +1,5 @@
+SERVERS = clientserver infoserver robotserver switchserver userserver
+
 # Check docker dependencys
 check-docker-deps:
 	@which docker > /dev/null
@@ -14,3 +16,7 @@ check-arduino-deps:
 
 # Check all dependencys
 check: check-docker-deps check-go-deps check-arduino-deps
+
+# Vendors all go dependencies
+vendor:
+	@ for SERVER in $(SERVERS); do (cd $$SERVER && go mod vendor); done
