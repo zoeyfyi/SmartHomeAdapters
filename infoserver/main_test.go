@@ -10,24 +10,53 @@ import (
 	"testing"
 	"time"
 
+	"google.golang.org/grpc/codes"
+
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/test/bufconn"
-	gock "gopkg.in/h2non/gock.v1"
 
 	"github.com/golang/protobuf/ptypes/empty"
 	_ "github.com/lib/pq"
 	"github.com/mrbenshef/SmartHomeAdapters/infoserver/infoserver"
+	"github.com/mrbenshef/SmartHomeAdapters/switchserver/switchserver"
 	"google.golang.org/grpc"
 )
 
 var lis *bufconn.Listener
 
+type mockSwitchClient struct{}
+
+func (c mockSwitchClient) GetSwitch(ctx context.Context, query *switchserver.SwitchQuery, _ ...grpc.CallOption) (*switchserver.Switch, error) {
+	if query.Id == "123abc" {
+		return &switchserver.Switch{
+			Id:   "123abc",
+			IsOn: true,
+		}, nil
+	} else {
+		return nil, status.New(codes.NotFound, "Switch does not exist").Err()
+	}
+}
+
+func (c mockSwitchClient) AddSwitch(_ context.Context, _ *switchserver.AddSwitchRequest, _ ...grpc.CallOption) (*switchserver.Switch, error) {
+	return nil, nil
+}
+
+func (c mockSwitchClient) RemoveSwitch(_ context.Context, _ *switchserver.RemoveSwitchRequest, _ ...grpc.CallOption) (*empty.Empty, error) {
+	return nil, nil
+}
+
+func (c mockSwitchClient) SetSwitch(_ context.Context, _ *switchserver.SetSwitchRequest, _ ...grpc.CallOption) (switchserver.SwitchServer_SetSwitchClient, error) {
+	return nil, nil
+}
+
 func TestMain(m *testing.M) {
 	// start test gRPC server
 	lis = bufconn.Listen(1024 * 1024)
 	s := grpc.NewServer()
+
 	infoserver.RegisterInfoServerServer(s, &server{
-		DB: getDb(),
+		DB:           getDb(),
+		SwitchClient: mockSwitchClient{},
 	})
 	go func() {
 		if err := s.Serve(lis); err != nil {
@@ -92,28 +121,7 @@ func TestGetRobotWithValidID(t *testing.T) {
 	cases := []struct {
 		id            string
 		expectedRobot *infoserver.Robot
-		gockSetup     func()
 	}{
-		{
-			id: "123abc",
-			expectedRobot: &infoserver.Robot{
-				Id:            "123abc",
-				Nickname:      "testLightbot",
-				RobotType:     "switch",
-				InterfaceType: "toggle",
-				RobotStatus: &infoserver.Robot_ToggleStatus{
-					ToggleStatus: &infoserver.ToggleStatus{
-						Value: false,
-					},
-				},
-			},
-			gockSetup: func() {
-				gock.New("http://switchserver").
-					Get("/123abc").
-					Reply(200).
-					JSON(map[string]interface{}{"isOn": false})
-			},
-		},
 		{
 			id: "123abc",
 			expectedRobot: &infoserver.Robot{
@@ -127,19 +135,10 @@ func TestGetRobotWithValidID(t *testing.T) {
 					},
 				},
 			},
-			gockSetup: func() {
-				gock.New("http://switchserver").
-					Get("/123abc").
-					Reply(200).
-					JSON(map[string]interface{}{"isOn": true})
-			},
 		},
 	}
 
 	for _, c := range cases {
-		c.gockSetup()
-		defer gock.Off()
-
 		ctx := context.Background()
 		conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithDialer(bufDialer), grpc.WithInsecure())
 		if err != nil {

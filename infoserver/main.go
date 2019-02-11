@@ -18,8 +18,6 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-var switchserverClient switchserver.SwitchServerClient
-
 var (
 	username = os.Getenv("DB_USERNAME")
 	password = os.Getenv("DB_PASSWORD")
@@ -28,7 +26,8 @@ var (
 )
 
 type server struct {
-	DB *sql.DB
+	DB           *sql.DB
+	SwitchClient switchserver.SwitchServerClient
 }
 
 func newRobotNotFoundError(id string) error {
@@ -87,7 +86,7 @@ func (s *server) GetRobot(ctx context.Context, query *infoserver.RobotQuery) (*i
 	// get the status of the robot
 	switch robotType {
 	case "switch":
-		switchRobot, err := switchserverClient.GetSwitch(context.Background(), &switchserver.SwitchQuery{
+		switchRobot, err := s.SwitchClient.GetSwitch(context.Background(), &switchserver.SwitchQuery{
 			Id: serial,
 		})
 		if err != nil {
@@ -189,7 +188,7 @@ func (s *server) ToggleRobot(ctx context.Context, request *infoserver.ToggleRequ
 	// forward request to relevent service
 	switch robotType {
 	case "switch":
-		stream, err := switchserverClient.SetSwitch(context.Background(), &switchserver.SetSwitchRequest{
+		stream, err := s.SwitchClient.SetSwitch(context.Background(), &switchserver.SetSwitchRequest{
 			Id:    request.Id,
 			On:    request.Value,
 			Force: request.Force,
@@ -261,11 +260,11 @@ func main() {
 		panic(err)
 	}
 	defer switchserverConn.Close()
-	switchserverClient = switchserver.NewSwitchServerClient(switchserverConn)
+	switchClient := switchserver.NewSwitchServerClient(switchserverConn)
 
 	// start grpc server
 	grpcServer := grpc.NewServer()
-	infoServer := &server{DB: db}
+	infoServer := &server{DB: db, SwitchClient: switchClient}
 	infoserver.RegisterInfoServerServer(grpcServer, infoServer)
 	lis, err := net.Listen("tcp", ":80")
 	if err != nil {
