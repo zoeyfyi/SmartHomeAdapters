@@ -1,33 +1,53 @@
-SERVERS = clientserver infoserver robotserver switchserver userserver
+#
+# CHECK
+#
 
-# Check docker dependencys
 check-docker-deps:
 	@which docker > /dev/null
 	@which docker-compose > /dev/null
 
-# Check go dependencys
 check-go-deps:
 	@which protoc > /dev/null
 	@which protoc-gen-go > /dev/null
 
-# Check arduino dependencys
 check-arduino-deps:
 	@which arduino > /dev/null
 
-# Check all dependencys
 check: check-docker-deps check-go-deps check-arduino-deps
 
-# Builds all the servers
-build-go: check-go-deps
-	@ for SERVER in $(SERVERS); do (cd $$SERVER && go generate && go build -o ../build/$$SERVER); done
+#
+# BUILD
+#
 
-# Builds the android app
+build-clientserver:
+	@(cd clientserver && go generate)
+	@(cd clientserver && go build -o ../build/clientserver)
+
+build-infoserver:
+	@(cd infoserver && go generate)
+	@(cd infoserver && go build -o ../build/infoserver)
+
+build-robotserver:
+	@(cd robotserver && go generate)
+	@(cd robotserver && go build -o ../build/robotserver)
+
+build-switchserver:
+	@(cd switchserver && go generate)
+	@(cd switchserver && go build -o ../build/switchserver)
+
+build-userserver:
+	@(cd userserver && go generate)
+	@(cd userserver && go build -o ../build/userserver)
+
 build-android:
 	@(cd android && ./gradlew assembleDebug)
 	@cp android/app/build/outputs/apk/debug/app-debug.apk build/app-debug.apk
 
-# Builds everything
-build: build-go build-android
+build: build-clientserver build-infoserver build-robotserver build-switchserver build-userserver build-android
+
+#
+# DOCKER
+#
 
 docker-clientserver:
 	@docker build -f go.Dockerfile -t smarthomeadapters/clientserver clientserver
@@ -46,6 +66,9 @@ docker-userserver:
 
 docker: docker-clientserver docker-infoserver docker-robotserver docker-switchserver docker-userserver
 
-# Cleans the build folder
+#
+# CLEAN
+#
+
 clean:
 	@rm -rf build/*
