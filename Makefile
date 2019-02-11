@@ -29,22 +29,22 @@ build-android:
 # Builds everything
 build: build-go build-android
 
-build-clientserver-image:
+docker-clientserver:
 	@docker build -f go.Dockerfile -t smarthomeadapters/clientserver clientserver
 
-build-infoserver-image:
+docker-infoserver:
 	@docker build -f go.Dockerfile -t smarthomeadapters/infoserver infoserver
 
-build-robotserver-image:
+docker-robotserver:
 	@docker build -f go.Dockerfile -t smarthomeadapters/robotserver robotserver
 
-build-switchserver-image:
+docker-switchserver:
 	@docker build -f go.Dockerfile -t smarthomeadapters/switchserver switchserver
 
-build-userserver-image:
+docker-userserver:
 	@docker build -f go.Dockerfile -t smarthomeadapters/userserver userserver
 
-build-images: build-clientserver-image build-infoserver-image build-robotserver-image build-switchserver-image build-userserver-image
+docker: docker-clientserver docker-infoserver docker-robotserver docker-switchserver docker-userserver
 
 # Cleans the build folder
 clean:
