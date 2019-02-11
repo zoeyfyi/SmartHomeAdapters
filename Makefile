@@ -20,3 +20,14 @@ check: check-docker-deps check-go-deps check-arduino-deps
 # Vendors all go dependencies
 vendor:
 	@ for SERVER in $(SERVERS); do (cd $$SERVER && go mod vendor); done
+
+# Builds all the servers
+build-go: check-go-deps
+	@ for SERVER in $(SERVERS); do (cd $$SERVER && go generate && go build -o ../build/$$SERVER); done
+
+# Builds everything
+build: build-go
+
+# Cleans the build folder
+clean:
+	@rm -rf build/*
