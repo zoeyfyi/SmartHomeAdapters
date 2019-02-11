@@ -25,8 +25,13 @@ vendor:
 build-go: check-go-deps
 	@ for SERVER in $(SERVERS); do (cd $$SERVER && go generate && go build -o ../build/$$SERVER); done
 
+# Builds the android app
+build-android:
+	@(cd android && ./gradlew assembleDebug)
+	@cp android/app/build/outputs/apk/debug/app-debug.apk build/app-debug.apk
+
 # Builds everything
-build: build-go
+build: build-go build-android
 
 # Cleans the build folder
 clean:
