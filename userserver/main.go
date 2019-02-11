@@ -91,7 +91,7 @@ func (s *server) Login(ctx context.Context, request *userserver.LoginRequest) (*
 	err := row.Scan(&id, &hash)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, status.Newf(codes.NotFound, "User with email \"\" does not exist", request.Email).Err()
+			return nil, status.Newf(codes.NotFound, "User with email \"%s\" does not exist", request.Email).Err()
 		} else {
 			log.Printf("Error scanning database: %v", err)
 			return nil, status.New(codes.Internal, "Internal error").Err()

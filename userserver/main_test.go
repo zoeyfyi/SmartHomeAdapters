@@ -1,14 +1,14 @@
 package main
 
 import (
-	"encoding/json"
-	"net/http"
-	"net/http/httptest"
-	"strings"
+	"context"
 	"testing"
+
+	"github.com/mrbenshef/SmartHomeAdapters/userserver/userserver"
 )
 
 var db = getDb()
+var testServer = &server{DB: db}
 
 func clearDatabase(t *testing.T) {
 	_, err := db.Exec("DELETE FROM users")
@@ -20,37 +20,48 @@ func TestRegisterFieldValidation(t *testing.T) {
 	clearDatabase(t)
 
 	cases := []struct {
-		body           string
-		expectedStatus int
-		expectedError  string
+		request       *userserver.RegisterRequest
+		expectedError string
 	}{
-		{"", http.StatusBadRequest, ErrorInvalidJSON},
-		{"{\"email\":\"\", \"password\":\"bar\"}", http.StatusBadRequest, ErrorEmailBlank},
-		{"{\"email\":\"foo@email.com\", \"password\":\"\"}", http.StatusBadRequest, ErrorPasswordBlank},
-		{"{\"email\":\"foo\", \"password\":\"bar\"}", http.StatusBadRequest, ErrorEmailInvalid},
+		{
+			&userserver.RegisterRequest{
+				Email:    "",
+				Password: "password",
+			},
+			"rpc error: code = InvalidArgument desc = Email is blank",
+		},
+		{
+			&userserver.RegisterRequest{
+				Email:    "foo",
+				Password: "password",
+			},
+			"rpc error: code = InvalidArgument desc = Email \"foo\" is invalid",
+		},
+		{
+			&userserver.RegisterRequest{
+				Email:    "foo@bar.com",
+				Password: "",
+			},
+			"rpc error: code = InvalidArgument desc = Password is blank",
+		},
+		{
+			&userserver.RegisterRequest{
+				Email:    "foo@bar.com",
+				Password: "pass",
+			},
+			"rpc error: code = InvalidArgument desc = Password is less than 8 characters",
+		},
 	}
 
 	for _, c := range cases {
-		req, err := http.NewRequest("GET", "/register", strings.NewReader(c.body))
-		if err != nil {
-			t.Errorf("Error: %v", err)
+		_, err := testServer.Register(context.Background(), c.request)
+
+		if err == nil {
+			t.Fatal("Expected non-nil error")
 		}
 
-		rr := httptest.NewRecorder()
-		http.HandlerFunc(registerHandler(db)).ServeHTTP(rr, req)
-
-		if status := rr.Code; status != c.expectedStatus {
-			t.Errorf("Status code differs. Expected \"%d\", Got \"%d\"", c.expectedStatus, status)
-		}
-
-		var restError restError
-		err = json.NewDecoder(rr.Body).Decode(&restError)
-		if err != nil {
-			t.Errorf("Could not read error json: %v", err)
-		}
-
-		if restError.Error != c.expectedError {
-			t.Errorf("Error differs. Expected \"%s\", Got: \"%s\"", c.expectedError, restError)
+		if err.Error() != c.expectedError {
+			t.Errorf("Expected error: %s, got error: %+v", c.expectedError, err)
 		}
 	}
 }
@@ -58,179 +69,143 @@ func TestRegisterFieldValidation(t *testing.T) {
 func TestSuccessfullRegistration(t *testing.T) {
 	clearDatabase(t)
 
-	req, err := http.NewRequest("GET", "/register", strings.NewReader("{\"email\":\"foo@email.com\", \"password\":\"bar\"}"))
+	user, err := testServer.Register(context.Background(), &userserver.RegisterRequest{
+		Email:    "foo@email.com",
+		Password: "password",
+	})
+
 	if err != nil {
-		t.Errorf("Error: %v", err)
+		t.Errorf("Error registering user: %v", err)
 	}
 
-	rr := httptest.NewRecorder()
-	http.HandlerFunc(registerHandler(db)).ServeHTTP(rr, req)
-
-	if status := rr.Code; status != http.StatusOK {
-		t.Errorf("Status code differs. Expected \"%d\", Got \"%d\"", http.StatusOK, status)
-	}
-
-	var userResponce userResponce
-	err = json.NewDecoder(rr.Body).Decode(&userResponce)
-	if err != nil {
-		t.Errorf("Could not read userResponce json: %v", err)
-	}
-
-	if userResponce.Email != "foo@email.com" {
-		t.Errorf("Email differs. Expected \"%s\", Got: \"%s\"", "foo@email.com", userResponce.Email)
+	if user == nil {
+		t.Errorf("Expected user to be non-nil")
 	}
 }
 
 func TestRegisterDuplicateEmails(t *testing.T) {
 	clearDatabase(t)
 
-	req, _ := http.NewRequest("GET", "/register", strings.NewReader("{\"email\":\"foo@email.com\", \"password\":\"bar\"}"))
-	rr := httptest.NewRecorder()
-	http.HandlerFunc(registerHandler(db)).ServeHTTP(rr, req)
-	if rr.Code != http.StatusOK {
-		t.Errorf("Expected OK from first /register")
+	testServer.Register(context.Background(), &userserver.RegisterRequest{
+		Email:    "foo@email.com",
+		Password: "password",
+	})
+
+	user, err := testServer.Register(context.Background(), &userserver.RegisterRequest{
+		Email:    "foo@email.com",
+		Password: "password",
+	})
+
+	expectedError := "rpc error: code = AlreadyExists desc = A user with email \"foo@email.com\" already exists"
+
+	if err == nil {
+		t.Fatal("Expected non-nil error")
 	}
 
-	req, err := http.NewRequest("GET", "/register", strings.NewReader("{\"email\":\"foo@email.com\", \"password\":\"bar\"}"))
-	if err != nil {
-		t.Errorf("Error: %v", err)
+	if err.Error() != expectedError {
+		t.Errorf("Expected error: %s, got error: %+v", expectedError, err)
 	}
 
-	rr = httptest.NewRecorder()
-	http.HandlerFunc(registerHandler(db)).ServeHTTP(rr, req)
-
-	if status := rr.Code; status != http.StatusBadRequest {
-		t.Errorf("Status code differs. Expected \"%d\", Got \"%d\"", http.StatusBadRequest, status)
-	}
-
-	var restError restError
-	err = json.NewDecoder(rr.Body).Decode(&restError)
-	if err != nil {
-		t.Errorf("Could not read error json: %v", err)
-	}
-
-	if restError.Error != ErrorEmailExists {
-		t.Errorf("Error differs. Expected \"%s\", Got: \"%s\"", ErrorEmailExists, restError)
+	if user != nil {
+		t.Errorf("Expected user to be nil")
 	}
 }
 
-func TestSuccessfulLogin(t *testing.T) {
+func TestSuccessfullLogin(t *testing.T) {
 	clearDatabase(t)
 
-	req, _ := http.NewRequest("GET", "/register", strings.NewReader("{\"email\":\"foo@email.com\", \"password\":\"bar\"}"))
-	rr := httptest.NewRecorder()
-	http.HandlerFunc(registerHandler(db)).ServeHTTP(rr, req)
-	if rr.Code != http.StatusOK {
-		t.Errorf("Expected OK from /register")
-	}
+	testServer.Register(context.Background(), &userserver.RegisterRequest{
+		Email:    "foo@email.com",
+		Password: "password",
+	})
 
-	req, err := http.NewRequest("GET", "/login", strings.NewReader("{\"email\":\"foo@email.com\", \"password\":\"bar\"}"))
+	token, err := testServer.Login(context.Background(), &userserver.LoginRequest{
+		Email:    "foo@email.com",
+		Password: "password",
+	})
+
 	if err != nil {
-		t.Errorf("Error: %v", err)
+		t.Errorf("Error login in user: %v", err)
 	}
 
-	rr = httptest.NewRecorder()
-	http.HandlerFunc(loginHandler(db)).ServeHTTP(rr, req)
-
-	if status := rr.Code; status != http.StatusOK {
-		t.Errorf("Status code differs. Expected \"%d\", Got \"%d\"", http.StatusOK, status)
+	if token == nil {
+		t.Errorf("Expected user to be non-nil")
 	}
 
-	var tokenResponce tokenResponce
-	err = json.NewDecoder(rr.Body).Decode(&tokenResponce)
-	if err != nil {
-		t.Errorf("Could not read tokenResponce json: %v", err)
-	}
-
-	if tokenResponce.Token == "" {
-		t.Errorf("Token is blank, tokenResponce: %+v", tokenResponce)
+	if token.Token == "" {
+		t.Errorf("Expected non-empty token")
 	}
 }
 
 func TestLoginFailure(t *testing.T) {
 	clearDatabase(t)
 
-	req, _ := http.NewRequest("GET", "/register", strings.NewReader("{\"email\":\"foo@email.com\", \"password\":\"bar\"}"))
-	rr := httptest.NewRecorder()
-	http.HandlerFunc(registerHandler(db)).ServeHTTP(rr, req)
-	if rr.Code != http.StatusOK {
-		t.Errorf("Expected OK from /register")
-	}
+	testServer.Register(context.Background(), &userserver.RegisterRequest{
+		Email:    "foo@email.com",
+		Password: "password",
+	})
 
 	cases := []struct {
-		body               string
-		expectedError      string
-		expectedReturnCode int
+		request       *userserver.LoginRequest
+		expectedError string
 	}{
-		{"", ErrorInvalidJSON, http.StatusBadRequest},
-		{"{\"email\":\"wrongemail\", \"password\":\"bar\"}", ErrorEmailDoesntExist, http.StatusBadRequest},
-		{"{\"email\":\"foo@email.com\", \"password\":\"wrongpassword\"}", ErrorPasswordIncorrect, http.StatusBadRequest},
+		{
+			&userserver.LoginRequest{
+				Email:    "wrong email",
+				Password: "password",
+			},
+			"rpc error: code = NotFound desc = User with email \"wrong email\" does not exist",
+		},
+		{
+			&userserver.LoginRequest{
+				Email:    "foo@bar.com",
+				Password: "wrong password",
+			},
+			"rpc error: code = NotFound desc = User with email \"foo@bar.com\" does not exist",
+		},
 	}
 
 	for _, c := range cases {
-		req, err := http.NewRequest("GET", "/login", strings.NewReader(c.body))
-		if err != nil {
-			t.Errorf("Error: %v", err)
+		user, err := testServer.Login(context.Background(), c.request)
+
+		if err == nil {
+			t.Fatal("Expected non-nil error")
 		}
 
-		rr = httptest.NewRecorder()
-		http.HandlerFunc(loginHandler(db)).ServeHTTP(rr, req)
-
-		if status := rr.Code; status != c.expectedReturnCode {
-			t.Errorf("Status code differs. Expected \"%d\", Got \"%d\"", c.expectedReturnCode, status)
+		if err.Error() != c.expectedError {
+			t.Errorf("Expected error: %s, got error: %s", c.expectedError, err.Error())
 		}
 
-		var restError restError
-		err = json.NewDecoder(rr.Body).Decode(&restError)
-		if err != nil {
-			t.Errorf("Could not read restError json: %v", err)
-		}
-
-		if restError.Error != c.expectedError {
-			t.Errorf("Error differs. Expected \"%s\", Got: \"%s\"", c.expectedError, restError.Error)
+		if user != nil {
+			t.Error("Expected nil user")
 		}
 	}
 }
 
-func TestAuthorize(t *testing.T) {
+func TestSuccessfullAuthorization(t *testing.T) {
 	clearDatabase(t)
 
-	req, _ := http.NewRequest("GET", "/register", strings.NewReader("{\"email\":\"foo@email.com\", \"password\":\"bar\"}"))
-	rr := httptest.NewRecorder()
-	http.HandlerFunc(registerHandler(db)).ServeHTTP(rr, req)
-	if rr.Code != http.StatusOK {
-		t.Errorf("Expected OK from /register")
-	}
+	ctx := context.Background()
 
-	req, _ = http.NewRequest("GET", "/login", strings.NewReader("{\"email\":\"foo@email.com\", \"password\":\"bar\"}"))
-	rr = httptest.NewRecorder()
-	http.HandlerFunc(loginHandler(db)).ServeHTTP(rr, req)
-	if rr.Code != http.StatusOK {
-		t.Errorf("Expected OK from /login")
-	}
-	var tokenResponce tokenResponce
-	json.NewDecoder(rr.Body).Decode(&tokenResponce)
+	testServer.Register(ctx, &userserver.RegisterRequest{
+		Email:    "foo@email.com",
+		Password: "password",
+	})
 
-	req, err := http.NewRequest("GET", "/authorize", nil)
-	req.Header.Set("token", tokenResponce.Token)
+	token, _ := testServer.Login(ctx, &userserver.LoginRequest{
+		Email:    "foo@email.com",
+		Password: "password",
+	})
+
+	user, err := testServer.Authorize(ctx, &userserver.Token{
+		Token: token.Token,
+	})
+
 	if err != nil {
-		t.Errorf("Error: %v", err)
+		t.Errorf("Error authorizing user: %v", err)
 	}
 
-	rr = httptest.NewRecorder()
-	http.HandlerFunc(authorizeHandler()).ServeHTTP(rr, req)
-
-	if status := rr.Code; status != http.StatusOK {
-		t.Errorf("Status code differs. Expected \"%d\", Got \"%d\"", http.StatusOK, status)
-	}
-
-	var authorizationResponce authorizationResponce
-	err = json.NewDecoder(rr.Body).Decode(&authorizationResponce)
-	if err != nil {
-		t.Errorf("Could not read authorizationResponce json: %v", err)
-	}
-
-	if authorizationResponce.ID == "" {
-		t.Errorf("ID is blank, authorizationResponce: %+v", authorizationResponce)
+	if user == nil {
+		t.Errorf("Expected user to be non-nil")
 	}
 }
