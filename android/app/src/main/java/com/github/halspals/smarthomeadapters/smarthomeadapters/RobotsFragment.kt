@@ -1,5 +1,6 @@
 package com.github.halspals.smarthomeadapters.smarthomeadapters
 
+import android.content.Intent
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.util.Log
@@ -10,8 +11,6 @@ import android.widget.GridView
 import com.github.halspals.smarthomeadapters.smarthomeadapters.model.Robot
 import kotlinx.android.synthetic.main.fragment_robots.*
 import org.jetbrains.anko.design.snackbar
-import org.json.JSONException
-import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -33,10 +32,14 @@ class RobotsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        add_robot_button.setOnClickListener { _ ->
+            (activity as MainActivity).startFragment(QRFragment(), false)
+        }
+
         (activity as MainActivity).restApiService.getRobots().enqueue(object : Callback<List<Robot>> {
             override fun onFailure(call: Call<List<Robot>>, t: Throwable) {
                 val errorMsg = t.message
-                Log.e(tag, "getRobots FAILED, got error: $errorMsg")
+                Log.e(fTag, "getRobots FAILED, got error: $errorMsg")
                 if (errorMsg != null) {
                     snackbar_layout.snackbar(errorMsg)
                 }
@@ -49,7 +52,7 @@ class RobotsFragment : Fragment() {
                 } else {
                     val error = RestApiService.extractErrorFromResponse(response)
 
-                    Log.e(tag, "getRobots got unsuccessful response, error: $error")
+                    Log.e(fTag, "getRobots got unsuccessful response, error: $error")
                     if (error != null) {
                         snackbar_layout.snackbar(error)
                     }

@@ -11,11 +11,8 @@ import com.github.halspals.smarthomeadapters.smarthomeadapters.model.User
 import kotlinx.android.synthetic.main.activity_authentication.*
 import org.jetbrains.anko.*
 import org.jetbrains.anko.design.snackbar
-import org.json.JSONException
-import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Callback
-import retrofit2.HttpException
 import retrofit2.Response
 
 class AuthenticationActivity : AppCompatActivity() {

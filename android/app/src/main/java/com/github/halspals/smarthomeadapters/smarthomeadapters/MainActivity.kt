@@ -1,6 +1,6 @@
 package com.github.halspals.smarthomeadapters.smarthomeadapters
 
-import android.app.FragmentManager.POP_BACK_STACK_INCLUSIVE
+import android.content.Intent
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.support.design.widget.BottomNavigationView
@@ -8,6 +8,8 @@ import android.support.v4.app.Fragment
 import android.support.v4.app.FragmentManager
 import android.util.Log
 import android.view.MenuItem
+import com.google.zxing.integration.android.IntentIntegrator
+import com.google.zxing.integration.android.IntentResult
 import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity :
@@ -77,5 +79,24 @@ class MainActivity :
         }
 
         Log.d(tag, "[startFragment] Committed transaction to fragment")
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+
+        val result: IntentResult? = IntentIntegrator.parseActivityResult(requestCode, resultCode, data)
+        val robotId: String? = result?.contents
+
+        if (robotId != null) {
+            Log.d(tag, "[onActivityResult] Scanned robotId $robotId")
+
+            val registerRobotFragment = RegisterRobotFragment()
+            val args = Bundle()
+            args.putString("robotId", robotId)
+            registerRobotFragment.arguments = args
+
+            startFragment(registerRobotFragment, false)
+        } else {
+            Log.d(tag, "User quit QR scanner early")
+        }
     }
 }
