@@ -1,6 +1,14 @@
-version: '3'
+version: 3
 
 services:
+  # reverse proxy
+  reverseproxy:
+    build:
+      context: ./reverseproxy
+      ports:
+          - 443:443
+          - 80:80
+    restart: always
   # database managment
   adminer:
     image: adminer
@@ -18,7 +26,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - portainer_data:/data
   userdb:
-    build: 
+    build:
       context: ./userserver/database
     restart: always
     environment:
@@ -26,7 +34,7 @@ services:
     volumes:
       - userdb_data:/var/lib/postgresql/data
   userserver:
-    build: 
+    build:
       context: ./userserver
     depends_on:
       - userdb
@@ -39,13 +47,13 @@ services:
       - DB_DATABASE=postgres
       - DB_URL=userdb
   clientserver:
-    build: 
+    build:
       context: ./clientserver
     restart: always
     ports:
       - 80:80
   infodb:
-    build: 
+    build:
       context: ./infoserver/database
     restart: always
     environment:
@@ -53,7 +61,7 @@ services:
     volumes:
       - infodb_data:/var/lib/postgresql/data
   infoserver:
-    build: 
+    build:
       context: ./infoserver
     depends_on:
       - infodb
@@ -66,7 +74,7 @@ services:
       - DB_DATABASE=postgres
       - DB_URL=infodb
   switchdb:
-    build: 
+    build:
       context: ./switchserver/database
     restart: always
     environment:
@@ -74,7 +82,7 @@ services:
     volumes:
       - switchdb_data:/var/lib/postgresql/data
   switchserver:
-    build: 
+    build:
       context: ./switchserver
     depends_on:
       - switchdb
