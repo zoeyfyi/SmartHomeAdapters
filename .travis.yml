@@ -1,9 +1,9 @@
-language: generic
+language: minimal
 
 before_install:
-  # disable services enabled by default
-  - sudo /etc/init.d/mysql stop
-  - sudo /etc/init.d/postgresql stop
+  - wget https://dl.google.com/go/go1.11.5.linux-amd64.tar.gz
+  - sudo tar -xvf go1.11.4.linux-amd64.tar.gz
+  - sudo mv go /usr/local
 
 jobs:
   include:
