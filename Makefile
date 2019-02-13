@@ -51,21 +51,30 @@ build: build-clientserver build-infoserver build-robotserver build-switchserver 
 #
 
 docker-clientserver:
-	@docker build -f go.Dockerfile -t smarthomeadapters/clientserver clientserver
+	@docker build -f go.Dockerfile -t smarthomeadapters/clientserver . --build-arg SERVICE=clientserver
+
+docker-infodb:
+	@(cd infodb && docker build -t smarthomeadapters/infodb .)
 
 docker-infoserver:
-	@docker build -f go.Dockerfile -t smarthomeadapters/infoserver infoserver
+	@docker build -f go.Dockerfile -t smarthomeadapters/infoserver . --build-arg SERVICE=infoserver
 
 docker-robotserver:
-	@docker build -f go.Dockerfile -t smarthomeadapters/robotserver robotserver
+	@docker build -f go.Dockerfile -t smarthomeadapters/robotserver . --build-arg SERVICE=robotserver
+
+docker-switchdb:
+	@(cd switchdb && docker build -t smarthomeadapters/switchdb .)
 
 docker-switchserver:
-	@docker build -f go.Dockerfile -t smarthomeadapters/switchserver switchserver
+	@docker build -f go.Dockerfile -t smarthomeadapters/switchserver . --build-arg SERVICE=switchserver
+
+docker-userdb:
+	@(cd userdb && docker build -t smarthomeadapters/userdb .)
 
 docker-userserver:
-	@docker build -f go.Dockerfile -t smarthomeadapters/userserver userserver
+	@docker build -f go.Dockerfile -t smarthomeadapters/switchserver . --build-arg SERVICE=userserver
 
-docker: docker-clientserver docker-infoserver docker-robotserver docker-switchserver docker-userserver
+docker: docker-clientserver docker-infoserver docker-robotserver docker-switchserver docker-userserver docker-infodb docker-switchdb docker-userdb
 
 #
 # CLEAN
@@ -97,3 +106,24 @@ lint-android:
 	@(cd android && ./gradlew lint)
 
 lint: lint-clientserver lint-infoserver lint-robotserver lint-switchserver lint-userserver lint-android
+
+#
+# TEST
+#
+
+test-clientserver:
+	@(cd clientserver && go test)
+
+test-infoserver:
+	@(cd infoserver && go test)
+
+test-robotserver:
+	@(cd robotserver && go test)
+
+test-switchserver:
+	@(cd switchserver && go test)
+
+test-userserver:
+	@(cd userserver && go test)
+
+test: test-clientserver test-infoserver test-robotserver test-switchserver test-userserver
