@@ -128,6 +128,10 @@ type loginBody struct {
 	Password string `json:"password"`
 }
 
+type tokenResponce struct {
+	Token string `json:"token"`
+}
+
 func loginHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	var loginBody loginBody
 	err := json.NewDecoder(r.Body).Decode(&loginBody)
@@ -137,13 +141,19 @@ func loginHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		return
 	}
 
-	_, err = userserverClient.Login(context.Background(), &userserver.LoginRequest{
+	token, err := userserverClient.Login(context.Background(), &userserver.LoginRequest{
 		Email:    loginBody.Email,
 		Password: loginBody.Password,
 	})
 	if err != nil {
 		HTTPError(w, err)
+		return
 	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(&tokenResponce{
+		Token: token.Token,
+	})
 }
 
 type Robot struct {
