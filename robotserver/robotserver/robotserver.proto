@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+service RobotServer {
+    rpc SetServo(ServoRequest) returns (google.protobuf.Empty) {}
+    rpc SetLED(LEDRequest) returns (google.protobuf.Empty) {}
+}
+
+message ServoRequest {
+    int64 angle = 1;
+}
+
+message LEDRequest {
+    bool on = 1;
+}
