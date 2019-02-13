@@ -1,13 +1,13 @@
-version: 3
+version: '3'
 
 services:
   # reverse proxy
   reverseproxy:
     build:
       context: ./reverseproxy
-      ports:
-          - 443:443
-          - 80:80
+    ports:
+        - 443:443
+        - 80:80
     restart: always
   # database managment
   adminer:
