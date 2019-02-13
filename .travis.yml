@@ -2,8 +2,7 @@ language: minimal
 
 before_install:
   - wget https://dl.google.com/go/go1.11.5.linux-amd64.tar.gz
-  - sudo tar -xvf go1.11.4.linux-amd64.tar.gz
-  - sudo mv go /usr/local
+  - sudo tar -C /usr/local -xvf go1.11.5.linux-amd64.tar.gz
 
 jobs:
   include:
