@@ -102,13 +102,103 @@ paths:
       description: ID of robot
       schema:
         type: string
-
+  /robot/{robotId}/calibration:
+    get:
+      description: Gets the current calibration parameters of the robot
+      reponses:
+        '200':
+        description: The parameters and parameter types of the robot
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomCalibration'
+    post:
+      description: Change values of robot's calibration parameters
+      parameters:
+      - in: query
+        name: calibrationParameters
+        description: "New calibration parameter values"
+        schema:
+          $ref: '#/components/schemas/CustomCalibration'
+    put:
+      description: Change robot's calibration parameters
+      parameters:
+      - in: query
+        name: calibrationParameters
+        description: "New calibration parameters"
+        schema:
+          $ref: '#/components/schemas/CustomCalibration'
+    parameters:
+    - in: path
+      name: robotId
+      description: ID of robot
+      schema:
+        type: string
+  /robot/{robotId}/calibration/test:
+    get:
+    parameters:
+    - in: path
+      name: robotId
+      description: ID of robot
+      schema:
+        type: string
+  /usecases:
+    get:
+      description: Gets all usecases
+      responses:
+        '200':
+        description: The usecases
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Usecase'
+  /usecase/{usecaseId}:
+    get:
+      description: Gets the usecase corresponding to the supplied ID
+      responses:
+        '200':
+        description: The usecase
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Usecase'
+    parameters:
+    - in: path
+      name: usecasId
+      description: ID of usecase
+      schema:
+        type: string
+  /robot/{robotId}/usecase/{usecaseId}:
+    post:
+      description: Registers a usecase to a robot
+      parameters:
+      - in: path
+        name: usecaseId
+        description: The usecase ID
+        schema:
+          type: string
+    parameters:
+    - in: path
+      name: robotId
+      description: ID of robot
+      schema:
+        type: string
+    
+  
 components:
   schemas:
     Robots:
        type: array
        items:
         $ref: '#/components/schemas/Robot'
+    Usecase:
+      type: object
+      properties:
+        notSure : string
+    CustomCalibration:
+      type: object
+      properties:
+        notSure : string
     Robot:
       type: object
       properties:
