@@ -1,20 +1,16 @@
 language: minimal
 
-before_install:
-  - wget https://dl.google.com/go/go1.11.5.linux-amd64.tar.gz
-  - sudo tar -C /usr/local -xvf go1.11.5.linux-amd64.tar.gz
-
 jobs:
   include:
     # Compiling reports
-    - stage: test
-      script:
-      - docker pull dxjoke/tectonic-docker
-      - |
-        for DIR in reports/*/; do
-          echo "Compiling ${DIR}";
-          docker run --mount src=${TRAVIS_BUILD_DIR}/${DIR},target=/usr/src/tex,type=bind dxjoke/tectonic-docker /bin/sh -c "tectonic document.tex"
-        done
+    # - stage: test
+    #   script:
+    #   - docker pull dxjoke/tectonic-docker
+    #   - |
+    #     for DIR in reports/*/; do
+    #       echo "Compiling ${DIR}";
+    #       docker run --mount src=${TRAVIS_BUILD_DIR}/${DIR},target=/usr/src/tex,type=bind dxjoke/tectonic-docker /bin/sh -c "tectonic document.tex"
+    #     done
     # test
     - stage: test
-      script: make ci
+      script: eval "$(gimme 1.11)" && make ci
