@@ -135,4 +135,4 @@ test: test-clientserver test-infoserver test-robotserver test-switchserver test-
 # CI
 #
 
-ci: test
+ci: docker test
