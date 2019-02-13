@@ -11,6 +11,7 @@ import android.widget.GridView
 import com.github.halspals.smarthomeadapters.smarthomeadapters.model.Robot
 import kotlinx.android.synthetic.main.fragment_robots.*
 import org.jetbrains.anko.design.snackbar
+import org.jetbrains.anko.startActivity
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -33,7 +34,7 @@ class RobotsFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         add_robot_button.setOnClickListener { _ ->
-            (activity as MainActivity).startFragment(QRFragment(), false)
+            (activity as MainActivity).startActivity<RegisterRobotActivity>()
         }
 
         (activity as MainActivity).restApiService.getRobots().enqueue(object : Callback<List<Robot>> {

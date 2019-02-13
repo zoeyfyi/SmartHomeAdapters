@@ -29,7 +29,7 @@
     <!-- Strings related to QRFragment -->
     <string name="scan_qr_text">Scan QR code</string>
 
-    <!-- Strings related to RegisterRobotFragment -->
+    <!-- Strings related to RobotSetupFragment -->
     <string name="nickname_input_placeholder">Robot nickname</string>
     <string name="select_from_spinner_text">Choose a use case</string>
 

@@ -80,23 +80,4 @@ class MainActivity :
 
         Log.d(tag, "[startFragment] Committed transaction to fragment")
     }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-
-        val result: IntentResult? = IntentIntegrator.parseActivityResult(requestCode, resultCode, data)
-        val robotId: String? = result?.contents
-
-        if (robotId != null) {
-            Log.d(tag, "[onActivityResult] Scanned robotId $robotId")
-
-            val registerRobotFragment = RegisterRobotFragment()
-            val args = Bundle()
-            args.putString("robotId", robotId)
-            registerRobotFragment.arguments = args
-
-            startFragment(registerRobotFragment, false)
-        } else {
-            Log.d(tag, "User quit QR scanner early")
-        }
-    }
 }
