@@ -1,13 +1,21 @@
 package main
 
 import (
-	"encoding/json"
+	"context"
+	"log"
+	"net"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
+	"time"
+
+	"github.com/mrbenshef/SmartHomeAdapters/robotserver/robotserver"
 
 	"github.com/gorilla/websocket"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/test/bufconn"
 )
 
 // httpToWsProtocal converts a http url to a WebSocket url
@@ -29,6 +37,26 @@ func newServer(t *testing.T) *testServer {
 	return &server
 }
 
+var lis *bufconn.Listener
+
+func TestMain(m *testing.M) {
+	// start test gRPC server
+	lis = bufconn.Listen(1024 * 1024)
+	s := grpc.NewServer()
+	robotserver.RegisterRobotServerServer(s, &server{})
+	go func() {
+		if err := s.Serve(lis); err != nil {
+			log.Fatalf("Server exited with error: %v", err)
+		}
+	}()
+
+	os.Exit(m.Run())
+}
+
+func bufDialer(string, time.Duration) (net.Conn, error) {
+	return lis.Dial()
+}
+
 func TestConnectToWebSocket(t *testing.T) {
 	s := newServer(t)
 	defer s.Server.Close()
@@ -42,11 +70,11 @@ func TestConnectToWebSocket(t *testing.T) {
 
 func TestSendLEDCommand(t *testing.T) {
 	requests := []struct {
-		path            string
+		ledRequest      *robotserver.LEDRequest
 		expectedMessage string
 	}{
-		{"/led/on", "led on"},
-		{"/led/off", "led off"},
+		{&robotserver.LEDRequest{On: true}, "led on"},
+		{&robotserver.LEDRequest{On: false}, "led off"},
 	}
 
 	s := newServer(t)
@@ -59,16 +87,17 @@ func TestSendLEDCommand(t *testing.T) {
 	defer func() { socket = nil }()
 
 	for _, r := range requests {
-		req, err := http.NewRequest("PUT", s.URL+r.path, nil)
+		ctx := context.Background()
+		conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithDialer(bufDialer), grpc.WithInsecure())
+		if err != nil {
+			t.Fatalf("Failed to dial bufnet: %v", err)
+		}
+		defer conn.Close()
+
+		client := robotserver.NewRobotServerClient(conn)
+		_, err = client.SetLED(context.Background(), r.ledRequest)
 		if err != nil {
 			t.Errorf("Error with request: %v", err)
-		}
-
-		rr := httptest.NewRecorder()
-		s.Handler.ServeHTTP(rr, req)
-
-		if rr.Code != http.StatusOK {
-			t.Errorf("Expected OK, got: %v", rr.Code)
 		}
 
 		typ, msg, err := ws.ReadMessage()
@@ -84,106 +113,109 @@ func TestSendLEDCommand(t *testing.T) {
 	}
 }
 
-func TestUnavalibleWhenRobotNotConnected(t *testing.T) {
-	requests := []string{
-		"/led/on",
-		"/led/off",
-		"/servo/90",
+func TestUnavailableWhenRobotNotConnected(t *testing.T) {
+	ctx := context.Background()
+	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithDialer(bufDialer), grpc.WithInsecure())
+	if err != nil {
+		t.Fatalf("Failed to dial bufnet: %v", err)
+	}
+	defer conn.Close()
+
+	expectedError := "rpc error: code = Unavailable desc = Robot not connected"
+
+	client := robotserver.NewRobotServerClient(conn)
+	_, err = client.SetLED(context.Background(), &robotserver.LEDRequest{On: false})
+	if err.Error() != expectedError {
+		t.Errorf("Expected error: \"%s\", got error: %s", expectedError, err.Error())
 	}
 
-	s := newServer(t)
-	defer s.Server.Close()
+	_, err = client.SetLED(context.Background(), &robotserver.LEDRequest{On: true})
+	if err.Error() != expectedError {
+		t.Errorf("Expected error: \"%s\", got error: %s", expectedError, err.Error())
+	}
 
-	for _, r := range requests {
-		req, err := http.NewRequest("PUT", s.URL+r, nil)
-		if err != nil {
-			t.Errorf("Error with request: %v", err)
-		}
-
-		rr := httptest.NewRecorder()
-		s.Handler.ServeHTTP(rr, req)
-
-		if rr.Code != http.StatusServiceUnavailable {
-			t.Errorf("Expected service unavailble, got: %v", rr.Code)
-		}
-
-		var restError restError
-		err = json.NewDecoder(rr.Body).Decode(&restError)
-		if err != nil {
-			t.Errorf("Could not read error json: %v", err)
-		}
-
-		if restError.Error != ErrNotConnected {
-			t.Errorf("Error differs. Expected \"%s\", Got: \"%s\"", ErrNotConnected, restError.Error)
-		}
+	_, err = client.SetServo(context.Background(), &robotserver.ServoRequest{Angle: 0})
+	if err.Error() != expectedError {
+		t.Errorf("Expected error: \"%s\", got error: %s", expectedError, err.Error())
 	}
 }
 
 func TestSendServoCommand(t *testing.T) {
+	requests := []struct {
+		servoRequest    *robotserver.ServoRequest
+		expectedMessage string
+	}{
+		{&robotserver.ServoRequest{Angle: 0}, "servo 0"},
+		{&robotserver.ServoRequest{Angle: 90}, "servo 90"},
+		{&robotserver.ServoRequest{Angle: 180}, "servo 180"},
+	}
+
 	s := newServer(t)
 	defer s.Server.Close()
 
 	ws, _, _ := websocket.DefaultDialer.Dial(s.URL+"/connect", nil)
+	// NOTE: we need to clear the socket in main.go otherwise it may not close in time
+	// before the next test. Once we have add handling for multiple robots we can replace
+	// this with `ws.close()`
 	defer func() { socket = nil }()
 
-	req, err := http.NewRequest("PUT", s.URL+"/servo/90", nil)
-	if err != nil {
-		t.Errorf("Error with request: %v", err)
-	}
+	for _, r := range requests {
+		ctx := context.Background()
+		conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithDialer(bufDialer), grpc.WithInsecure())
+		if err != nil {
+			t.Fatalf("Failed to dial bufnet: %v", err)
+		}
+		defer conn.Close()
 
-	rr := httptest.NewRecorder()
-	s.Handler.ServeHTTP(rr, req)
+		client := robotserver.NewRobotServerClient(conn)
+		_, err = client.SetServo(context.Background(), r.servoRequest)
+		if err != nil {
+			t.Errorf("Error with request: %v", err)
+		}
 
-	if rr.Code != http.StatusOK {
-		t.Errorf("Expected OK, got: %v", rr.Code)
-	}
-
-	typ, msg, err := ws.ReadMessage()
-	if err != nil {
-		t.Errorf("Error reading websocket message: %v", err)
-	}
-	if typ != websocket.TextMessage {
-		t.Errorf("Expected websocket.TextMessage type, got type: %v", typ)
-	}
-	if string(msg) != "servo 90" {
-		t.Errorf("Expected message: \"%s\", got message: \"%s\"", "servo 90", msg)
+		typ, msg, err := ws.ReadMessage()
+		if err != nil {
+			t.Errorf("Error reading websocket message: %v", err)
+		}
+		if typ != websocket.TextMessage {
+			t.Errorf("Expected websocket.TextMessage type, got type: %v", typ)
+		}
+		if string(msg) != r.expectedMessage {
+			t.Errorf("Expected message: \"%s\", got message: \"%s\"", r.expectedMessage, msg)
+		}
 	}
 }
 
 func TestSendInvalidServoCommand(t *testing.T) {
 	requests := []struct {
-		path          string
+		servoRequest  *robotserver.ServoRequest
 		expectedError string
 	}{
-		{"/servo/-100", ErrAngleSmall},
-		{"/servo/999", ErrAngleLarge},
-		{"/servo/foo", ErrAngleNotNumber},
+		{
+			&robotserver.ServoRequest{Angle: -100},
+			"rpc error: code = InvalidArgument desc = -100 is to small, must be >= 0",
+		},
+		{
+			&robotserver.ServoRequest{Angle: 230},
+			"rpc error: code = InvalidArgument desc = 230 is to large, must be <= 180",
+		},
 	}
 
 	s := newServer(t)
 	defer s.Server.Close()
 
 	for _, r := range requests {
-		req, err := http.NewRequest("PUT", s.URL+r.path, nil)
+		ctx := context.Background()
+		conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithDialer(bufDialer), grpc.WithInsecure())
 		if err != nil {
-			t.Errorf("Error with request: %v", err)
+			t.Fatalf("Failed to dial bufnet: %v", err)
 		}
+		defer conn.Close()
 
-		rr := httptest.NewRecorder()
-		s.Handler.ServeHTTP(rr, req)
-
-		if rr.Code != http.StatusBadRequest {
-			t.Errorf("Expected bad request, got: %v", rr.Code)
-		}
-
-		var restError restError
-		err = json.NewDecoder(rr.Body).Decode(&restError)
-		if err != nil {
-			t.Errorf("Could not read error json: %v", err)
-		}
-
-		if restError.Error != r.expectedError {
-			t.Errorf("Error differs. Expected \"%s\", Got: \"%s\"", r.expectedError, restError.Error)
+		client := robotserver.NewRobotServerClient(conn)
+		_, err = client.SetServo(context.Background(), r.servoRequest)
+		if err.Error() != r.expectedError {
+			t.Errorf("Expected error: %s, got error: %v", r.expectedError, err)
 		}
 	}
 }

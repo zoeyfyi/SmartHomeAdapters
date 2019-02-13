@@ -1,15 +1,22 @@
+//go:generate protoc --go_out=plugins=grpc:. ./userserver/userserver.proto
 package main
 
 import (
+	"context"
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"log"
-	"net/http"
+	"net"
 	"os"
 	"regexp"
 	"strconv"
 	"time"
+
+	"github.com/golang/protobuf/ptypes/empty"
+	"github.com/mrbenshef/SmartHomeAdapters/userserver/userserver"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/lib/pq"
@@ -19,10 +26,10 @@ import (
 
 // database connection infomation
 var (
-	username = os.Getenv("DB_USERNAME")
-	password = os.Getenv("DB_PASSWORD")
-	database = os.Getenv("DB_DATABASE")
-	url      = os.Getenv("DB_URL")
+	dbUsername = os.Getenv("DB_USERNAME")
+	dbPassword = os.Getenv("DB_PASSWORD")
+	dbDatabase = os.Getenv("DB_DATABASE")
+	dbURL      = os.Getenv("DB_URL")
 )
 
 // signingKey key for signing json web tokens
@@ -31,22 +38,8 @@ var signingKey = os.Getenv("JWT_SIGNING_KEY")
 // bcryptRounds number of rounds bcrypt uses to hash passwords
 const bcryptRounds = 10
 
-// error messages for register route
-const (
-	ErrorInvalidJSON   = "Invalid JSON"
-	ErrorEmailBlank    = "Email is blank"
-	ErrorEmailInvalid  = "Email address is invalid"
-	ErrorPasswordBlank = "Password is blank"
-	ErrorEmailExists   = "Email already exists"
-)
-
-type restError struct {
-	Error string `json:"error"`
-}
-
-func httpWriteError(w http.ResponseWriter, msg string, code int) {
-	w.WriteHeader(http.StatusBadRequest)
-	json.NewEncoder(w).Encode(restError{msg})
+type server struct {
+	DB *sql.DB
 }
 
 func isEmailValid(email string) bool {
@@ -54,219 +47,132 @@ func isEmailValid(email string) bool {
 	return emailRegex.MatchString(email)
 }
 
-type registerBody struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
+func (s *server) Register(ctx context.Context, request *userserver.RegisterRequest) (*empty.Empty, error) {
+	// check fields are correct
+	if request.Email == "" {
+		return nil, status.New(codes.InvalidArgument, "Email is blank").Err()
+	}
+	if !isEmailValid(request.Email) {
+		return nil, status.Newf(codes.InvalidArgument, "Email \"%s\" is invalid", request.Email).Err()
+	}
+	if request.Password == "" {
+		return nil, status.New(codes.InvalidArgument, "Password is blank").Err()
+	}
+	if len(request.Password) < 8 {
+		return nil, status.New(codes.InvalidArgument, "Password is less than 8 characters").Err()
+	}
+
+	// hash password
+	hash, err := bcrypt.GenerateFromPassword([]byte(request.Password), 10)
+	if err != nil {
+		return nil, status.New(codes.Internal, "Internal error").Err()
+	}
+
+	// insert user into database
+	_, err = s.DB.Exec("INSERT INTO users(email, password) VALUES($1, $2)", request.Email, hash)
+	if err != nil {
+		if err, ok := err.(*pq.Error); ok && err.Code.Name() == "unique_violation" {
+			// email already exists
+			return nil, status.Newf(codes.AlreadyExists, "A user with email \"%s\" already exists", request.Email).Err()
+		} else {
+			log.Printf("Failed to insert user into database: %v", err)
+			return nil, status.New(codes.Internal, "Internal error").Err()
+		}
+	}
+
+	return &empty.Empty{}, nil
 }
 
-type userResponce struct {
-	Email string `json:"email"`
-}
-
-func registerHandler(db *sql.DB) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Println("/register")
-
-		w.Header().Add("Content-Type", "application/json")
-
-		// decode body
-		var registerBody registerBody
-		err := json.NewDecoder(r.Body).Decode(&registerBody)
-		if err != nil {
-			httpWriteError(w, ErrorInvalidJSON, http.StatusBadRequest)
-			return
+func (s *server) Login(ctx context.Context, request *userserver.LoginRequest) (*userserver.Token, error) {
+	// get email/hash from database
+	var id int
+	var hash string
+	row := s.DB.QueryRow("SELECT id, password FROM users WHERE email = $1", request.Email)
+	err := row.Scan(&id, &hash)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, status.Newf(codes.NotFound, "User with email \"%s\" does not exist", request.Email).Err()
+		} else {
+			log.Printf("Error scanning database: %v", err)
+			return nil, status.New(codes.Internal, "Internal error").Err()
 		}
+	}
 
-		email := registerBody.Email
-		password := registerBody.Password
+	// check password
+	err = bcrypt.CompareHashAndPassword([]byte(hash), []byte(request.Password))
+	if err != nil {
+		if err == bcrypt.ErrMismatchedHashAndPassword {
+			return nil, status.New(codes.InvalidArgument, "Password incorrect").Err()
+		} else {
+			log.Printf("Error comparing hashes: %v", err)
+			return nil, status.New(codes.Internal, "Internal error").Err()
+		}
+	}
 
-		// check fields are correct
-		if email == "" {
-			httpWriteError(w, ErrorEmailBlank, http.StatusBadRequest)
-			return
-		}
-		if !isEmailValid(email) {
-			httpWriteError(w, ErrorEmailInvalid, http.StatusBadRequest)
-			return
-		}
-		if password == "" {
-			httpWriteError(w, ErrorPasswordBlank, http.StatusBadRequest)
-			return
-		}
-
-		// hash password
-		hash, err := bcrypt.GenerateFromPassword([]byte(password), 10)
-		if err != nil {
-			httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		}
-
-		// insert user into database
-		_, err = db.Exec("INSERT INTO users(email, password) VALUES($1, $2)", email, hash)
-		if err != nil {
-			if err, ok := err.(*pq.Error); ok && err.Code.Name() == "unique_violation" {
-				// email already exists
-				httpWriteError(w, ErrorEmailExists, http.StatusBadRequest)
-			} else {
-				log.Printf("Failed to insert user into database: %v", err)
-				httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-			}
-			return
-		}
-
-		// return user
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(userResponce{
-			Email: email,
-		})
+	// create token
+	expire := time.Now().Add(time.Hour * 24)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"exp": expire,
+		"id":  strconv.Itoa(id),
 	})
+	tokenString, err := token.SignedString([]byte(signingKey))
+	if err != nil {
+		log.Printf("Error signing token: %v", err)
+		return nil, status.New(codes.Internal, "Internal error").Err()
+	}
+
+	return &userserver.Token{
+		Token: tokenString,
+	}, nil
 }
 
-// error messages for register route
-const (
-	ErrorEmailDoesntExist  = "A user with that email adress does not exist"
-	ErrorPasswordIncorrect = "Password incorrect"
-)
-
-type loginBody struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
-
-type tokenResponce struct {
-	Token string `json:"token"`
-}
-
-func loginHandler(db *sql.DB) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Println("/login")
-
-		w.Header().Add("Content-Type", "application/json")
-
-		// decode body
-		var loginBody loginBody
-		err := json.NewDecoder(r.Body).Decode(&loginBody)
-		if err != nil {
-			httpWriteError(w, ErrorInvalidJSON, http.StatusBadRequest)
-			return
+func (s *server) Authorize(ctx context.Context, token *userserver.Token) (*userserver.User, error) {
+	// parse token
+	jwtToken, err := jwt.Parse(token.Token, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 		}
-
-		email := loginBody.Email
-		password := loginBody.Password
-
-		// get email/hash from database
-		var id int
-		var hash string
-		row := db.QueryRow("SELECT id, password FROM users WHERE email = $1", email)
-		err = row.Scan(&id, &hash)
-		if err != nil {
-			if err == sql.ErrNoRows {
-				httpWriteError(w, ErrorEmailDoesntExist, http.StatusBadRequest)
-			} else {
-				log.Printf("Error scanning database: %v", err)
-				httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-			}
-			return
-		}
-
-		// check password
-		err = bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
-		if err != nil {
-			if err == bcrypt.ErrMismatchedHashAndPassword {
-				httpWriteError(w, ErrorPasswordIncorrect, http.StatusBadRequest)
-			} else {
-				log.Printf("Error comparing hashes: %v", err)
-				httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-			}
-			return
-		}
-
-		// create token
-		expire := time.Now().Add(time.Hour * 24)
-		token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-			"exp": expire,
-			"id":  strconv.Itoa(id),
-		})
-		tokenString, err := token.SignedString([]byte(signingKey))
-		if err != nil {
-			httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-			return
-		}
-
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(tokenResponce{
-			Token: tokenString,
-		})
+		return []byte(signingKey), nil
 	})
-}
+	if err != nil {
+		log.Printf("Couldnt parse token: %v", err)
+		return nil, status.New(codes.InvalidArgument, "Invalid token").Err()
+	}
 
-// error messages for authorization route
-const (
-	ErrorInvalidToken = "Authorization token is invalid"
-)
+	// get claims
+	claims, ok := jwtToken.Claims.(jwt.MapClaims)
+	if !ok || !jwtToken.Valid {
+		log.Printf("Could not get token claims")
+		return nil, status.New(codes.InvalidArgument, "Invalid token").Err()
+	}
 
-type authorizationResponce struct {
-	ID string `json:"id"`
-}
+	// get ID from claims
+	id, ok := claims["id"].(string)
+	if !ok {
+		log.Printf("Token did not have ID claim, claims: %+v", claims)
+		return nil, status.New(codes.InvalidArgument, "Invalid token").Err()
+	}
 
-func authorizeHandler() http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Println("/authorize")
-
-		w.Header().Add("Content-Type", "application/json")
-
-		// parse token
-		tokenString := r.Header.Get("token")
-		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
-			}
-			return []byte(signingKey), nil
-		})
-		if err != nil {
-			log.Printf("Couldnt parse token: %v", err)
-			httpWriteError(w, ErrorInvalidToken, http.StatusBadRequest)
-			return
-		}
-
-		// get claims
-		claims, ok := token.Claims.(jwt.MapClaims)
-		if !ok || !token.Valid {
-			log.Printf("Could not get token claims")
-			httpWriteError(w, ErrorInvalidToken, http.StatusBadRequest)
-			return
-		}
-
-		// get ID from claims
-		id, ok := claims["id"].(string)
-		if !ok {
-			log.Printf("Token did not have ID claim, claims: %+v", claims)
-			httpWriteError(w, ErrorInvalidToken, http.StatusBadRequest)
-			return
-		}
-
-		// return authorization responce
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(authorizationResponce{
-			ID: string(id),
-		})
-	})
+	return &userserver.User{
+		Id: id,
+	}, nil
 }
 
 func connectionStr() string {
-	if username == "" {
-		username = "postgres"
+	if dbUsername == "" {
+		dbUsername = "postgres"
 	}
-	if password == "" {
-		password = "password"
+	if dbPassword == "" {
+		dbPassword = "password"
 	}
-	if url == "" {
-		url = "localhost:5432"
+	if dbURL == "" {
+		dbURL = "localhost:5432"
 	}
-	if database == "" {
-		database = "postgres"
+	if dbDatabase == "" {
+		dbDatabase = "postgres"
 	}
 
-	return fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable", username, password, url, database)
+	return fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable", dbUsername, dbPassword, dbURL, dbDatabase)
 }
 
 func getDb() *sql.DB {
@@ -294,13 +200,13 @@ func main() {
 
 	log.Printf("Connected to database: %v+\n", db.Stats())
 
-	// register routes
-	http.HandleFunc("/register", registerHandler(db))
-	http.HandleFunc("/login", loginHandler(db))
-	http.HandleFunc("/authorize", authorizeHandler())
-
-	// start server
-	if err := http.ListenAndServe(":80", nil); err != nil {
-		panic(err)
+	// start grpc server
+	grpcServer := grpc.NewServer()
+	userServer := &server{DB: db}
+	userserver.RegisterUserServerServer(grpcServer, userServer)
+	lis, err := net.Listen("tcp", ":80")
+	if err != nil {
+		log.Fatalf("Failed to listen: %v", err)
 	}
+	grpcServer.Serve(lis)
 }

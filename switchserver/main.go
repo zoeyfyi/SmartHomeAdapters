@@ -1,19 +1,27 @@
+//go:generate protoc --go_out=plugins=grpc:. ./switchserver/switchserver.proto
 package main
 
 import (
-	"bytes"
+	"context"
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"log"
-	"net/http"
+	"net"
 	"os"
 	"time"
 
-	"github.com/julienschmidt/httprouter"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
+	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/lib/pq"
 	_ "github.com/lib/pq"
+	"github.com/mrbenshef/SmartHomeAdapters/robotserver/robotserver"
+	"github.com/mrbenshef/SmartHomeAdapters/switchserver/switchserver"
+	"google.golang.org/grpc"
 )
+
+var robotserverClient robotserver.RobotServerClient
 
 // database connection infomation
 var (
@@ -23,7 +31,166 @@ var (
 	url      = os.Getenv("DB_URL")
 )
 
-var client = http.DefaultClient
+type server struct {
+	DB *sql.DB
+}
+
+func (s *server) AddSwitch(ctx context.Context, request *switchserver.AddSwitchRequest) (*switchserver.Switch, error) {
+	switchRobot := switchserver.Switch{
+		Id:   request.Id,
+		IsOn: request.IsOn,
+	}
+
+	// insert into database
+	_, err := s.DB.Exec(
+		"INSERT INTO switches(serial, isOn, onAngle, offAngle, restAngle, isCalibrated) VALUES($1, $2, $3, $4, $5, $6)",
+		switchRobot.Id,
+		switchRobot.IsOn,
+		switchRobot.OnAngle,
+		switchRobot.OffAngle,
+		switchRobot.RestAngle,
+		switchRobot.IsCalibrated,
+	)
+	if err != nil {
+		if err, ok := err.(*pq.Error); ok && err.Code.Name() == "unique_violation" {
+			// robot is already registered
+			return nil, status.Newf(codes.AlreadyExists, "Robot \"%s\" is already a registered switch", switchRobot.Id).Err()
+		} else {
+			log.Printf("Failed to insert user into database: %v", err)
+			return nil, status.Newf(codes.Internal, "Could not register robot \"%s\" as a switch", switchRobot.Id).Err()
+		}
+	}
+
+	return &switchRobot, nil
+}
+
+func (s *server) RemoveSwitch(ctx context.Context, request *switchserver.RemoveSwitchRequest) (*empty.Empty, error) {
+	result, err := s.DB.Exec("DELETE FROM switches WHERE serial = $1", request.Id)
+	if err != nil {
+		return nil, status.Newf(codes.Internal, "Failed to unregister switch \"%s\"", request.Id).Err()
+	}
+
+	count, err := result.RowsAffected()
+	if err != nil {
+		return nil, status.New(codes.Internal, "Internal error").Err()
+	}
+
+	if count == 0 {
+		return nil, status.Newf(codes.InvalidArgument, "Robot \"%s\" is not a switch", request.Id).Err()
+	}
+
+	return &empty.Empty{}, nil
+}
+
+func (s *server) GetSwitch(ctx context.Context, request *switchserver.SwitchQuery) (*switchserver.Switch, error) {
+	var (
+		isOn         bool
+		isCalibrated bool
+		onAngle      int
+		offAngle     int
+		restAngle    int
+	)
+
+	row := s.DB.QueryRow("SELECT isOn, isCalibrated, onAngle, offAngle, restAngle FROM switches WHERE serial = $1", request.Id)
+	err := row.Scan(&isOn, &isCalibrated, &onAngle, &offAngle, &restAngle)
+	if err != nil {
+		log.Printf("Failed to scan database: %v", err)
+		return nil, status.Newf(codes.Internal, "Failed to fetch switch \"%s\"", request.Id).Err()
+	}
+
+	return &switchserver.Switch{
+		Id:           request.Id,
+		IsOn:         isOn,
+		IsCalibrated: isCalibrated,
+		OnAngle:      int64(onAngle),
+		OffAngle:     int64(offAngle),
+		RestAngle:    int64(restAngle),
+	}, nil
+}
+
+func (s *server) SetSwitch(request *switchserver.SetSwitchRequest, stream switchserver.SwitchServer_SetSwitchServer) error {
+	// get switch
+	robotSwitch, err := s.GetSwitch(context.Background(), &switchserver.SwitchQuery{
+		Id: request.Id,
+	})
+	if err != nil {
+		return err
+	}
+
+	// check calibration
+	if !robotSwitch.IsCalibrated {
+		return status.New(codes.FailedPrecondition, "Switch is not calibrated").Err()
+	}
+
+	// if not force check we are going to a different state
+	if robotSwitch.IsOn == request.On && !request.Force {
+		if robotSwitch.IsOn {
+			return status.New(codes.InvalidArgument, "Switch is already on").Err()
+		} else {
+			return status.New(codes.InvalidArgument, "Switch is already off").Err()
+		}
+	}
+
+	stream.Send(&switchserver.SetSwitchStatus{
+		Status: switchserver.SetSwitchStatus_SETTING,
+	})
+
+	var angle int64
+	if request.On {
+		angle = robotSwitch.OnAngle
+	} else {
+		angle = robotSwitch.OffAngle
+	}
+
+	_, err = robotserverClient.SetServo(context.Background(), &robotserver.ServoRequest{
+		Angle: angle,
+	})
+	if err != nil {
+		return err
+	}
+
+	// TODO: replace waiting with message acknowledment
+	stream.Send(&switchserver.SetSwitchStatus{
+		Status: switchserver.SetSwitchStatus_WAITING,
+	})
+	time.Sleep(time.Second * 3)
+
+	// return to rest angle
+	stream.Send(&switchserver.SetSwitchStatus{
+		Status: switchserver.SetSwitchStatus_RETURNING,
+	})
+	_, err = robotserverClient.SetServo(context.Background(), &robotserver.ServoRequest{
+		Angle: robotSwitch.RestAngle,
+	})
+	if err != nil {
+		return err
+	}
+
+	// done
+	stream.Send(&switchserver.SetSwitchStatus{
+		Status: switchserver.SetSwitchStatus_DONE,
+	})
+
+	// update database
+	res, err := s.DB.Exec("UPDATE switches SET isOn = $1 WHERE serial = $2", request.On, request.Id)
+	if err != nil {
+		log.Printf("Failed to update database: %v", err)
+		return status.Newf(codes.Internal, "Failed to update state of switch \"%s\"", request.Id).Err()
+	}
+
+	// check 1 row was updated
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		log.Printf("Failed to get the amount of rows affected: %v", err)
+		return status.Newf(codes.Internal, "Internal error").Err()
+	}
+	if rowsAffected != 1 {
+		log.Printf("Expected to update exactly 1 row, rows updated: %d\n", rowsAffected)
+		return status.Newf(codes.Internal, "Internal error").Err()
+	}
+
+	return nil
+}
 
 func connectionStr() string {
 	if username == "" {
@@ -52,347 +219,6 @@ func getDb() *sql.DB {
 	return db
 }
 
-type switchRobot struct {
-	RobotID      string `json:"robotId"`
-	IsOn         bool   `json:"isOn"`
-	IsCalibrated bool   `json:"isCalibrated"`
-	OnAngle      int    `json:"onAngle"`
-	OffAngle     int    `json:"offAngle"`
-	RestAngle    int    `json:"restAngle"`
-}
-
-type restError struct {
-	Error string `json:"error"`
-}
-
-func httpWriteError(w http.ResponseWriter, msg string, code int) {
-	w.WriteHeader(http.StatusBadRequest)
-	json.NewEncoder(w).Encode(restError{msg})
-}
-
-// error messages for add switch route
-const (
-	ErrorInvalidJSON     = "Invalid JSON"
-	ErrorIsOnMissing     = "Field \"isOn\" missing"
-	ErrorRobotRegistered = "Robot is already registered"
-)
-
-type addSwitchBody struct {
-	IsOn *bool `json:"isOn"`
-}
-
-// addSwitchHandler registers a robot as a switch robot
-func addSwitchHandler(db *sql.DB) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-		// decode body
-		var addSwitchBody addSwitchBody
-		err := json.NewDecoder(r.Body).Decode(&addSwitchBody)
-		if err != nil {
-			httpWriteError(w, ErrorInvalidJSON, http.StatusBadRequest)
-			return
-		}
-
-		// check fields
-		if addSwitchBody.IsOn == nil {
-			httpWriteError(w, ErrorIsOnMissing, http.StatusBadRequest)
-			return
-		}
-
-		switchRobot := switchRobot{
-			RobotID: p.ByName("id"),
-			IsOn:    *addSwitchBody.IsOn,
-		}
-
-		// insert into database
-		_, err = db.Exec(
-			"INSERT INTO switches(serial, isOn, onAngle, offAngle, restAngle, isCalibrated) VALUES($1, $2, $3, $4, $5, $6)",
-			switchRobot.RobotID,
-			switchRobot.IsOn,
-			switchRobot.OnAngle,
-			switchRobot.OffAngle,
-			switchRobot.RestAngle,
-			switchRobot.IsCalibrated,
-		)
-		if err != nil {
-			if err, ok := err.(*pq.Error); ok && err.Code.Name() == "unique_violation" {
-				// robot is already registered
-				httpWriteError(w, ErrorRobotRegistered, http.StatusBadRequest)
-			} else {
-				log.Printf("Failed to insert user into database: %v", err)
-				httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-			}
-			return
-		}
-
-		// return success
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(switchRobot)
-	}
-}
-
-// error messages for remove switch routes
-const (
-	ErrorRobotNotRegistered = "Robot is not registered"
-)
-
-// removeSwitchHandler unregisters a robot as a switch
-func removeSwitchHandler(db *sql.DB) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-		robotID := p.ByName("id")
-
-		// insert into database
-		result, err := db.Exec("DELETE FROM switches WHERE serial = $1", robotID)
-		if err != nil {
-			log.Printf("Failed to insert user into database: %v", err)
-			httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-			return
-		}
-
-		count, err := result.RowsAffected()
-		if err != nil {
-			httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-			return
-		}
-
-		if count == 0 {
-			httpWriteError(w, ErrorRobotNotRegistered, http.StatusBadRequest)
-			return
-		}
-
-		w.WriteHeader(http.StatusOK)
-	}
-}
-
-func setServo(w http.ResponseWriter, angle int) bool {
-	// send servo commands
-	url := fmt.Sprintf("http://robotserver/servo/%d", angle)
-	req, err := http.NewRequest(http.MethodPut, url, nil)
-	if err != nil {
-		log.Printf("Error creating request: %v", err)
-		httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return false
-	}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Printf("Error executing request: %v", err)
-		httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return false
-	}
-	if resp.StatusCode != http.StatusOK {
-		w.WriteHeader(resp.StatusCode)
-		buf := new(bytes.Buffer)
-		buf.ReadFrom(resp.Body)
-		w.Write(buf.Bytes())
-		return false
-	}
-
-	return true
-}
-
-func setIsOn(w http.ResponseWriter, db *sql.DB, robotID string, isOn bool) bool {
-	res, err := db.Exec("UPDATE switches SET isOn = $1 WHERE serial = $2", isOn, robotID)
-	if err != nil {
-		log.Printf("Failed to update database: %v", err)
-		httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return false
-	}
-
-	rowsAffected, err := res.RowsAffected()
-
-	if err != nil {
-		log.Printf("Failed to get the amount of rows affected: %v", err)
-		httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return false
-	}
-
-	if rowsAffected != 1 {
-		log.Printf("Expected to update exactly 1 row, rows updated: %d\n", rowsAffected)
-		httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return false
-	}
-
-	return true
-}
-
-// errors for light on/off routes
-const (
-	ErrorNotCalibrated = "Robot has not been calibrated"
-	ErrorSwitchOn      = "Switch is already on (use force to override)"
-	ErrorSwitchOff     = "Switch is already off (use force to override)"
-)
-
-func setSwitch(w http.ResponseWriter, db *sql.DB, robotID string, setOn bool, force bool) {
-	// get switch status from database
-	var (
-		isOn         bool
-		isCalibrated bool
-		onAngle      int
-		offAngle     int
-		restAngle    int
-	)
-
-	row := db.QueryRow("SELECT isOn, isCalibrated, onAngle, offAngle, restAngle FROM switches WHERE serial = $1", robotID)
-	err := row.Scan(&isOn, &isCalibrated, &onAngle, &offAngle, &restAngle)
-	if err != nil {
-		log.Printf("Failed to scan database: %v", err)
-		httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return
-	}
-
-	// check if it has been calibrated
-	if !isCalibrated {
-		httpWriteError(w, ErrorNotCalibrated, http.StatusBadRequest)
-		return
-	}
-
-	// check if the light is already on
-	if !force {
-		// check if switch is already on/off
-		if isOn == setOn {
-			if isOn {
-				httpWriteError(w, ErrorSwitchOn, http.StatusBadRequest)
-			} else {
-				httpWriteError(w, ErrorSwitchOff, http.StatusBadRequest)
-			}
-			return
-		}
-	}
-
-	targetAngle := 0
-	if setOn {
-		targetAngle = onAngle
-	} else {
-		targetAngle = offAngle
-	}
-
-	// send servo commands
-	if ok := setServo(w, targetAngle); !ok {
-		return
-	}
-	time.Sleep(time.Second)
-	if ok := setServo(w, restAngle); !ok {
-		return
-	}
-
-	// update database
-	if ok := setIsOn(w, db, robotID, true); !ok {
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-}
-
-type onSwitchBody struct {
-	// Force determines weather a servo command is sent even if the robot is already on
-	Force bool `json:"force"`
-}
-
-func onHandler(db *sql.DB) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-		log.Println("on handler")
-
-		// parse robot ID
-		robotID := p.ByName("id")
-
-		var onSwitchBody onSwitchBody
-
-		if r.Body != nil {
-			// decode body
-			err := json.NewDecoder(r.Body).Decode(&onSwitchBody)
-			if err != nil {
-				httpWriteError(w, ErrorInvalidJSON, http.StatusBadRequest)
-				return
-			}
-		}
-
-		// update switch
-		setSwitch(w, db, robotID, true, onSwitchBody.Force)
-	}
-}
-
-type offSwitchBody struct {
-	// Force determines weather a servo command is sent even if the robot is already on
-	Force bool `json:"force"`
-}
-
-func offHandler(db *sql.DB) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-		// parse robot ID
-		robotID := p.ByName("id")
-
-		// decode body
-		var offSwitchBody offSwitchBody
-		if r.Body != nil {
-			err := json.NewDecoder(r.Body).Decode(&offSwitchBody)
-			if err != nil {
-				httpWriteError(w, ErrorInvalidJSON, http.StatusBadRequest)
-				return
-			}
-		}
-
-		// update switch
-		setSwitch(w, db, robotID, false, offSwitchBody.Force)
-
-		// update database
-		setIsOn(w, db, robotID, false)
-	}
-}
-
-func getSwitchHandler(db *sql.DB) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-		// parse robot ID
-		robotID := p.ByName("id")
-
-		var (
-			isOn         bool
-			isCalibrated bool
-			onAngle      int
-			offAngle     int
-			restAngle    int
-		)
-
-		row := db.QueryRow("SELECT isOn, isCalibrated, onAngle, offAngle, restAngle FROM switches WHERE serial = $1", robotID)
-		err := row.Scan(&isOn, &isCalibrated, &onAngle, &offAngle, &restAngle)
-		if err != nil {
-			log.Printf("Failed to scan database: %v", err)
-			httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-			return
-		}
-
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(&switchRobot{
-			RobotID:      robotID,
-			IsOn:         isOn,
-			IsCalibrated: isCalibrated,
-			OnAngle:      onAngle,
-			OffAngle:     offAngle,
-			RestAngle:    restAngle,
-		})
-	}
-}
-
-func createRouter(db *sql.DB) *httprouter.Router {
-	router := httprouter.New()
-
-	// register routes
-	router.POST("/:id", addSwitchHandler(db))
-	router.DELETE("/:id", removeSwitchHandler(db))
-	router.GET("/:id", getSwitchHandler(db))
-	router.PATCH("/:id/on", onHandler(db))
-	router.PATCH("/:id/off", offHandler(db))
-
-	return router
-}
-
-// logRequests logs the method and URL of each request
-func logRequests(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("%s %s", r.Method, r.URL.String())
-		next.ServeHTTP(w, r)
-	})
-}
-
 func main() {
 	// connect to database
 	db := getDb()
@@ -406,8 +232,21 @@ func main() {
 
 	log.Printf("Connected to database: %+v\n", db.Stats())
 
-	// start server
-	if err := http.ListenAndServe(":80", logRequests(createRouter(db))); err != nil {
+	// connect to robotserver
+	robotserverConn, err := grpc.Dial("robotserver:8080", grpc.WithInsecure())
+	if err != nil {
 		panic(err)
 	}
+	defer robotserverConn.Close()
+	robotserverClient = robotserver.NewRobotServerClient(robotserverConn)
+
+	// start grpc server
+	grpcServer := grpc.NewServer()
+	switchServer := &server{DB: db}
+	switchserver.RegisterSwitchServerServer(grpcServer, switchServer)
+	lis, err := net.Listen("tcp", ":80")
+	if err != nil {
+		log.Fatalf("Failed to listen: %v", err)
+	}
+	grpcServer.Serve(lis)
 }
