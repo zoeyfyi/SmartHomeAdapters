@@ -79,19 +79,19 @@ clean:
 #
 
 lint-clientserver:
-	@(cd clientserver && gometalinter --enable=gofmt ./...)
+	@(cd clientserver && gometalinter --disable=gocyclo --enable=gofmt ./...)
 
 lint-infoserver:
-	@(cd infoserver && gometalinter --enable=gofmt ./...)
+	@(cd infoserver && gometalinter --disable=gocyclo --enable=gofmt ./...)
 
 lint-robotserver:
-	@(cd robotserver && gometalinter --enable=gofmt ./...)
+	@(cd robotserver && gometalinter --disable=gocyclo --enable=gofmt ./...)
 
 lint-switchserver:
-	@(cd switchserver && gometalinter --enable=gofmt ./...)
+	@(cd switchserver && gometalinter --disable=gocyclo --enable=gofmt ./...)
 
 lint-userserver:
-	@(cd userserver && gometalinter --enable=gofmt ./...)
+	@(cd userserver && gometalinter --disable=gocyclo --enable=gofmt ./...)
 
 lint-android:
 	@(cd android && ./gradlew lint)
