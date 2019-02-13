@@ -126,4 +126,7 @@ test-switchserver:
 test-userserver:
 	@(cd userserver && go test)
 
-test: test-clientserver test-infoserver test-robotserver test-switchserver test-userserver
+test-android:
+	@(cd android && ./gradlew test)
+
+test: test-clientserver test-infoserver test-robotserver test-switchserver test-userserver test-android
