@@ -8,7 +8,7 @@ before_install:
 stages:
   - test
   - name: deploy
-    if: branch = master
+    if: branch = master AND type != pull_request
   - name: deploy-test
     if: head_branch = webserver
 
