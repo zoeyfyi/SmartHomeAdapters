@@ -5,17 +5,18 @@ before_install:
   - sudo /etc/init.d/mysql stop
   - sudo /etc/init.d/postgresql stop
 
+stages:
+  - test
+  - name: deploy
+    if: branch = master
+  - name: deploy-test
+    if: head_branch = webserver
+
 jobs:
   include:
-    # Compiling reports
-    # - stage: test
-    #   script:
-    #   - docker pull dxjoke/tectonic-docker
-    #   - |
-    #     for DIR in reports/*/; do
-    #       echo "Compiling ${DIR}";
-    #       docker run --mount src=${TRAVIS_BUILD_DIR}/${DIR},target=/usr/src/tex,type=bind dxjoke/tectonic-docker /bin/sh -c "tectonic document.tex"
-    #     done
-    # test
     - stage: test
       script: eval "$(gimme 1.11)" && make ci
+    - stage: deploy
+      script: make docker-push
+    - stage: deploy-test
+      script: make docker-push-test
