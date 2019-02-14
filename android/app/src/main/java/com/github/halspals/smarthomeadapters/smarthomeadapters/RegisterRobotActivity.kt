@@ -27,7 +27,7 @@ class RegisterRobotActivity : AppCompatActivity() {
     * @param addToBackstack if true, fragment will be added to the backstack,
     * otherwise backstack will be dropped
     */
-    fun startFragment(fragment: Fragment, addToBackstack: Boolean = false) {
+    private fun startFragment(fragment: Fragment, addToBackstack: Boolean = false) {
         Log.d(tag, "[startFragment] Invoked")
 
         val fManager = supportFragmentManager
@@ -40,10 +40,14 @@ class RegisterRobotActivity : AppCompatActivity() {
                 addToBackStack(null)
             } else {
                 // A->B->C to A (clear backstack)
-                fManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+                try {
+                    fManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+                } catch (e: IllegalStateException) {
+                    Log.w(tag, "[startFragment] Caught IllegalStateException $e")
+                }
             }
 
-            commit()
+            commitAllowingStateLoss()
         }
 
         Log.d(tag, "[startFragment] Committed transaction to fragment")
@@ -62,7 +66,7 @@ class RegisterRobotActivity : AppCompatActivity() {
             args.putString("robotId", robotId)
             registerRobotFragment.arguments = args
 
-            startFragment(registerRobotFragment, false)
+            startFragment(registerRobotFragment)
         } else {
             Log.d(tag, "User quit QR scanner early")
         }
