@@ -4,6 +4,8 @@ before_install:
   # disable services enabled by default
   - sudo /etc/init.d/mysql stop
   - sudo /etc/init.d/postgresql stop
+  # login so we can push to dockerhub
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
 
 stages:
   - test
