@@ -76,6 +76,38 @@ docker-userserver:
 
 docker: docker-clientserver docker-infoserver docker-robotserver docker-switchserver docker-userserver docker-infodb docker-switchdb docker-userdb
 
+docker-push:
+	@docker tag smarthomeadapters/clientserver smarthomeadapters/clientserver:latest
+	@docker push smarthomeadapters/clientserver:latest
+	@docker tag smarthomeadapters/infodb smarthomeadapters/infodb:latest
+	@docker push smarthomeadapters/infodb:latest
+	@docker tag smarthomeadapters/infoserver smarthomeadapters/infoserver:latest
+	@docker push smarthomeadapters/infoserver:latest
+	@docker tag smarthomeadapters/robotserver smarthomeadapters/robotserver:latest
+	@docker push smarthomeadapters/robotserver:latest
+	@docker tag smarthomeadapters/switchdb smarthomeadapters/switchdb:latest
+	@docker push smarthomeadapters/switchdb:latest
+	@docker tag smarthomeadapters/switchserver smarthomeadapters/switchserver:latest
+	@docker push smarthomeadapters/switchserver:latest
+	@docker tag smarthomeadapters/userdb smarthomeadapters/userdb:latest
+	@docker push smarthomeadapters/userdb:latest
+
+docker-push-test:
+	@docker tag smarthomeadapters/clientserver smarthomeadapters/clientserver:test
+	@docker push smarthomeadapters/clientserver:test
+	@docker tag smarthomeadapters/infodb smarthomeadapters/infodb:test
+	@docker push smarthomeadapters/infodb:test
+	@docker tag smarthomeadapters/infoserver smarthomeadapters/infoserver:test
+	@docker push smarthomeadapters/infoserver:test
+	@docker tag smarthomeadapters/robotserver smarthomeadapters/robotserver:test
+	@docker push smarthomeadapters/robotserver:test
+	@docker tag smarthomeadapters/switchdb smarthomeadapters/switchdb:test
+	@docker push smarthomeadapters/switchdb:test
+	@docker tag smarthomeadapters/switchserver smarthomeadapters/switchserver:test
+	@docker push smarthomeadapters/switchserver:test
+	@docker tag smarthomeadapters/userdb smarthomeadapters/userdb:test
+	@docker push smarthomeadapters/userdb:test
+
 #
 # CLEAN
 #
