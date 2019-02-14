@@ -170,6 +170,6 @@ test: test-services test-android
 #
 
 ci-test-android: 
-	@docker run -it --rm -v $$PWD/android:/root/tmp budtmo/docker-android-x86-8.1 bash -c "(cd tmp && ./gradlew test)"
+	@docker run -it --rm -v $$PWD/android:/root/tmp budtmo/docker-android-x86-9.0 bash -c "(cd tmp && ./gradlew test)"
 
 ci: docker test-services ci-test-android
