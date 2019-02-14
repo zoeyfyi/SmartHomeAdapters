@@ -17,17 +17,21 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - portainer_data:/data
+  # updates to latest container
+  watchtower:
+    image: v2tec/watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: --interval 30 --no-pull=${LOCAL}
   userdb:
-    build: 
-      context: ./userserver/database
+    image: smarthomeadapters/userdb
     restart: always
     environment:
       - POSTGRES_PASSWORD=password
     volumes:
       - userdb_data:/var/lib/postgresql/data
   userserver:
-    build: 
-      context: ./userserver
+    image: smarthomeadapters/userserver
     depends_on:
       - userdb
     restart: always
@@ -39,22 +43,19 @@ services:
       - DB_DATABASE=postgres
       - DB_URL=userdb
   clientserver:
-    build: 
-      context: ./clientserver
+    image: smarthomeadapters/clientserver
     restart: always
     ports:
       - 80:80
   infodb:
-    build: 
-      context: ./infoserver/database
+    image: smarthomeadapters/infodb
     restart: always
     environment:
       - POSTGRES_PASSWORD=password
     volumes:
       - infodb_data:/var/lib/postgresql/data
   infoserver:
-    build: 
-      context: ./infoserver
+    image: smarthomeadapters/infoserver
     depends_on:
       - infodb
     restart: always
@@ -66,16 +67,14 @@ services:
       - DB_DATABASE=postgres
       - DB_URL=infodb
   switchdb:
-    build: 
-      context: ./switchserver/database
+    image: smarthomeadapters/switchdb
     restart: always
     environment:
       - POSTGRES_PASSWORD=password
     volumes:
       - switchdb_data:/var/lib/postgresql/data
   switchserver:
-    build: 
-      context: ./switchserver
+    image: smarthomeadapters/switchserver
     depends_on:
       - switchdb
     restart: always
@@ -87,8 +86,7 @@ services:
       - DB_DATABASE=postgres
       - DB_URL=switchdb
   robotserver:
-    build:
-      context: ./robotserver
+    image: smarthomeadapters/robotserver
     restart: always
     ports:
       - 8083:80
