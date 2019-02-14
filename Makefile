@@ -129,10 +129,15 @@ test-userserver:
 test-android:
 	@(cd android && ./gradlew test)
 
-test: test-clientserver test-infoserver test-robotserver test-switchserver test-userserver test-android
+test-services: test-clientserver test-infoserver test-robotserver test-switchserver test-userserver
+
+test: test-services test-android
 
 #
 # CI
 #
 
-ci: docker test
+ci-test-android: 
+	@docker run -it --rm -v $$PWD/android:/root/tmp budtmo/docker-android-x86-8.1 bash -c "(cd tmp && ./gradlew test)"
+
+ci: docker test-services ci-test-android
