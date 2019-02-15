@@ -137,7 +137,10 @@ lint-userserver:
 lint-android:
 	@(cd android && ./gradlew lint)
 
-lint: lint-clientserver lint-infoserver lint-robotserver lint-switchserver lint-userserver lint-android
+lint-docker-compose:
+	docker-compose config
+
+lint: lint-clientserver lint-infoserver lint-robotserver lint-switchserver lint-userserver lint-android lint-docker-compose
 
 #
 # TEST
@@ -183,4 +186,4 @@ compile-reports:
 ci-test-android: 
 	@docker run -it --rm -v $$PWD/android:/root/tmp budtmo/docker-android-x86-9.0 bash -c "(cd tmp && ./gradlew test)"
 
-ci: docker test-services ci-test-android compile-reports
+ci: docker test-services ci-test-android compile-reports lint-docker-compose
