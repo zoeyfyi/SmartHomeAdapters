@@ -166,10 +166,21 @@ test-services: test-clientserver test-infoserver test-robotserver test-switchser
 test: test-services test-android
 
 #
+# Reports
+#
+
+compile-reports:
+	for DIR in reports/*/; \
+	do \
+		echo "Compiling $${DIR}"; \
+		docker run --mount src=$$PWD/$${DIR},target=/usr/src/tex,type=bind dxjoke/tectonic-docker /bin/sh -c "tectonic document.tex"; \
+	done
+
+#
 # CI
 #
 
 ci-test-android: 
 	@docker run -it --rm -v $$PWD/android:/root/tmp budtmo/docker-android-x86-9.0 bash -c "(cd tmp && ./gradlew test)"
 
-ci: docker test-services ci-test-android
+ci: docker test-services ci-test-android compile-reports
