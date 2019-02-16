@@ -84,6 +84,28 @@ func (s *server) GetRobot(ctx context.Context, query *infoserver.RobotQuery) (*i
 				},
 			},
 		}, nil
+	case "thermostat":
+		thermostat, err := s.ThermostatClient.GetThermostat(context.Background(), &thermostatserver.ThermostatQuery{
+			Id: serial,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		// return robot with status infomation
+		return &infoserver.Robot{
+			Id:            serial,
+			Nickname:      nickname,
+			RobotType:     robotType,
+			InterfaceType: "toggle",
+			RobotStatus: &infoserver.Robot_RangeStatus{
+				RangeStatus: &infoserver.RangeStatus{
+					Min:     thermostat.MinTempreture,
+					Max:     thermostat.MaxTempreture,
+					Current: thermostat.Tempreture,
+				},
+			},
+		}, nil
 	default:
 		return nil, status.Newf(codes.InvalidArgument, "Invalid robot type \"%s\"", robotType).Err()
 	}
