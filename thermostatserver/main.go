@@ -9,6 +9,7 @@ import (
 	"os"
 
 	_ "github.com/lib/pq"
+	"github.com/mrbenshef/SmartHomeAdapters/robotserver/robotserver"
 	"github.com/mrbenshef/SmartHomeAdapters/thermostatserver/thermostatserver"
 	"google.golang.org/grpc"
 )
@@ -21,7 +22,8 @@ var (
 )
 
 type server struct {
-	DB *sql.DB
+	DB          *sql.DB
+	RobotClient robotserver.RobotServerClient
 }
 
 func connectionStr() string {
@@ -64,9 +66,20 @@ func main() {
 
 	log.Printf("Connected to database: %+v\n", db.Stats())
 
+	// connect to robotserver
+	robotserverConn, err := grpc.Dial("robotserver:8080", grpc.WithInsecure())
+	if err != nil {
+		panic(err)
+	}
+	defer robotserverConn.Close()
+	robotClient := robotserver.NewRobotServerClient(robotserverConn)
+
 	// start grpc server
 	grpcServer := grpc.NewServer()
-	thermostatServer := &server{DB: db}
+	thermostatServer := &server{
+		DB:          db,
+		RobotClient: robotClient,
+	}
 	thermostatserver.RegisterThermostatServerServer(grpcServer, thermostatServer)
 	lis, err := net.Listen("tcp", ":80")
 	if err != nil {

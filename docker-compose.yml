@@ -86,6 +86,27 @@ services:
       - DB_PASSWORD=password
       - DB_DATABASE=postgres
       - DB_URL=switchdb
+  thermodb:
+    build: 
+      context: ./thermostatserver/database
+    restart: always
+    environment:
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - thermodb_data:/var/lib/postgresql/data
+  thermostatserver:
+    build:
+      context: ./thermostatserver
+    depends_on:
+      - thermodb
+    restart: always
+    ports:
+      - 8084:80
+    environment:
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=password
+      - DB_DATABASE=postgres
+      - DB_URL=thermodb
   robotserver:
     build:
       context: ./robotserver
@@ -97,3 +118,4 @@ volumes:
   userdb_data:
   infodb_data:
   switchdb_data:
+  thermodb_data:
