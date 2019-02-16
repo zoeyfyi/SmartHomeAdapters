@@ -30,7 +30,10 @@ class QRFragment : Fragment() {
 
         scan_qr_button.setOnClickListener { _ ->
             // Start a QR scan from the parent using ZXING
-            IntentIntegrator(activity).initiateScan()
+            IntentIntegrator(activity)
+                .setDesiredBarcodeFormats(IntentIntegrator.QR_CODE)
+                .setPrompt("Scan robot QR code")
+                .initiateScan()
         }
     }
 }
