@@ -2,6 +2,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log"
@@ -12,6 +13,8 @@ import (
 	"github.com/mrbenshef/SmartHomeAdapters/robotserver/robotserver"
 	"github.com/mrbenshef/SmartHomeAdapters/thermostatserver/thermostatserver"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 var (
@@ -24,6 +27,38 @@ var (
 type server struct {
 	DB          *sql.DB
 	RobotClient robotserver.RobotServerClient
+}
+
+func (s *server) GetThermostat(ctx context.Context, query *thermostatserver.ThermostatQuery) (*thermostatserver.Thermostat, error) {
+	var (
+		tempreture    int64
+		minAngle      int64
+		maxAngle      int64
+		minTempreture int64
+		maxTempreture int64
+		isCalibrated  bool
+	)
+
+	row := s.DB.QueryRow("SELECT tempreture, minAngle, maxAngle, minTempreture, maxTempreture, isCalibrated FROM thermostats WHERE serial = $1", query.Id)
+	err := row.Scan(&tempreture, &minAngle, &maxAngle, &minTempreture, &maxTempreture, &isCalibrated)
+	if err != nil {
+		log.Printf("Failed to scan database: %v", err)
+		return nil, status.Newf(codes.Internal, "Failed to fetch thermostat \"%s\"", query.Id).Err()
+	}
+
+	return &thermostatserver.Thermostat{
+		Id:            query.Id,
+		Tempreture:    tempreture,
+		MinAngle:      minAngle,
+		MaxAngle:      maxAngle,
+		MinTempreture: minTempreture,
+		MaxTempreture: maxTempreture,
+		IsCalibrated:  isCalibrated,
+	}, nil
+}
+
+func (s *server) SetThermostat(request *thermostatserver.SetThermostatRequest, stream thermostatserver.ThermostatServer_SetThermostatServer) error {
+	return nil
 }
 
 func connectionStr() string {
