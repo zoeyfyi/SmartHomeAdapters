@@ -1,4 +1,4 @@
-CREATE TABLE thermostat (
+CREATE TABLE thermostats (
     -- ID of the robot
     serial text not null unique,
     -- Tempreture of current thermostat

@@ -1,7 +1,5 @@
 syntax = "proto3";
 
-import "google/protobuf/empty.proto";
-
 service ThermostatServer {
     rpc GetThermostat(ThermostatQuery) returns (Thermostat) {}
     rpc SetThermostat(SetThermostatRequest) returns (stream SetThermostatStatus) {}
@@ -22,8 +20,9 @@ message ThermostatQuery {
 }
 
 message SetThermostatRequest {
-    int64 tempreture = 1;
-    string unit = 2;
+    string id = 1;
+    int64 tempreture = 2;
+    string unit = 3;
 }
 
 message SetThermostatStatus {
