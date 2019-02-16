@@ -47,7 +47,6 @@ class RegisterRobotFragment : Fragment() {
             val currentView = activity?.currentFocus ?: view
             inputMethodManager?.hideSoftInputFromWindow(currentView.windowToken, 0)
 
-            registration_progress_bar.visibility = View.VISIBLE
             register_button.isEnabled = false
 
             // Make the registration call
@@ -67,6 +66,7 @@ class RegisterRobotFragment : Fragment() {
         if (nickname.isEmpty()) {
             nickname_input.error = "Enter a nickname for the robot"
         } else {
+            registration_progress_bar.visibility = View.VISIBLE
             parent
                 .restApiService
                 .registerRobot(parent.robotId, nickname.toString())
