@@ -1,4 +1,4 @@
-package usecaseapi
+package usecase
 
 import (
 	"database/sql"

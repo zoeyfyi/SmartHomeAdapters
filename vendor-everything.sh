@@ -1,6 +1,7 @@
-for SERVER in clientserver infoserver robotserver switchserver userserver
+for SERVER in clientserver infoserver robotserver switchserver userserver usecase
 do
-	cd $SERVER
+    echo $SERVER
+    cd $SERVER
     go mod vendor
     cd ..
 done

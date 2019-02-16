@@ -4,10 +4,8 @@ package main
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"log"
 	"net"
-	"os"
 	"time"
 
 	"google.golang.org/grpc/codes"
@@ -18,21 +16,13 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/mrbenshef/SmartHomeAdapters/robotserver/robotserver"
 	"github.com/mrbenshef/SmartHomeAdapters/switchserver/switchserver"
+	"github.com/mrbenshef/SmartHomeAdapters/usecase"
 	"google.golang.org/grpc"
 )
 
-var robotserverClient robotserver.RobotServerClient
-
-// database connection infomation
-var (
-	username = os.Getenv("DB_USERNAME")
-	password = os.Getenv("DB_PASSWORD")
-	database = os.Getenv("DB_DATABASE")
-	url      = os.Getenv("DB_URL")
-)
-
 type server struct {
-	DB *sql.DB
+	DB          *sql.DB
+	RobotClient robotserver.RobotServerClient
 }
 
 func (s *server) AddSwitch(ctx context.Context, request *switchserver.AddSwitchRequest) (*switchserver.Switch, error) {
@@ -142,7 +132,7 @@ func (s *server) SetSwitch(request *switchserver.SetSwitchRequest, stream switch
 		angle = robotSwitch.OffAngle
 	}
 
-	_, err = robotserverClient.SetServo(context.Background(), &robotserver.ServoRequest{
+	_, err = s.RobotClient.SetServo(context.Background(), &robotserver.ServoRequest{
 		Angle: angle,
 	})
 	if err != nil {
@@ -159,7 +149,7 @@ func (s *server) SetSwitch(request *switchserver.SetSwitchRequest, stream switch
 	stream.Send(&switchserver.SetSwitchStatus{
 		Status: switchserver.SetSwitchStatus_RETURNING,
 	})
-	_, err = robotserverClient.SetServo(context.Background(), &robotserver.ServoRequest{
+	_, err = s.RobotClient.SetServo(context.Background(), &robotserver.ServoRequest{
 		Angle: robotSwitch.RestAngle,
 	})
 	if err != nil {
@@ -192,61 +182,29 @@ func (s *server) SetSwitch(request *switchserver.SetSwitchRequest, stream switch
 	return nil
 }
 
-func connectionStr() string {
-	if username == "" {
-		username = "postgres"
-	}
-	if password == "" {
-		password = "password"
-	}
-	if url == "" {
-		url = "localhost:5432"
-	}
-	if database == "" {
-		database = "postgres"
-	}
-
-	return fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable", username, password, url, database)
-}
-
-func getDb() *sql.DB {
-	log.Printf("Connecting to database with \"%s\"\n", connectionStr())
-	db, err := sql.Open("postgres", connectionStr())
-	if err != nil {
-		log.Fatalf("Failed to connect to postgres: %v", err)
-	}
-
-	return db
-}
-
 func main() {
-	// connect to database
-	db := getDb()
-	defer db.Close()
-
-	// test connection
-	err := db.Ping()
-	if err != nil {
-		log.Fatalf("Failed to ping postgres: %v", err)
-	}
-
-	log.Printf("Connected to database: %+v\n", db.Stats())
-
-	// connect to robotserver
-	robotserverConn, err := grpc.Dial("robotserver:8080", grpc.WithInsecure())
+	db, err := usecase.ConnectToDatabase()
 	if err != nil {
 		panic(err)
 	}
-	defer robotserverConn.Close()
-	robotserverClient = robotserver.NewRobotServerClient(robotserverConn)
+
+	robotClient, err := usecase.ConnectToRobotClient()
+	if err != nil {
+		panic(err)
+	}
 
 	// start grpc server
+	switchServer := &server{
+		DB:          db,
+		RobotClient: robotClient,
+	}
+
 	grpcServer := grpc.NewServer()
-	switchServer := &server{DB: db}
 	switchserver.RegisterSwitchServerServer(grpcServer, switchServer)
 	lis, err := net.Listen("tcp", ":80")
 	if err != nil {
 		log.Fatalf("Failed to listen: %v", err)
 	}
+
 	grpcServer.Serve(lis)
 }

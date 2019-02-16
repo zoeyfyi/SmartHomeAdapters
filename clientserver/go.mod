@@ -15,3 +15,5 @@ replace github.com/mrbenshef/SmartHomeAdapters/userserver => ../userserver
 replace github.com/mrbenshef/SmartHomeAdapters/switchserver => ../switchserver
 
 replace github.com/mrbenshef/SmartHomeAdapters/robotserver => ../robotserver
+
+replace github.com/mrbenshef/SmartHomeAdapters/usecase => ../usecase
