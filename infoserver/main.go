@@ -284,9 +284,21 @@ func main() {
 	defer switchserverConn.Close()
 	switchClient := switchserver.NewSwitchServerClient(switchserverConn)
 
+	// connect to thermostatserver
+	thermostatserverConn, err := grpc.Dial("thermostatserver:80", grpc.WithInsecure())
+	if err != nil {
+		panic(err)
+	}
+	defer thermostatserverConn.Close()
+	thermostatClient := thermostatserver.NewThermostatServerClient(thermostatserverConn)
+
 	// start grpc server
 	grpcServer := grpc.NewServer()
-	infoServer := &server{DB: db, SwitchClient: switchClient}
+	infoServer := &server{
+		DB:               db,
+		SwitchClient:     switchClient,
+		ThermostatClient: thermostatClient,
+	}
 	infoserver.RegisterInfoServerServer(grpcServer, infoServer)
 	lis, err := net.Listen("tcp", ":80")
 	if err != nil {
