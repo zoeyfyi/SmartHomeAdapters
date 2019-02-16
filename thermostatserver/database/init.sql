@@ -2,7 +2,7 @@ CREATE TABLE thermostats (
     -- ID of the robot
     serial text not null unique,
     -- Tempreture of current thermostat
-    tempreture boolean not null,
+    tempreture int not null,
     -- Angles to set servo too
     minAngle int not null,
     maxAngle int not null,
