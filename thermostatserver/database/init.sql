@@ -13,4 +13,4 @@ CREATE TABLE thermostats (
     isCalibrated boolean not null
 );
 
-INSERT INTO thermostats (serial, tempreture, minAngle, maxAngle, minTempreture, maxTempreture, isCalibrated) VALUES ('qwerty', 20, 30, 170, 10, 30, true);
+INSERT INTO thermostats (serial, tempreture, minAngle, maxAngle, minTempreture, maxTempreture, isCalibrated) VALUES ('qwerty', 293, 30, 170, 283, 303, true);
