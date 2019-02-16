@@ -42,7 +42,19 @@ interface RestApiService {
     @GET("robot/{id}")
     fun getRobot(@Path("id") id: String): Call<Robot>
 
+    @POST("robot/{id}")
+    fun registerRobot(@Path("id") id: String, @Query("nickname") nickname: String): Call<ResponseBody>
+
     @PATCH("robot/{id}/toggle/{current}")
-    fun robotToggle(@Path("id") id: String, @Path("current") value: Boolean, @Body map: Map<String, Boolean>): Call<ResponseBody>
+    fun robotToggle(
+        @Path("id") id: String, @Path("current") value: Boolean,
+        @Body map: Map<String, Boolean>): Call<ResponseBody>
+
+    @GET("usecases")
+    fun getAllUseCases(): Call<List<String>>
+
+    @POST("robot/{robotId}/usecase/{usecaseId}")
+    fun registerUseCaseToRobot(
+        @Path("robotId") robotId: String, @Path("usecaseId") usecaseId: String): Call<ResponseBody>
 
 }

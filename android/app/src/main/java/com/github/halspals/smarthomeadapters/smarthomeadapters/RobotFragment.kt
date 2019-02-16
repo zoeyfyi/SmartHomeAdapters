@@ -38,7 +38,7 @@ class RobotFragment : Fragment() {
         val robotIdArgument = arguments?.getString("robotId")
         if (robotIdArgument == null) {
             // no id passed, try to go back
-            Log.d(tag, "No robotId passed to robotFragment")
+            Log.d(fTag, "No robotId passed to robotFragment")
             context?.toast("Oops, something went wrong")
             fragmentManager?.popBackStack()
             return null

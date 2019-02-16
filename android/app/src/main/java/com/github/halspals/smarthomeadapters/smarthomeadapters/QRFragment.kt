@@ -9,9 +9,11 @@ import android.view.ViewGroup
 import com.google.zxing.integration.android.IntentIntegrator
 import kotlinx.android.synthetic.main.fragment_qr.*
 
-
+/**
+ * A fragment which upon a button click starts a QR scanner from the parent activity.
+ * This is the first screen in the registration wizard.
+ */
 class QRFragment : Fragment() {
-    // TODO: Rename and change types
 
     private val fTag = "QRFragment"
 
@@ -27,6 +29,7 @@ class QRFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         scan_qr_button.setOnClickListener { _ ->
+            // Start a QR scan from the parent using ZXING
             IntentIntegrator(activity).initiateScan()
         }
     }

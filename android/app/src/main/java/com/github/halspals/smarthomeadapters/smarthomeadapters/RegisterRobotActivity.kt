@@ -9,9 +9,19 @@ import android.util.Log
 import com.google.zxing.integration.android.IntentIntegrator
 import com.google.zxing.integration.android.IntentResult
 
+/**
+ * The activity forming the base of the robot registration wizard.
+ */
 class RegisterRobotActivity : AppCompatActivity() {
 
     private val tag = "RegisterRobotActivity"
+
+    // Keep track of the id of the robot once it has been scanned/entered
+    internal lateinit var robotId: String
+
+    internal val restApiService by lazy {
+        RestApiService.new()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -22,12 +32,13 @@ class RegisterRobotActivity : AppCompatActivity() {
 
     /*
     * Replaces the currently active fragment, if there is any to replace.
+    * Note this IGNORES STATE LOSS.
     *
     * @param fragment the Fragment to replace the currently active one with.
     * @param addToBackstack if true, fragment will be added to the backstack,
     * otherwise backstack will be dropped
     */
-    private fun startFragment(fragment: Fragment, addToBackstack: Boolean = false) {
+    internal fun startFragment(fragment: Fragment, addToBackstack: Boolean = false) {
         Log.d(tag, "[startFragment] Invoked")
 
         val fManager = supportFragmentManager
@@ -53,6 +64,9 @@ class RegisterRobotActivity : AppCompatActivity() {
         Log.d(tag, "[startFragment] Committed transaction to fragment")
     }
 
+    /**
+     * Handles the result from the ZXING QR Scanner initiated by a child [QRFragment].
+     */
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
 
         val result: IntentResult? = IntentIntegrator.parseActivityResult(requestCode, resultCode, data)
@@ -61,12 +75,9 @@ class RegisterRobotActivity : AppCompatActivity() {
         if (robotId != null) {
             Log.d(tag, "[onActivityResult] Scanned robotId $robotId")
 
-            val registerRobotFragment = RobotSetupFragment()
-            val args = Bundle()
-            args.putString("robotId", robotId)
-            registerRobotFragment.arguments = args
+            this.robotId = robotId
 
-            startFragment(registerRobotFragment)
+            startFragment(RegisterRobotFragment())
         } else {
             Log.d(tag, "User quit QR scanner early")
         }
