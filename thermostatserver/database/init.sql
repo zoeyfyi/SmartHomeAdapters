@@ -12,3 +12,5 @@ CREATE TABLE thermostats (
     -- Weather the robot has been calibrated
     isCalibrated boolean not null
 );
+
+INSERT INTO thermostats (serial, tempreture, minAngle, maxAngle, minTempreture, maxTempreture, isCalibrated) VALUES ('qwerty', 20, 30, 170, 10, 30, true);
