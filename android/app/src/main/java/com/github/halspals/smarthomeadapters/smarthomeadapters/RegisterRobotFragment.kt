@@ -9,8 +9,10 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
+import kotlinx.android.synthetic.main.activity_register_robot.*
 import kotlinx.android.synthetic.main.fragment_register_robot.*
 import okhttp3.ResponseBody
+import org.jetbrains.anko.design.snackbar
 import org.jetbrains.anko.toast
 import retrofit2.Call
 import retrofit2.Callback
@@ -85,7 +87,10 @@ class RegisterRobotFragment : Fragment() {
                         } else {
                             val error = RestApiService.extractErrorFromResponse(response)
                             Log.e(fTag, "registerRobot got unsuccessful response, error: $error")
-                            // TODO display error to user
+                            if (error != null) {
+                                parent.snackbar_layout.snackbar(error)
+                            }
+
                         }
                     }
 
@@ -93,9 +98,11 @@ class RegisterRobotFragment : Fragment() {
                         registration_progress_bar.visibility = View.GONE
                         register_button.isEnabled = true
 
-                        val errorMsg = t.message
-                        Log.e(fTag, "registerRobot FAILED, got error: $errorMsg")
-                        // TODO display error to user
+                        val error = t.message
+                        Log.e(fTag, "registerRobot FAILED, got error: $error")
+                        if (error != null) {
+                            parent.snackbar_layout.snackbar(error)
+                        }
                     }
                 })
         }
