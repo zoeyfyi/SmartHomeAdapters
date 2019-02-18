@@ -270,6 +270,69 @@ func toggleHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 	}
 }
 
+type usecase struct {
+	ID         string                 `json:"id"`
+	Parameters []calibrationParameter `json:"parameters"`
+}
+
+type parameterDetails interface {
+	parameterDetails()
+}
+
+type intParameter struct {
+	Min     int `json:"min"`
+	Max     int `json:"max"`
+	Default int `json:"default"`
+}
+
+func (p intParameter) parameterDetails() {}
+
+type booleanParameter struct {
+	Default bool `json:"default"`
+}
+
+func (p booleanParameter) parameterDetails() {}
+
+type calibrationParameter struct {
+	Name        string           `json:"name"`
+	Description string           `json:"description"`
+	Type        string           `json:"type"`
+	Details     parameterDetails `json:"details"`
+}
+
+func usecasesHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	usecases := []usecase{
+		usecase{
+			ID: "1",
+			Parameters: []calibrationParameter{
+				calibrationParameter{
+					Name:        "On Angle",
+					Description: "Angle to turn the servo to turn the switch on",
+					Type:        "int",
+					Details: intParameter{
+						Min:     90,
+						Max:     180,
+						Default: 100,
+					},
+				},
+				calibrationParameter{
+					Name:        "Off Angle",
+					Description: "Angle to turn the servo to turn the switch off",
+					Type:        "int",
+					Details: intParameter{
+						Min:     90,
+						Max:     0,
+						Default: 80,
+					},
+				},
+			},
+		},
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(usecases)
+}
+
 func createRouter() *httprouter.Router {
 	router := httprouter.New()
 
@@ -280,6 +343,7 @@ func createRouter() *httprouter.Router {
 	router.GET("/robots", robotsHandler)
 	router.GET("/robot/:id", robotHandler)
 	router.PATCH("/robot/:id/toggle/:value", toggleHandler)
+	router.GET("/usecases", usecasesHandler)
 
 	return router
 }
