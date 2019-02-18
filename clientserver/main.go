@@ -300,37 +300,57 @@ type calibrationParameter struct {
 	Details     parameterDetails `json:"details"`
 }
 
-func usecasesHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	usecases := []usecase{
-		usecase{
-			ID: "1",
-			Parameters: []calibrationParameter{
-				calibrationParameter{
-					Name:        "On Angle",
-					Description: "Angle to turn the servo to turn the switch on",
-					Type:        "int",
-					Details: intParameter{
-						Min:     90,
-						Max:     180,
-						Default: 100,
-					},
+var usecases = map[string]usecase{
+	"1": usecase{
+		ID: "1",
+		Parameters: []calibrationParameter{
+			calibrationParameter{
+				Name:        "On Angle",
+				Description: "Angle to turn the servo to turn the switch on",
+				Type:        "int",
+				Details: intParameter{
+					Min:     90,
+					Max:     180,
+					Default: 100,
 				},
-				calibrationParameter{
-					Name:        "Off Angle",
-					Description: "Angle to turn the servo to turn the switch off",
-					Type:        "int",
-					Details: intParameter{
-						Min:     90,
-						Max:     0,
-						Default: 80,
-					},
+			},
+			calibrationParameter{
+				Name:        "Off Angle",
+				Description: "Angle to turn the servo to turn the switch off",
+				Type:        "int",
+				Details: intParameter{
+					Min:     90,
+					Max:     0,
+					Default: 80,
 				},
 			},
 		},
+	},
+}
+
+func usecasesHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	// map -> list
+	usecaseList := make([]usecase, 0, len(usecases))
+	for _, usecase := range usecases {
+		usecaseList = append(usecaseList, usecase)
 	}
 
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(usecases)
+	json.NewEncoder(w).Encode(usecaseList)
+}
+
+func usecaseHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	id := ps.ByName("id")
+
+	usecase, ok := usecases[id]
+	if !ok {
+		err := status.Newf(codes.NotFound, "No usecase with id \"%s\"", id).Err()
+		HTTPError(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(usecase)
 }
 
 func createRouter() *httprouter.Router {
@@ -344,6 +364,7 @@ func createRouter() *httprouter.Router {
 	router.GET("/robot/:id", robotHandler)
 	router.PATCH("/robot/:id/toggle/:value", toggleHandler)
 	router.GET("/usecases", usecasesHandler)
+	router.GET("/usecase/:id", usecaseHandler)
 
 	return router
 }
