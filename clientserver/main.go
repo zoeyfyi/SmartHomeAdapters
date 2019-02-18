@@ -300,6 +300,8 @@ type calibrationParameter struct {
 	Details     parameterDetails `json:"details"`
 }
 
+// TODO: load from some kind of resource file
+// we want this to extendable, so plugins can request a list of parameters
 var usecases = map[string]usecase{
 	"1": usecase{
 		ID: "1",
