@@ -51,7 +51,7 @@ services:
       context: ./clientserver
     restart: always
     ports:
-      - 80:80
+      - 9100:80
   infodb:
     build:
       context: ./infoserver/database
