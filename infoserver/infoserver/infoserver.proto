@@ -6,6 +6,7 @@ service InfoServer {
     rpc GetRobot (RobotQuery) returns (Robot) {}
     rpc GetRobots (google.protobuf.Empty) returns (stream Robot) {}
     rpc ToggleRobot (ToggleRequest) returns (google.protobuf.Empty) {}
+    rpc CalibrateRobot (CalibrationRequest) returns (Robot) {} 
 }
 
 message RobotQuery {
@@ -38,4 +39,14 @@ message RangeStatus {
     int64 max = 1;
     int64 min = 2;
     int64 current = 3;
+}
+
+message CalibrationRequest {
+    string id = 1;
+    repeated CalibrationParameter parameters = 2;
+}
+
+message CalibrationParameter {
+    string name = 1;
+    string value = 2;
 }

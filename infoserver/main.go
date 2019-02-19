@@ -8,8 +8,10 @@ import (
 	"log"
 	"net"
 	"os"
+	"strconv"
 
 	"github.com/golang/protobuf/ptypes/empty"
+	"github.com/golang/protobuf/ptypes/wrappers"
 	_ "github.com/lib/pq"
 	"github.com/mrbenshef/SmartHomeAdapters/infoserver/infoserver"
 	"github.com/mrbenshef/SmartHomeAdapters/switchserver/switchserver"
@@ -214,6 +216,70 @@ func (s *server) ToggleRobot(ctx context.Context, request *infoserver.ToggleRequ
 	}
 
 	return &empty.Empty{}, nil
+}
+
+func (s *server) CalibrateRobot(ctx context.Context, request *infoserver.CalibrationRequest) (*infoserver.Robot, error) {
+	robot, err := s.GetRobot(ctx, &infoserver.RobotQuery{
+		Id: request.Id,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	switch robot.RobotType {
+	case "switch":
+		parameters := &switchserver.SwitchCalibrationParameters{
+			Id: request.Id,
+		}
+
+		// parse parameters
+		for _, param := range request.Parameters {
+			switch param.Name {
+			case "OnAngle":
+				angle, err := strconv.ParseInt(param.Value, 10, 64)
+				if err != nil {
+					log.Printf("Failed to parse OnAngle parameter value: %v", err)
+					return nil, status.Errorf(codes.InvalidArgument, "Expected integer for field OnAngle")
+				}
+				parameters.OnAngle = &wrappers.Int64Value{Value: angle}
+			case "OffAngle":
+				angle, err := strconv.ParseInt(param.Value, 10, 64)
+				if err != nil {
+					log.Printf("Failed to parse OffAngle parameter value: %v", err)
+					return nil, status.Errorf(codes.InvalidArgument, "Expected integer for field OffAngle")
+				}
+				parameters.OffAngle = &wrappers.Int64Value{Value: angle}
+			case "RestAngle":
+				angle, err := strconv.ParseInt(param.Value, 10, 64)
+				if err != nil {
+					log.Printf("Failed to parse RestAngle parameter value: %v", err)
+					return nil, status.Errorf(codes.InvalidArgument, "Expected integer for field RestAngle")
+				}
+				parameters.RestAngle = &wrappers.Int64Value{Value: angle}
+			case "IsCalibrated":
+				isCalibrated, err := strconv.ParseBool(param.Value)
+				if err != nil {
+					log.Printf("Failed to parse IsCalibrated parameter value: %v", err)
+					return nil, status.Errorf(codes.InvalidArgument, "Expected boolean for field IsCalibrated")
+				}
+				parameters.IsCalibrated = &wrappers.BoolValue{Value: isCalibrated}
+			default:
+				return nil, status.Errorf(codes.InvalidArgument, "\"%s\" is not a parameter", param.Name)
+			}
+		}
+
+		// send calibration request
+		_, err := s.SwitchClient.CalibrateSwitch(ctx, parameters)
+		if err != nil {
+			return nil, err
+		}
+	default:
+		return nil, status.Errorf(codes.FailedPrecondition, "Robot type \"%s\" is not recognized", robot.RobotType)
+	}
+
+	return s.GetRobot(ctx, &infoserver.RobotQuery{
+		Id: request.Id,
+	})
 }
 
 func connectionStr() string {

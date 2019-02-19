@@ -52,7 +52,6 @@ require (
 	golang.org/x/sys v0.0.0-20190204203706-41f3e6584952 // indirect
 	golang.org/x/tools v0.0.0-20190206221403-44bcb96178d3 // indirect
 	google.golang.org/grpc v1.18.0
-	gopkg.in/h2non/gock.v1 v1.0.14
 	honnef.co/go/tools v0.0.0-20190128043916-71123fcbb8fe // indirect
 	sourcegraph.com/sqs/pbtypes v1.0.0 // indirect
 )
