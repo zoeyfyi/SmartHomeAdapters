@@ -91,6 +91,8 @@ docker-push:
 	@docker push smarthomeadapters/switchserver:latest
 	@docker tag smarthomeadapters/userdb smarthomeadapters/userdb:latest
 	@docker push smarthomeadapters/userdb:latest
+	@docker tag smarthomeadapters/userserver smarthomeadapters/userserver:latest
+	@docker push smarthomeadapters/userserver:latest
 
 docker-push-test:
 	@docker tag smarthomeadapters/clientserver smarthomeadapters/clientserver:test
@@ -107,6 +109,8 @@ docker-push-test:
 	@docker push smarthomeadapters/switchserver:test
 	@docker tag smarthomeadapters/userdb smarthomeadapters/userdb:test
 	@docker push smarthomeadapters/userdb:test
+	@docker tag smarthomeadapters/userserver smarthomeadapters/userserver:test
+	@docker push smarthomeadapters/userserver:test
 
 #
 # CLEAN
