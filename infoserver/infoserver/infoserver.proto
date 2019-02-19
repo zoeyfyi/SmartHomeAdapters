@@ -4,12 +4,17 @@ import "google/protobuf/empty.proto";
 
 service InfoServer {
     rpc GetRobot (RobotQuery) returns (Robot) {}
-    rpc GetRobots (google.protobuf.Empty) returns (stream Robot) {}
+    rpc GetRobots (RobotsQuery) returns (stream Robot) {}
     rpc ToggleRobot (ToggleRequest) returns (google.protobuf.Empty) {}
+}
+
+message RobotsQuery {
+    string userid = 1;
 }
 
 message RobotQuery {
     string id = 1;
+    string userid = 1;
 }
 
 message ToggleRequest {
