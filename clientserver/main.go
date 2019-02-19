@@ -355,6 +355,68 @@ func usecaseHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params
 	json.NewEncoder(w).Encode(usecase)
 }
 
+type parameter struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
+}
+
+func calibrationHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	id := ps.ByName("id")
+
+	// decode json request
+	var parameters []parameter
+	err := json.NewDecoder(r.Body).Decode(&parameters)
+	if err != nil {
+		log.Printf("Invalid calibration JSON: %v", err)
+		HTTPError(w, errors.New("Invalid JSON"))
+		return
+	}
+
+	// build infoserver calibration request
+	request := &infoserver.CalibrationRequest{}
+	request.Id = id
+	for _, param := range parameters {
+		request.Parameters = append(request.Parameters, &infoserver.CalibrationParameter{
+			Name:  param.Name,
+			Value: param.Value,
+		})
+	}
+
+	// send request
+	robot, err := infoserverClient.CalibrateRobot(context.Background(), request)
+	if err != nil {
+		HTTPError(w, err)
+		return
+	}
+
+	// convert robot status
+	var status Status
+	switch robotStatus := robot.RobotStatus.(type) {
+	case *infoserver.Robot_ToggleStatus:
+		status = ToggleStatus{
+			Value: robotStatus.ToggleStatus.Value,
+		}
+	case *infoserver.Robot_RangeStatus:
+		status = RangeStatus{
+			Min:     int(robotStatus.RangeStatus.Min),
+			Max:     int(robotStatus.RangeStatus.Max),
+			Current: int(robotStatus.RangeStatus.Current),
+		}
+	default:
+		panic(fmt.Sprintf("%T is not a valid robot status", robotStatus))
+	}
+
+	// encode robot responce
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(Robot{
+		ID:            robot.Id,
+		Nickname:      robot.Nickname,
+		RobotType:     robot.RobotType,
+		InterfaceType: robot.InterfaceType,
+		Status:        status,
+	})
+}
+
 func createRouter() *httprouter.Router {
 	router := httprouter.New()
 
@@ -367,6 +429,7 @@ func createRouter() *httprouter.Router {
 	router.PATCH("/robot/:id/toggle/:value", toggleHandler)
 	router.GET("/usecases", usecasesHandler)
 	router.GET("/usecase/:id", usecaseHandler)
+	router.PUT("/robot/:id/calibration", calibrationHandler)
 
 	return router
 }
