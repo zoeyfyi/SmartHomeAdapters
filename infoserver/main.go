@@ -1,16 +1,21 @@
+//go:generate protoc --go_out=plugins=grpc:. ./infoserver/infoserver.proto
 package main
 
 import (
-	"bytes"
+	"context"
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"log"
-	"net/http"
+	"net"
 	"os"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/golang/protobuf/ptypes/empty"
 	_ "github.com/lib/pq"
+	"github.com/mrbenshef/SmartHomeAdapters/infoserver/infoserver"
+	"github.com/mrbenshef/SmartHomeAdapters/switchserver/switchserver"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 var (
@@ -20,22 +25,195 @@ var (
 	url      = os.Getenv("DB_URL")
 )
 
-type RobotInterface interface {
-}
-type TriggerInterface struct {
-	InterfaceType string `json:"type"`
-}
-type RangeInterface struct {
-	InterfaceType string `json:"type"`
-	Min           int    `json:"min"`
-	Max           int    `json:"max"`
+type server struct {
+	DB           *sql.DB
+	SwitchClient switchserver.SwitchServerClient
 }
 
-type Response struct {
-	Id             string `json:"id"`
-	Nickname       string `json:"nickname"`
-	RobotType      string `json:"robotType"`
-	RobotInterface `json:"interface"`
+func newRobotNotFoundError(id string) error {
+	return status.Newf(codes.NotFound, "No robot with ID \"%s\"", id).Err()
+}
+
+func newStatusRequestFailed(message string) error {
+	if message == "" {
+		return status.New(codes.Internal, "Failed to retrive status of robot").Err()
+	}
+	return status.Newf(codes.Internal, "Failed to retrive status of robot: %s", message).Err()
+}
+
+func newInvalidRobotTypeError(robotType string) error {
+	return status.Newf(codes.InvalidArgument, "Invalid robot type \"%s\"", robotType).Err()
+}
+
+func newRobotNotTogglableError(id string, robotType string) error {
+	return status.Newf(codes.InvalidArgument, "Robot \"%s\" of type \"%s\" cannot be toggled", id, robotType).Err()
+}
+
+func newToggleRequestFailed(message string) error {
+	return status.Newf(codes.Internal, "Toggle request failed: %s", message).Err()
+}
+
+func (s *server) GetRobot(ctx context.Context, query *infoserver.RobotQuery) (*infoserver.Robot, error) {
+	var (
+		serial    string
+		nickname  string
+		robotType string
+		minimum   int
+		maximum   int
+	)
+
+	log.Println("getting robot with id: " + query.Id)
+
+	// query toggleRobots table for matching robots
+	row := s.DB.QueryRow("SELECT * FROM toggleRobots WHERE serial = $1", query.Id)
+	err := row.Scan(&serial, &nickname, &robotType)
+	if err == sql.ErrNoRows {
+		// not in toggleRobots, try rangeRobots
+		row := s.DB.QueryRow("SELECT * FROM rangeRobots WHERE serial = $1", query.Id)
+		err := row.Scan(&serial, &nickname, &robotType, &minimum, &maximum)
+		if err == sql.ErrNoRows {
+			// not there either
+			return nil, newRobotNotFoundError(query.Id)
+		} else if err != nil {
+			log.Printf("Failed to retrive robot %s: %v", query.Id, err)
+			return nil, err
+		}
+	} else if err != nil {
+		log.Printf("Failed to retrive robot %s: %v", query.Id, err)
+		return nil, err
+	}
+
+	// get the status of the robot
+	switch robotType {
+	case "switch":
+		switchRobot, err := s.SwitchClient.GetSwitch(context.Background(), &switchserver.SwitchQuery{
+			Id: serial,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		// return robot with status infomation
+		return &infoserver.Robot{
+			Id:            serial,
+			Nickname:      nickname,
+			RobotType:     robotType,
+			InterfaceType: "toggle",
+			RobotStatus: &infoserver.Robot_ToggleStatus{
+				ToggleStatus: &infoserver.ToggleStatus{
+					Value: switchRobot.IsOn,
+				},
+			},
+		}, nil
+	default:
+		return nil, newInvalidRobotTypeError(robotType)
+	}
+}
+
+func (s *server) GetRobots(_ *empty.Empty, stream infoserver.InfoServer_GetRobotsServer) error {
+	log.Println("getting robots")
+
+	// Query database for robots
+	rows, err := s.DB.Query("SELECT * FROM toggleRobots")
+	if err != nil {
+		log.Printf("Failed to retrive list of robots: %v", err)
+		return err
+	}
+
+	var (
+		serial    string
+		nickname  string
+		robotType string
+		minimum   int
+		maximum   int
+	)
+
+	for rows.Next() {
+		err := rows.Scan(&serial, &nickname, &robotType)
+		if err != nil {
+			log.Printf("Failed to scan row of toggle table: %v", err)
+			return err
+		}
+
+		err = stream.Send(&infoserver.Robot{
+			Id:            serial,
+			Nickname:      nickname,
+			RobotType:     robotType,
+			InterfaceType: "toggle",
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	rows, err = s.DB.Query("SELECT * FROM rangeRobots")
+	if err != nil {
+		log.Printf("Failed to retrive list of robots: %v", err)
+		return err
+	}
+
+	for rows.Next() {
+		err := rows.Scan(&serial, &nickname, &robotType, &minimum, &maximum)
+		if err != nil {
+			log.Printf("Failed to scan row of range table: %v", err)
+			return err
+		}
+
+		err = stream.Send(&infoserver.Robot{
+			Id:            serial,
+			Nickname:      nickname,
+			RobotType:     robotType,
+			InterfaceType: "range",
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (s *server) ToggleRobot(ctx context.Context, request *infoserver.ToggleRequest) (*empty.Empty, error) {
+	log.Printf("toggling robot %s\n", request.Id)
+
+	// get robot type
+	var robotType string
+	row := s.DB.QueryRow("SELECT robotType FROM toggleRobots WHERE serial = $1", request.Id)
+	err := row.Scan(&robotType)
+	if err != nil {
+		log.Printf("Failed to retrive list of robots: %v", err)
+		return nil, err
+	}
+
+	// forward request to relevent service
+	switch robotType {
+	case "switch":
+		stream, err := s.SwitchClient.SetSwitch(context.Background(), &switchserver.SetSwitchRequest{
+			Id:    request.Id,
+			On:    request.Value,
+			Force: request.Force,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		for {
+			status, err := stream.Recv()
+			if err != nil {
+				return nil, err
+			}
+
+			if status.Status == switchserver.SetSwitchStatus_DONE {
+				break
+			}
+		}
+
+	default:
+		log.Printf("robot type \"%s\" is not toggelable", robotType)
+		return nil, newRobotNotTogglableError(request.Id, robotType)
+	}
+
+	return &empty.Empty{}, nil
 }
 
 func connectionStr() string {
@@ -61,250 +239,10 @@ func getDb() *sql.DB {
 	if err != nil {
 		log.Fatalf("Failed to connect to postgres: %v", err)
 	}
-
 	return db
 }
 
-type restError struct {
-	Error string `json:"error"`
-}
-
-func httpWriteError(w http.ResponseWriter, msg string, code int) {
-	w.WriteHeader(http.StatusBadRequest)
-	json.NewEncoder(w).Encode(restError{msg})
-}
-
-func queryRobotHandler(db *sql.DB) httprouter.Handle {
-	return httprouter.Handle(func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-
-		// get user-supplied ID parameter
-
-		robotId := ps.ByName("robotId")
-
-		var (
-			serial    string
-			nickname  string
-			robotType string
-			minimum   int
-			maximum   int
-		)
-
-		w.Header().Set("Content-Type", "application/json")
-
-		log.Println("/robot/" + robotId)
-
-		// query toggleRobots table for matching robots
-		rows, err := db.Query("SELECT * FROM toggleRobots WHERE serial = $1", robotId)
-
-		// initialise counter
-		found := false
-		if err != nil {
-			log.Printf("Failed to retrive robot %s: %v", robotId, err)
-			httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		}
-
-		for rows.Next() {
-			// read from table and write response
-			found = true
-			err := rows.Scan(&serial, &nickname, &robotType)
-			robotInterface := TriggerInterface{"toggle"}
-			resp := &Response{
-				Id:             serial,
-				Nickname:       nickname,
-				RobotType:      robotType,
-				RobotInterface: robotInterface,
-			}
-			json.NewEncoder(w).Encode(resp)
-			if err != nil {
-				log.Printf("Failed to scan robot %s: %v", robotId, err)
-				httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-			}
-		}
-
-		// if the robot was not found in toggleRobots, search rangeRobots
-		if found == false {
-			rows, err := db.Query("SELECT * FROM rangeRobots WHERE serial = $1", robotId)
-
-			if err != nil {
-				log.Printf("Failed to retrive robot %s: %v", robotId, err)
-				httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-			}
-
-			for rows.Next() {
-				found = true
-				err := rows.Scan(&serial, &nickname, &robotType, &minimum, &maximum)
-				robotInterface := RangeInterface{"range", minimum, maximum}
-				resp := &Response{
-					Id:             serial,
-					Nickname:       nickname,
-					RobotType:      robotType,
-					RobotInterface: robotInterface,
-				}
-				json.NewEncoder(w).Encode(resp)
-				if err != nil {
-					log.Printf("Failed to scan robot %s: %v", robotId, err)
-					httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-				}
-			}
-
-		}
-
-		// if no robots were found, return nil
-		if found == false {
-			json.NewEncoder(w).Encode("No robot with that ID")
-		}
-
-	})
-}
-
-func listRobotHandler(db *sql.DB) httprouter.Handle {
-	return httprouter.Handle(func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-
-		w.Header().Set("Content-Type", "application/json")
-
-		log.Println("/robots")
-
-		// Query database for robots
-		rows, err := db.Query("SELECT * FROM toggleRobots")
-		if err != nil {
-			log.Printf("Failed to retrive list of robots: %v", err)
-			httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		}
-		var (
-			serial    string
-			nickname  string
-			robotType string
-			minimum   int
-			maximum   int
-		)
-		// iterate through rows
-
-		robots := []*Response{}
-
-		for rows.Next() {
-			err := rows.Scan(&serial, &nickname, &robotType)
-			if err != nil {
-				log.Printf("Failed to scan row of toggle table: %v", err)
-				httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-			}
-
-			robotInterface := TriggerInterface{"toggle"}
-			resp := &Response{
-				Id:             serial,
-				Nickname:       nickname,
-				RobotType:      robotType,
-				RobotInterface: robotInterface,
-			}
-			robots = append(robots, resp)
-		}
-
-		rows, err = db.Query("SELECT * FROM rangeRobots")
-		if err != nil {
-			log.Printf("Failed to retrive list of robots: %v", err)
-			httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		}
-
-		for rows.Next() {
-			err := rows.Scan(&serial, &nickname, &robotType, &minimum, &maximum)
-			if err != nil {
-				log.Printf("Failed to scan row of range table: %v", err)
-				httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-			}
-			robotInterface := RangeInterface{"range", minimum, maximum}
-
-			resp := &Response{
-				Id:             serial,
-				Nickname:       nickname,
-				RobotType:      robotType,
-				RobotInterface: robotInterface,
-			}
-			robots = append(robots, resp)
-		}
-
-		json.NewEncoder(w).Encode(robots)
-
-	})
-}
-
-// proxy forwards the request to a different url
-func proxy(method string, url string, w http.ResponseWriter, r *http.Request) {
-	req, err := http.NewRequest(method, url, r.Body)
-	if err != nil {
-		log.Printf("Error creating request: %v", err)
-		httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return
-	}
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		log.Printf("Error executing request: %v", err)
-		httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(resp.StatusCode)
-	buf := new(bytes.Buffer)
-	buf.ReadFrom(resp.Body)
-	w.Write(buf.Bytes())
-}
-
-// errors for toggle robot route
-const (
-	ErrNotTogglable = "This robot is not togglable"
-)
-
-func toggleRobotHandler(db *sql.DB) httprouter.Handle {
-	return httprouter.Handle(func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		log.Println(r.URL.String())
-		w.Header().Set("Content-Type", "application/json")
-
-		robotID := ps.ByName("robotId")
-		value := ps.ByName("value")
-
-		// get robot type
-		var robotType string
-		row := db.QueryRow("SELECT robotType FROM toggleRobots WHERE serial = $1", robotID)
-		err := row.Scan(&robotType)
-		if err != nil {
-			log.Printf("Failed to retrive list of robots: %v", err)
-			httpWriteError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		}
-
-		// forward request to relevent service
-		switch robotType {
-		case "switch":
-			switch value {
-			case "true":
-				url := fmt.Sprintf("http://switchserver/%s/on", robotID)
-				proxy(http.MethodPatch, url, w, r)
-				return
-			case "false":
-				url := fmt.Sprintf("http://switchserver/%s/off", robotID)
-				proxy(http.MethodPatch, url, w, r)
-				return
-			}
-		default:
-			log.Printf("robot type \"%s\" is not toggelable", robotType)
-			httpWriteError(w, ErrNotTogglable, http.StatusBadRequest)
-			return
-		}
-
-	})
-}
-
-func createRouter(db *sql.DB) *httprouter.Router {
-	router := httprouter.New()
-	router.GET("/robot/:robotId", queryRobotHandler(db))
-	router.GET("/robots", listRobotHandler(db))
-	router.PATCH("/robot/:robotId/toggle/:value", toggleRobotHandler(db))
-
-	return router
-}
-
 func main() {
-	// register routes
-	// mux := http.NewServeMux()
-
 	db := getDb()
 	defer db.Close()
 
@@ -316,8 +254,21 @@ func main() {
 
 	log.Printf("Connected to database: %+v\n", db.Stats())
 
-	// start server
-	if err := http.ListenAndServe(":80", createRouter(db)); err != nil {
+	// connect to switchserver
+	switchserverConn, err := grpc.Dial("switchserver:80", grpc.WithInsecure())
+	if err != nil {
 		panic(err)
 	}
+	defer switchserverConn.Close()
+	switchClient := switchserver.NewSwitchServerClient(switchserverConn)
+
+	// start grpc server
+	grpcServer := grpc.NewServer()
+	infoServer := &server{DB: db, SwitchClient: switchClient}
+	infoserver.RegisterInfoServerServer(grpcServer, infoServer)
+	lis, err := net.Listen("tcp", ":80")
+	if err != nil {
+		log.Fatalf("Failed to listen: %v", err)
+	}
+	grpcServer.Serve(lis)
 }
