@@ -9,16 +9,17 @@ service InfoServer {
 }
 
 message RobotsQuery {
-    string userid = 1;
+    string userId = 1;
 }
 
 message RobotQuery {
     string id = 1;
-    string userid = 1;
+    string userId = 1;
 }
 
 message ToggleRequest {
     string id = 1;
+    string userid = 1;
     bool value = 2;
     bool force = 3;
 }
