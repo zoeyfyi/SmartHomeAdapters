@@ -17,21 +17,20 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - portainer_data:/data
-  # updates to latest container
-  watchtower:
-    image: v2tec/watchtower
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    command: --interval 30 --no-pull=${LOCAL}
   userdb:
-    image: smarthomeadapters/userdb
+    build:
+      context: ./userdb
     restart: always
     environment:
       - POSTGRES_PASSWORD=password
     volumes:
       - userdb_data:/var/lib/postgresql/data
   userserver:
-    image: smarthomeadapters/userserver
+    build: 
+      context: .
+      dockerfile: go.Dockerfile
+      args:
+        SERVICE: userserver
     depends_on:
       - userdb
     restart: always
@@ -43,19 +42,28 @@ services:
       - DB_DATABASE=postgres
       - DB_URL=userdb
   clientserver:
-    image: smarthomeadapters/clientserver
+    build: 
+      context: .
+      dockerfile: go.Dockerfile
+      args:
+        SERVICE: clientserver
     restart: always
     ports:
       - 80:80
   infodb:
-    image: smarthomeadapters/infodb
+    build: 
+      context: ./infodb
     restart: always
     environment:
       - POSTGRES_PASSWORD=password
     volumes:
       - infodb_data:/var/lib/postgresql/data
   infoserver:
-    image: smarthomeadapters/infoserver
+    build: 
+      context: .
+      dockerfile: go.Dockerfile
+      args:
+        SERVICE: infoserver
     depends_on:
       - infodb
     restart: always
@@ -67,14 +75,19 @@ services:
       - DB_DATABASE=postgres
       - DB_URL=infodb
   switchdb:
-    image: smarthomeadapters/switchdb
+    build: 
+      context: ./switchdb
     restart: always
     environment:
       - POSTGRES_PASSWORD=password
     volumes:
       - switchdb_data:/var/lib/postgresql/data
   switchserver:
-    image: smarthomeadapters/switchserver
+    build: 
+      context: .
+      dockerfile: go.Dockerfile
+      args:
+        SERVICE: switchserver
     depends_on:
       - switchdb
     restart: always
@@ -86,7 +99,11 @@ services:
       - DB_DATABASE=postgres
       - DB_URL=switchdb
   robotserver:
-    image: smarthomeadapters/robotserver
+    build: 
+      context: .
+      dockerfile: go.Dockerfile
+      args:
+        SERVICE: robotserver
     restart: always
     ports:
       - 8083:80
