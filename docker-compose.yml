@@ -100,15 +100,18 @@ services:
       - DB_URL=switchdb
   thermodb:
     build: 
-      context: ./thermostatserver/database
+      context: ./thermodb
     restart: always
     environment:
       - POSTGRES_PASSWORD=password
     volumes:
       - thermodb_data:/var/lib/postgresql/data
   thermostatserver:
-    build:
-      context: ./thermostatserver
+    build: 
+      context: .
+      dockerfile: go.Dockerfile
+      args:
+        SERVICE: infoserver
     depends_on:
       - thermodb
     restart: always
