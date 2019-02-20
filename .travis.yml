@@ -4,27 +4,21 @@ before_install:
   # disable services enabled by default
   - sudo /etc/init.d/mysql stop
   - sudo /etc/init.d/postgresql stop
+  # login so we can push to dockerhub
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+
+stages:
+  - test
+  - name: deploy
+    if: branch = master AND type != pull_request
+  - name: deploy-test
+    if: head_branch = webserver
 
 jobs:
   include:
-    # Compiling reports
     - stage: test
-      script:
-      - docker pull dxjoke/tectonic-docker
-      - |
-        for DIR in reports/*/; do
-          echo "Compiling ${DIR}";
-          docker run --mount src=${TRAVIS_BUILD_DIR}/${DIR},target=/usr/src/tex,type=bind dxjoke/tectonic-docker /bin/sh -c "tectonic document.tex"
-        done
-    # test info server
-    - stage: test
-      script: eval "$(gimme 1.11)" && cd ${TRAVIS_BUILD_DIR}/infoserver && make test
-    # test client server
-    - stage: test
-      script: eval "$(gimme 1.11)" && cd ${TRAVIS_BUILD_DIR}/clientserver && make test
-    # test user server
-    - stage: test
-      script: eval "$(gimme 1.11)" && cd ${TRAVIS_BUILD_DIR}/userserver && make test
-    # test robot server
-    - stage: test
-      script: eval "$(gimme 1.11)" && cd ${TRAVIS_BUILD_DIR}/robotserver && make test
+      script: eval "$(gimme 1.11)" && make ci
+    - stage: deploy
+      script: make docker-push
+    - stage: deploy-test
+      script: make docker-push-test
