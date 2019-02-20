@@ -2,12 +2,16 @@ package main
 
 import (
 	"context"
+	"database/sql"
+	"fmt"
 	"log"
 	"net"
 	"os"
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/ory/dockertest"
 
 	"google.golang.org/grpc/test/bufconn"
 
@@ -18,9 +22,33 @@ import (
 
 var lis *bufconn.Listener
 
-var db = getDb()
-
 func TestMain(m *testing.M) {
+	// connect to docker
+	pool, err := dockertest.NewPool("")
+	if err != nil {
+		log.Fatalf("Could not connect to docker: %s", err)
+	}
+
+	// start infodb
+	resource, err := pool.Run("smarthomeadapters/switchdb", "latest", []string{"POSTGRES_PASSWORD=password"})
+	if err != nil {
+		log.Fatalf("Could not start resource: %s", err)
+	}
+
+	url = fmt.Sprintf("localhost:%s", resource.GetPort("5432/tcp"))
+
+	// wait till db is up
+	if err = pool.Retry(func() error {
+		var err error
+		db, err := sql.Open("postgres", fmt.Sprintf("postgres://postgres:password@localhost:%s/%s?sslmode=disable", resource.GetPort("5432/tcp"), database))
+		if err != nil {
+			return err
+		}
+		return db.Ping()
+	}); err != nil {
+		log.Fatalf("Could not connect to docker: %s", err)
+	}
+
 	// start test gRPC server
 	lis = bufconn.Listen(1024 * 1024)
 	s := grpc.NewServer()
@@ -33,7 +61,11 @@ func TestMain(m *testing.M) {
 		}
 	}()
 
-	os.Exit(m.Run())
+	exitCode := m.Run()
+
+	pool.Purge(resource)
+
+	os.Exit(exitCode)
 }
 
 func bufDialer(string, time.Duration) (net.Conn, error) {
