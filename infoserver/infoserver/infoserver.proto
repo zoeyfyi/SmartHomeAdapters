@@ -14,14 +14,14 @@ message RobotsQuery {
 
 message RobotQuery {
     string id = 1;
-    string userId = 1;
+    string userId = 2;
 }
 
 message ToggleRequest {
     string id = 1;
-    string userid = 1;
-    bool value = 2;
-    bool force = 3;
+    string userId = 2;
+    bool value = 3;
+    bool force = 4;
 }
 
 message Robot {
