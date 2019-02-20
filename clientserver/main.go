@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/julienschmidt/httprouter"
 	"github.com/mrbenshef/SmartHomeAdapters/infoserver/infoserver"
 	"github.com/mrbenshef/SmartHomeAdapters/userserver/userserver"
@@ -173,7 +172,7 @@ type RangeStatus struct {
 func (s RangeStatus) status() {}
 
 func robotsHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	stream, err := infoserverClient.GetRobots(context.Background(), &empty.Empty{})
+	stream, err := infoserverClient.GetRobots(context.Background(), &infoserver.RobotsQuery{UserId:r.Header.Get("token")})
 	if err != nil {
 		HTTPError(w, err)
 		return
