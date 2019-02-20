@@ -19,6 +19,6 @@ jobs:
     - stage: test
       script: eval "$(gimme 1.11)" && make ci
     - stage: deploy
-      script: make docker-push
+      script: make docker && make docker-push
     - stage: deploy-test
-      script: make docker-push-test
+      script: make docker && make docker-push-test
