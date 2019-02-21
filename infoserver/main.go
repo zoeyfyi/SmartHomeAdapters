@@ -63,7 +63,7 @@ func (s *server) GetRobot(ctx context.Context, query *infoserver.RobotQuery) (*i
 	log.Println("getting robot with id: " + query.Id)
 
 	// query toggleRobots table for matching robots
-	row := s.DB.QueryRow("SELECT * FROM robots WHERE serial = $1 AND registeredUserId = $2", query.Id, query.UserId)
+	row := s.DB.QueryRow("SELECT serial, nickname, robotType FROM robots WHERE serial = $1 AND registeredUserId = $2", query.Id, query.UserId)
 	err := row.Scan(&serial, &nickname, &robotType)
 	if err == sql.ErrNoRows {
 		return nil, newRobotNotFoundError(query.Id)
@@ -103,7 +103,7 @@ func (s *server) GetRobots(query *infoserver.RobotsQuery, stream infoserver.Info
 	log.Println("getting robots")
 
 	// Query database for robots
-	rows, err := s.DB.Query("SELECT * FROM robots WHERE registeredUserId = $1", query.UserId)
+	rows, err := s.DB.Query("SELECT serial, nickname, robotType FROM robots WHERE registeredUserId = $1", query.UserId)
 	if err != nil {
 		log.Printf("Failed to retrive list of robots: %v", err)
 		return err
