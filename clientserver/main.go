@@ -105,6 +105,7 @@ type registerBody struct {
 }
 
 func registerHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+
 	var registerBody registerBody
 	err := json.NewDecoder(r.Body).Decode(&registerBody)
 	if err != nil {
@@ -112,6 +113,8 @@ func registerHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params
 		HTTPError(w, errors.New("Invalid JSON"))
 		return
 	}
+
+	log.Printf("Registering user with email: %s", registerBody.Email)
 
 	_, err = userserverClient.Register(context.Background(), &userserver.RegisterRequest{
 		Email:    registerBody.Email,
@@ -140,6 +143,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		return
 	}
 
+	log.Printf("Logging in user with email: %s", loginBody.Email)
 	token, err := userserverClient.Login(context.Background(), &userserver.LoginRequest{
 		Email:    loginBody.Email,
 		Password: loginBody.Password,
@@ -182,7 +186,15 @@ type RangeStatus struct {
 func (s RangeStatus) status() {}
 
 func robotsHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	stream, err := infoserverClient.GetRobots(context.Background(), &infoserver.RobotsQuery{UserId:r.Header.Get("token")})
+
+	user, err := userserverClient.Authorize(context.Background(), &userserver.Token{Token:r.Header.Get("token")})
+
+	if err != nil {
+		log.Printf("Failed to authorize user: %v", err)
+		HTTPError(w, err)
+	}
+
+	stream, err := infoserverClient.GetRobots(context.Background(), &infoserver.RobotsQuery{UserId:user.Id})
 	if err != nil {
 		HTTPError(w, err)
 		return
@@ -214,7 +226,17 @@ func robotHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 	id := ps.ByName("id")
 	log.Printf("Getting robot with id %s", id)
 
-	robot, err := infoserverClient.GetRobot(context.Background(), &infoserver.RobotQuery{Id: id})
+	// also need to call auth here and pass token
+
+	user, err := userserverClient.Authorize(context.Background(), &userserver.Token{Token:r.Header.Get("token")})
+
+	if err != nil {
+		log.Printf("Failed to authorize user: %v", err)
+		HTTPError(w, err)
+	}
+
+	robot, err := infoserverClient.GetRobot(context.Background(), &infoserver.RobotQuery{Id: id, UserId : user.Id})
+
 	if err != nil {
 		HTTPError(w, err)
 		return
