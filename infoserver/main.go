@@ -135,6 +135,18 @@ func (s *server) GetRobots(query *infoserver.RobotsQuery, stream infoserver.Info
 	return nil
 }
 
+func (s *server) RegisterRobot(ctx context.Context, query *infoserver.RegisterRobotQuery) (*empty.Empty, error) {
+	log.Println("registering robot")
+
+	_, err := s.DB.Exec("INSERT INTO robots (serial, nickname, robotType, registeredUserId) VALUES ($1, $2, $3, $4)", query.Id, query.Nickname, query.RobotType, query.UserId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &empty.Empty{}, nil
+}
+
 func (s *server) ToggleRobot(ctx context.Context, request *infoserver.ToggleRequest) (*empty.Empty, error) {
 	log.Printf("toggling robot %s\n", request.Id)
 

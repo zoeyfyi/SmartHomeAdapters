@@ -269,6 +269,44 @@ func robotHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 	})
 }
 
+type RegisterRobotBody struct {
+	Nickname  string `json:"nickname"`
+	RobotType string `json:"robotType"`
+}
+
+func registerRobotHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	id := ps.ByName("id")
+	log.Printf("Registering robot with id %s", id)
+
+	user, err := userserverClient.Authorize(context.Background(), &userserver.Token{Token: r.Header.Get("token")})
+
+	if err != nil {
+		log.Printf("Failed to authorize user: %v", err)
+		HTTPError(w, err)
+	}
+
+	var registerRobotBody RegisterRobotBody
+
+	err = json.NewDecoder(r.Body).Decode(&registerRobotBody)
+
+	if err != nil {
+		log.Printf("Invalid register JSON: %v", err)
+		HTTPError(w, errors.New("Invalid JSON"))
+		return
+	}
+
+	registerQuery := infoserver.RegisterRobotQuery{Id: id, Nickname: registerRobotBody.Nickname, RobotType: registerRobotBody.RobotType, UserId: user.Id}
+
+	_, err = infoserverClient.RegisterRobot(context.Background(), &registerQuery)
+
+	if err != nil {
+		HTTPError(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+
+}
 func toggleHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	id := ps.ByName("id")
 	value := ps.ByName("value")
@@ -298,6 +336,7 @@ func createRouter() *httprouter.Router {
 	router.GET("/ping", pingHandler)
 	router.POST("/register", registerHandler)
 	router.POST("/login", loginHandler)
+	router.POST("/robot/:id", registerRobotHandler)
 	router.GET("/robots", robotsHandler)
 	router.GET("/robot/:id", robotHandler)
 	router.PATCH("/robot/:id/toggle/:value", toggleHandler)
