@@ -187,14 +187,14 @@ func (s RangeStatus) status() {}
 
 func robotsHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 
-	user, err := userserverClient.Authorize(context.Background(), &userserver.Token{Token:r.Header.Get("token")})
+	user, err := userserverClient.Authorize(context.Background(), &userserver.Token{Token: r.Header.Get("token")})
 
 	if err != nil {
 		log.Printf("Failed to authorize user: %v", err)
 		HTTPError(w, err)
 	}
 
-	stream, err := infoserverClient.GetRobots(context.Background(), &infoserver.RobotsQuery{UserId:user.Id})
+	stream, err := infoserverClient.GetRobots(context.Background(), &infoserver.RobotsQuery{UserId: user.Id})
 	if err != nil {
 		HTTPError(w, err)
 		return
@@ -228,14 +228,14 @@ func robotHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 
 	// also need to call auth here and pass token
 
-	user, err := userserverClient.Authorize(context.Background(), &userserver.Token{Token:r.Header.Get("token")})
+	user, err := userserverClient.Authorize(context.Background(), &userserver.Token{Token: r.Header.Get("token")})
 
 	if err != nil {
 		log.Printf("Failed to authorize user: %v", err)
 		HTTPError(w, err)
 	}
 
-	robot, err := infoserverClient.GetRobot(context.Background(), &infoserver.RobotQuery{Id: id, UserId : user.Id})
+	robot, err := infoserverClient.GetRobot(context.Background(), &infoserver.RobotQuery{Id: id, UserId: user.Id})
 
 	if err != nil {
 		HTTPError(w, err)
