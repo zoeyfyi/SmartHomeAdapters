@@ -45,6 +45,10 @@ func newInvalidRobotTypeError(robotType string) error {
 	return status.Newf(codes.InvalidArgument, "Invalid robot type \"%s\"", robotType).Err()
 }
 
+func robotAlreadyExistsError(id string) error {
+	return status.Newf(codes.InvalidArgument, "Robot %s already exists ", id).Err()
+}
+
 func newRobotNotTogglableError(id string, robotType string) error {
 	return status.Newf(codes.InvalidArgument, "Robot \"%s\" of type \"%s\" cannot be toggled", id, robotType).Err()
 }
@@ -137,8 +141,16 @@ func (s *server) GetRobots(query *infoserver.RobotsQuery, stream infoserver.Info
 
 func (s *server) RegisterRobot(ctx context.Context, query *infoserver.RegisterRobotQuery) (*empty.Empty, error) {
 	log.Println("registering robot")
+	rows, err := s.DB.Query("SELECT * FROM robots WHERE serial = $1", query.Id)
+	if err != nil {
+		log.Println("Failed to search database for robot.")
+		return nil, err
+	}
+	for rows.Next() {
+		return nil, robotAlreadyExistsError(query.Id)
+	}
 
-	_, err := s.DB.Exec("INSERT INTO robots (serial, nickname, robotType, registeredUserId) VALUES ($1, $2, $3, $4)", query.Id, query.Nickname, query.RobotType, query.UserId)
+	_, err = s.DB.Exec("INSERT INTO robots (serial, nickname, robotType, registeredUserId) VALUES ($1, $2, $3, $4)", query.Id, query.Nickname, query.RobotType, query.UserId)
 
 	if err != nil {
 		return nil, err
