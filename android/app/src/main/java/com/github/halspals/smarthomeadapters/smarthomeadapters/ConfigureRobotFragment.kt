@@ -5,6 +5,8 @@ import android.support.v4.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import com.github.halspals.smarthomeadapters.smarthomeadapters.model.ConfigDetails
+import com.github.halspals.smarthomeadapters.smarthomeadapters.model.ConfigParameter
 import kotlinx.android.synthetic.main.fragment_configure_robot.*
 
 /**
@@ -25,6 +27,18 @@ class ConfigureRobotFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         finish_button.setOnClickListener { _ -> setConfigParametersAndFinish() }
+
+        val params = listOf( // TODO this is test only, should be fetched from the server
+            ConfigParameter("On Angle", "Angle to turn the servo to turn the switch on",
+                "int", ConfigDetails(100, 90, 180)),
+            ConfigParameter("Off Angle", "Angle to turn the servo to turn the switch off",
+                "int", ConfigDetails(80, 0, 90)),
+            ConfigParameter("Test Boolean config", "Just for testing", "bool",
+                ConfigDetails(0, 0, 0)
+            )
+        )
+
+        parameter_grid.adapter = ParameterAdapter(view.context, params)
     }
 
     /**
