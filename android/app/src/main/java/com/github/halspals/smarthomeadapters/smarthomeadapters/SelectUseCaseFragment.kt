@@ -27,6 +27,8 @@ class SelectUseCaseFragment : Fragment() {
 
     private lateinit var parent: RegisterRobotActivity
 
+    private var selectedUseCase: String? = null
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         Log.d(fTag, "[onCreateView] Invoked")
         return inflater.inflate(R.layout.fragment_select_use_case, container, false)
@@ -84,7 +86,9 @@ class SelectUseCaseFragment : Fragment() {
             override fun onFailure(call: Call<List<String>>, t: Throwable) {
                 val errorMsg = t.message
                 Log.e(fTag, "[getAllUseCases] FAILED, got error: $errorMsg")
-                // TODO present the error to the user
+                if (errorMsg != null) {
+                    parent.snackbar_layout.snackbar(errorMsg)
+                }
             }
         })
 
@@ -92,23 +96,20 @@ class SelectUseCaseFragment : Fragment() {
         spinner.onItemSelectedListener = object: AdapterView.OnItemSelectedListener {
 
             override fun onNothingSelected(p0: AdapterView<*>?) {
-                // Not interested
+                selectedUseCase = null
             }
 
             override fun onItemSelected(adapter: AdapterView<*>?, view: View?, pos: Int, p3: Long) {
 
-                spinner.isEnabled = false
-
-                // The user has chosen a use case -- fetch it and and invoke [registerUseCase].
-
                 val useCase: String? = adapter?.getItemAtPosition(pos) as? String
 
-                if (useCase != null) {
-                    Log.v(fTag, "[onItemSelected] User chose use case $useCase")
-                    registerUseCase(useCase)
+                selectedUseCase = if (useCase != null) {
+                    Log.v(fTag, "[onItemSelected] User selected use case $useCase")
+                    useCase
                 } else {
                     Log.e(fTag, "[onItemSelected] User indicated position $pos but adapter or item was null")
                     parent.snackbar_layout.snackbar("Could not fetch your chosen use case")
+                    null
                 }
             }
 
@@ -118,6 +119,8 @@ class SelectUseCaseFragment : Fragment() {
         // or configuration
         finish_early_button.setOnClickListener { _ -> activity?.finish() }
 
+        set_usecase_button.setOnClickListener { _ -> registerUseCase(selectedUseCase) }
+
     }
 
     /**
@@ -126,7 +129,13 @@ class SelectUseCaseFragment : Fragment() {
      *
      * @param useCase the use case chosen by the user for the robot
      */
-    private fun registerUseCase(useCase: String) {
+    private fun registerUseCase(useCase: String?) {
+
+        if (useCase == null) {
+            Log.e(fTag, "registerUseCase got null use case")
+            return
+        }
+
         val parent = activity as RegisterRobotActivity
         use_case_registration_progress_bar.visibility = View.VISIBLE
 
