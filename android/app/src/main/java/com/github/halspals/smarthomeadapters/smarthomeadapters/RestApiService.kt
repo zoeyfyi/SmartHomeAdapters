@@ -18,7 +18,7 @@ interface RestApiService {
         fun new(): RestApiService {
             return Retrofit.Builder()
                     .addConverterFactory(GsonConverterFactory.create())
-                    .baseUrl("http://client.api.halspals.co.uk/")
+                    .baseUrl("https://client.api.halspals.co.uk/")
                     .build()
                     .create(RestApiService::class.java)
         }
