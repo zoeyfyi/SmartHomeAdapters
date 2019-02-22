@@ -8,3 +8,7 @@
 ## Compile & Run
 
 Use the Arduino IDE
+
+# Eduroam_Backup
+
+The Eduroam_Backup.ino is the back up, it only provide the method to connect to eduroam.
