@@ -28,18 +28,10 @@ class ConfigureRobotFragment : Fragment() {
 
         finish_button.setOnClickListener { _ -> setConfigParametersAndFinish() }
 
-        val params = listOf( // TODO this is test only, should be fetched from the server
-            ConfigParameter("On Angle", "Angle to turn the servo to turn the switch on",
-                "int", ConfigDetails(100, 90, 180)),
-            ConfigParameter("Off Angle", "Angle to turn the servo to turn the switch off",
-                "int", ConfigDetails(80, 0, 90)),
-            ConfigParameter("Test Boolean config", "Just for testing", "bool",
-                ConfigDetails(0, 0, 0)
-            )
-        )
-
         // Set up the grid's adapter to display the configuration parameters requested
-        parameter_grid.adapter = ParameterAdapter(view.context, params)
+        parameter_grid.adapter = ParameterAdapter(
+            view.context,
+            (activity as RegisterRobotActivity).chosenUseCase.parameters)
     }
 
     /**

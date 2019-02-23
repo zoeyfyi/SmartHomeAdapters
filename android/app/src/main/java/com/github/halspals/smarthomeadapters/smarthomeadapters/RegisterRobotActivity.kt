@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.support.v4.app.FragmentManager
 import android.util.Log
+import com.github.halspals.smarthomeadapters.smarthomeadapters.model.UseCase
 import com.google.zxing.integration.android.IntentIntegrator
 import com.google.zxing.integration.android.IntentResult
 
@@ -18,6 +19,9 @@ class RegisterRobotActivity : AppCompatActivity() {
 
     // Keep track of the id of the robot once it has been scanned/entered
     internal lateinit var robotId: String
+
+    // Record the chosen use case so that its parameters can be set up
+    internal lateinit var chosenUseCase: UseCase
 
     internal val restApiService by lazy {
         RestApiService.new()

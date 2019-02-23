@@ -33,7 +33,7 @@
             android:layout_height="wrap_content"
             android:id="@+id/finish_early_button"
             style="@style/Widget.AppCompat.Button.Borderless.Colored" app:layout_constraintBottom_toBottomOf="parent"
-            android:layout_marginBottom="128dp" app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginBottom="64dp" app:layout_constraintEnd_toEndOf="parent"
             android:layout_marginEnd="16dp" app:layout_constraintStart_toStartOf="parent"
             android:layout_marginStart="16dp"/>
 

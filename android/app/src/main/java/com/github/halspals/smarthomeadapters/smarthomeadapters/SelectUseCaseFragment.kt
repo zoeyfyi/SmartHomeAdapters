@@ -1,5 +1,6 @@
 package com.github.halspals.smarthomeadapters.smarthomeadapters
 
+import android.content.Context
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.util.Log
@@ -8,6 +9,11 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
+import android.widget.BaseAdapter
+import android.widget.TextView
+import com.github.halspals.smarthomeadapters.smarthomeadapters.model.ConfigDetails
+import com.github.halspals.smarthomeadapters.smarthomeadapters.model.ConfigParameter
+import com.github.halspals.smarthomeadapters.smarthomeadapters.model.UseCase
 import kotlinx.android.synthetic.main.activity_register_robot.*
 import kotlinx.android.synthetic.main.fragment_select_use_case.*
 import okhttp3.ResponseBody
@@ -27,7 +33,7 @@ class SelectUseCaseFragment : Fragment() {
 
     private lateinit var parent: RegisterRobotActivity
 
-    private var selectedUseCase: String? = null
+    private var selectedUseCase: UseCase? = null
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         Log.d(fTag, "[onCreateView] Invoked")
@@ -41,55 +47,133 @@ class SelectUseCaseFragment : Fragment() {
 
         // Get the use cases from the server
         Log.v(fTag, "Getting use cases")
-        parent.restApiService.getAllUseCases().enqueue(object : Callback<List<String>> {
+        parent.restApiService.getAllUseCases().enqueue(object : Callback<List<UseCase>> {
 
-            override fun onResponse(call: Call<List<String>>, response: Response<List<String>>) {
-
+            override fun onResponse(call: Call<List<UseCase>>, response: Response<List<UseCase>>) {
                 spinner_progress_bar.visibility = View.GONE
 
                 // Extract the use cases from the response, if it was successful
                 // TODO the spinner should not be set up if the call fails once the /usecases endpoint is working
-                val body = response.body()
-                val spinnerContents: List<String> = when {
-                    !response.isSuccessful -> {
-                        val error = RestApiService.extractErrorFromResponse(response)
-                        if (error != null) {
-                            parent.snackbar_layout.snackbar(error)
+                val useCases: List<UseCase>? = response.body()
+                if (response.isSuccessful && useCases != null) {
+                    Log.v(fTag, "[getAllUseCases] Successfully got list of ${useCases.size} use cases")
+
+                    spinner.adapter = object : BaseAdapter() {
+                        override fun getCount(): Int {
+                            return useCases.size
                         }
-                        spinner_text_view.visibility = View.INVISIBLE
-                        Log.d(fTag, "[getAllUseCases] Got unsuccessful response when loading use cases: $error")
-                        listOf("Switch", "Thermostat", "Botlock") // TODO remove these when /usecases works
+
+                        override fun getItemId(p0: Int): Long {
+                            return 0L
+                        }
+
+                        override fun getItem(position: Int): Any {
+                            return useCases[position]
+                        }
+
+                        override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
+                            if (convertView != null) {
+                                return convertView
+                            }
+
+                            val inflater =
+                                view.context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+                            val ret = inflater.inflate(android.R.layout.simple_spinner_item, parent, false)
+                            ret.findViewById<TextView>(android.R.id.text1).text = useCases[position].name
+                            return ret
+                        }
                     }
 
-                    body == null -> {
-                        spinner_text_view.visibility = View.INVISIBLE
-                        Log.w(fTag, "[getAllUseCases] Response was successful but body is null")
-                        parent.snackbar_layout.snackbar("Could not find any use cases")
-                        listOf("Switch", "Thermostat", "Botlock") // TODO remove these when /usecases works
+                    spinner.visibility = View.VISIBLE
+                } else {
+
+                    val error = RestApiService.extractErrorFromResponse(response)
+                    Log.e(fTag, "[getAllUseCases] response was unsuccessful or body was null; error: $error")
+                    if (error != null) {
+                        parent.snackbar_layout.snackbar(error)
+                    }
+                    /*
+                    TODO REMOVE TEST CODE.
+                    Currently the app uses hard-coded alternatives for configuration so that it can be tested
+                    while the end points are still being developed.
+                    TODO THIS SHOULD BE REMOVED!
+                     */
+
+                    val testUseCases = listOf(
+                        UseCase(
+                            "1",
+                            "Thermostat",
+                            listOf(
+                                ConfigParameter(
+                                    "10 Degrees Point", "Set the angle corresponding to the temperature" +
+                                            "10 degrees Celsius.", "int", ConfigDetails(75, 0, 90)
+                                ),
+                                ConfigParameter(
+                                    "30 Degrees Point", "Set the angle corresponding to the temperature" +
+                                            "30 degrees Celsius.", "int", ConfigDetails(145, 90, 180)
+                                ),
+                                ConfigParameter(
+                                    "Test bool param", "just for testing; default ON", "bool",
+                                    ConfigDetails(1, 0, 1)
+                                )
+                            )
+                        ),
+                        UseCase(
+                            "2",
+                            "Switch",
+                            listOf(
+                                ConfigParameter(
+                                    "Off Angle", "Set the angle for turning off the light",
+                                    "int", ConfigDetails(80, 0, 90)
+                                ),
+                                ConfigParameter(
+                                    "On Angle", "Set the angle for turning on the light",
+                                    "int", ConfigDetails(165, 90, 180)
+                                ),
+                                ConfigParameter(
+                                    "Test bool param", "just for testing; default OFF", "bool",
+                                    ConfigDetails(0, 0, 1)
+                                )
+                            )
+                        )
+                    )
+
+                    spinner.adapter = object : BaseAdapter() {
+                        override fun getCount(): Int {
+                            return testUseCases.size
+                        }
+
+                        override fun getItemId(p0: Int): Long {
+                            return 0L
+                        }
+
+                        override fun getItem(position: Int): Any {
+                            return testUseCases[position]
+                        }
+
+                        override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
+                            val inflater =
+                                view.context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+                            val ret = inflater.inflate(android.R.layout.simple_spinner_item, parent, false)
+                            ret.findViewById<TextView>(android.R.id.text1).text = testUseCases[position].name
+                            return ret
+                        }
                     }
 
-                    else -> {
-                        // response was succesful and body is non-null
-                        context?.toast("Successfully retrieved list of use cases")
-                        body
-                    }
+                    spinner.visibility = View.VISIBLE
+
+
                 }
-
-                // Set the spinner to be visible and add an adapter with the use cases retrieved
-                spinner.adapter = ArrayAdapter<String>(
-                    view.context,
-                    android.R.layout.simple_spinner_item,
-                    spinnerContents)
-                spinner.visibility = View.VISIBLE
             }
 
-            override fun onFailure(call: Call<List<String>>, t: Throwable) {
+            override fun onFailure(call: Call<List<UseCase>>, t: Throwable) {
                 val errorMsg = t.message
                 Log.e(fTag, "[getAllUseCases] FAILED, got error: $errorMsg")
                 if (errorMsg != null) {
                     parent.snackbar_layout.snackbar(errorMsg)
                 }
             }
+
         })
 
         // Set up the selection listener for the use case spinner
@@ -101,7 +185,7 @@ class SelectUseCaseFragment : Fragment() {
 
             override fun onItemSelected(adapter: AdapterView<*>?, view: View?, pos: Int, p3: Long) {
 
-                val useCase: String? = adapter?.getItemAtPosition(pos) as? String
+                val useCase = adapter?.getItemAtPosition(pos) as? UseCase
 
                 selectedUseCase = if (useCase != null) {
                     Log.v(fTag, "[onItemSelected] User selected use case $useCase")
@@ -129,17 +213,17 @@ class SelectUseCaseFragment : Fragment() {
      *
      * @param useCase the use case chosen by the user for the robot
      */
-    private fun registerUseCase(useCase: String?) {
+    private fun registerUseCase(useCase: UseCase?) {
 
         if (useCase == null) {
             Log.e(fTag, "registerUseCase got null use case")
             return
         }
 
-        val parent = activity as RegisterRobotActivity
         use_case_registration_progress_bar.visibility = View.VISIBLE
+        parent.chosenUseCase = useCase
 
-        parent.restApiService.registerUseCaseToRobot(parent.robotId, useCase).enqueue(object : Callback<ResponseBody> {
+        parent.restApiService.registerUseCaseToRobot(parent.robotId, useCase.id).enqueue(object : Callback<ResponseBody> {
             override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
 
                 use_case_registration_progress_bar.visibility = View.GONE

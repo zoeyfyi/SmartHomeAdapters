@@ -2,6 +2,7 @@ package com.github.halspals.smarthomeadapters.smarthomeadapters
 
 import com.github.halspals.smarthomeadapters.smarthomeadapters.model.Robot
 import com.github.halspals.smarthomeadapters.smarthomeadapters.model.Token
+import com.github.halspals.smarthomeadapters.smarthomeadapters.model.UseCase
 import com.github.halspals.smarthomeadapters.smarthomeadapters.model.User
 import okhttp3.ResponseBody
 import org.json.JSONException
@@ -51,7 +52,7 @@ interface RestApiService {
         @Body map: Map<String, Boolean>): Call<ResponseBody>
 
     @GET("usecases")
-    fun getAllUseCases(): Call<List<String>>
+    fun getAllUseCases(): Call<List<UseCase>>
 
     @POST("robot/{robotId}/usecase/{usecaseId}")
     fun registerUseCaseToRobot(
