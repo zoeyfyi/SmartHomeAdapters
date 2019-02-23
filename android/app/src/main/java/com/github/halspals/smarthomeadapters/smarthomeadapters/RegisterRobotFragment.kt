@@ -67,6 +67,7 @@ class RegisterRobotFragment : Fragment() {
     private fun registerRobot(nickname: Editable) {
         if (nickname.isEmpty()) {
             nickname_input.error = "Enter a nickname for the robot"
+            register_button.isEnabled = true
         } else {
             registration_progress_bar.visibility = View.VISIBLE
             parent
