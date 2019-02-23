@@ -113,12 +113,6 @@ func TestGetRobots(t *testing.T) {
 			RobotType:     "switch",
 			InterfaceType: "toggle",
 		},
-		&infoserver.Robot{
-			Id:            "T2D2",
-			Nickname:      "testThermoBot",
-			RobotType:     "thermostat",
-			InterfaceType: "range",
-		},
 	}
 
 	ctx := context.Background()
@@ -129,7 +123,7 @@ func TestGetRobots(t *testing.T) {
 	defer conn.Close()
 
 	client := infoserver.NewInfoServerClient(conn)
-	stream, err := client.GetRobots(context.Background(), &empty.Empty{})
+	stream, err := client.GetRobots(context.Background(), &infoserver.RobotsQuery{UserId:"1"})
 	if err != nil {
 		t.Fatalf("Could not get robots: %v", err)
 	}
@@ -149,6 +143,7 @@ func TestGetRobots(t *testing.T) {
 	if !reflect.DeepEqual(robots, expectedRobots) {
 		t.Fatalf("Expected: %+v, Got: %+v", expectedRobots, robots)
 	}
+
 }
 
 func TestGetRobotWithValidID(t *testing.T) {
@@ -181,7 +176,8 @@ func TestGetRobotWithValidID(t *testing.T) {
 		defer conn.Close()
 
 		client := infoserver.NewInfoServerClient(conn)
-		robot, err := client.GetRobot(context.Background(), &infoserver.RobotQuery{Id: c.id})
+		robot, err := client.GetRobot(context.Background(), &infoserver.RobotQuery{Id: c.id, UserId:"1"})
+
 		if err != nil {
 			t.Fatalf("Could not get robot: %v", err)
 		}
@@ -201,7 +197,7 @@ func TestGetRobotWithInvalidID(t *testing.T) {
 	defer conn.Close()
 
 	client := infoserver.NewInfoServerClient(conn)
-	robot, err := client.GetRobot(context.Background(), &infoserver.RobotQuery{Id: "invalidid"})
+	robot, err := client.GetRobot(context.Background(), &infoserver.RobotQuery{Id: "invalidid", UserId:"1"})
 
 	status, ok := status.FromError(err)
 	if !ok {
