@@ -110,7 +110,7 @@ class RobotFragment : Fragment() {
         seekBar.visibility = View.INVISIBLE
 
         when(robot.robotInterfaceType) {
-            "toggle" -> {
+            Robot.TYPE_TOGGLE -> {
                 switch.visibility = View.VISIBLE
                 switch.isChecked = robot.robotStatus.value
 
@@ -118,19 +118,23 @@ class RobotFragment : Fragment() {
                     onSwitch(isOn)
                 }
             }
-            "range" -> {
+
+            Robot.TYPE_RANGE -> {
                 seekBar.visibility = View.VISIBLE
-                seekBar.max = robot.robotStatus.max
-                seekBar.min = robot.robotStatus.min
-                seekBar.progress = robot.robotStatus.current
+                seekBar.max = robot.robotStatus.max - robot.robotStatus.min
+                seekBar.progress = robot.robotStatus.current - robot.robotStatus.min
 
                 seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
                     override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                        onSeek(progress)
+                        onSeek(progress + robot.robotStatus.min)
                     }
                     override fun onStartTrackingTouch(seekBar: SeekBar?) {}
                     override fun onStopTrackingTouch(seekBar: SeekBar?) {}
                 })
+            }
+
+            else -> {
+                TODO("No other robot interface types exepcted")
             }
         }
     }
