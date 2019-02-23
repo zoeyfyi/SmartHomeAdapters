@@ -20,7 +20,7 @@
     />
 
     <Button
-            android:text="SUBMIT CODE"
+            android:text="@string/manual_submit_button_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/manual_submit_button"
@@ -34,7 +34,7 @@
             android:layout_height="wrap_content"
             android:inputType="textNoSuggestions"
             android:gravity="center"
-            android:text="000000"
+            android:hint="@string/input_id_default"
             android:ems="8"
             android:id="@+id/manual_code_input" app:layout_constraintEnd_toEndOf="parent"
             android:layout_marginEnd="8dp" app:layout_constraintStart_toStartOf="parent"

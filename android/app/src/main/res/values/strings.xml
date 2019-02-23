@@ -17,8 +17,6 @@
     <string name="nav_bar_triggers">Triggers</string>
     <string name="nav_bar_settings">Settings</string>
 
-    <!-- Strings related to RobotFragment -->
-    <string name="blank_robot_placeholder">I am a robot beep beep boop boop</string> <!-- TODO remove/replace -->
 
     <!-- Strings related to TriggersFragment -->
     <string name="blank_trigger_placeholder">Triggered</string> <!-- TODO remove/replace -->
@@ -28,6 +26,8 @@
 
     <!-- Strings related to QRFragment -->
     <string name="scan_qr_text">Scan QR code</string>
+    <string name="input_id_default">000000</string>
+    <string name="manual_submit_button_text">Submit Robot ID</string>
 
     <!-- Strings related to RegisterRobotFragment -->
     <string name="nickname_input_placeholder">Robot nickname</string>
@@ -37,6 +37,7 @@
     <string name="select_from_spinner_text">Choose a use case</string>
     <string name="loading_spinner_text">Loading use cases&#8230;</string>
     <string name="finish_early_button_text">Skip configuration</string>
+    <string name="set_use_case_button_text">Set</string>
 
 
 </resources>
