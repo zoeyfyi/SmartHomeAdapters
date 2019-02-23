@@ -54,7 +54,7 @@ interface RestApiService {
     @GET("usecases")
     fun getAllUseCases(): Call<List<UseCase>>
 
-    @POST("robot/{robotId}/usecase/{usecaseId}")
+    @PUT("robot/{robotId}/usecase/{usecaseId}")
     fun registerUseCaseToRobot(
         @Path("robotId") robotId: String, @Path("usecaseId") usecaseId: String): Call<ResponseBody>
 
