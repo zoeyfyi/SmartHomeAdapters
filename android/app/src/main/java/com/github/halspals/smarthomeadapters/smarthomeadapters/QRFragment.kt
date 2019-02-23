@@ -35,5 +35,10 @@ class QRFragment : Fragment() {
                 .setPrompt("Scan robot QR code")
                 .initiateScan()
         }
+
+        manual_submit_button.setOnClickListener { _ ->
+            (activity as RegisterRobotActivity).robotId = manual_code_input.toString()
+            (activity as RegisterRobotActivity).startFragment(RegisterRobotFragment())
+        }
     }
 }
