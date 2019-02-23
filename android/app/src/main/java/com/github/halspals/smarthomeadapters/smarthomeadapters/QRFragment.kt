@@ -37,7 +37,7 @@ class QRFragment : Fragment() {
         }
 
         manual_submit_button.setOnClickListener { _ ->
-            (activity as RegisterRobotActivity).robotId = manual_code_input.toString()
+            (activity as RegisterRobotActivity).robotId = manual_code_input.text.toString()
             (activity as RegisterRobotActivity).startFragment(RegisterRobotFragment())
         }
     }
