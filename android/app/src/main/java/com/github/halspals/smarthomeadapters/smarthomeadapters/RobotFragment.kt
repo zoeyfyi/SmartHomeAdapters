@@ -10,7 +10,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import com.github.halspals.smarthomeadapters.smarthomeadapters.model.Robot
-import kotlinx.android.synthetic.main.activity_authentication.*
+import kotlinx.android.synthetic.main.fragment_robot.*
 import okhttp3.ResponseBody
 import org.jetbrains.anko.design.snackbar
 import org.jetbrains.anko.toast
@@ -123,10 +123,13 @@ class RobotFragment : Fragment() {
                 seekBar.visibility = View.VISIBLE
                 seekBar.max = robot.robotStatus.max - robot.robotStatus.min
                 seekBar.progress = robot.robotStatus.current - robot.robotStatus.min
+                seek_bar_text_view.text = robot.robotStatus.current.toString()
 
                 seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
                     override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                        onSeek(progress + robot.robotStatus.min)
+                        val seekValue = progress + robot.robotStatus.min
+                        onSeek(seekValue)
+                        seek_bar_text_view.text = seekValue.toString()
                     }
                     override fun onStartTrackingTouch(seekBar: SeekBar?) {}
                     override fun onStopTrackingTouch(seekBar: SeekBar?) {}
