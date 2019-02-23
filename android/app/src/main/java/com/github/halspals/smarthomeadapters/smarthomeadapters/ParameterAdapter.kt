@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import com.github.halspals.smarthomeadapters.smarthomeadapters.model.ConfigParameter
+import com.github.halspals.smarthomeadapters.smarthomeadapters.model.ConfigResult
 
 /**
  * Provides an adapter to list [ConfigParameter]s in a grid of cards.
@@ -14,6 +15,26 @@ import com.github.halspals.smarthomeadapters.smarthomeadapters.model.ConfigParam
  * @property parameters the configuration parameters to list
  */
 class ParameterAdapter (private val context: Context, private val parameters: List<ConfigParameter>):  BaseAdapter() {
+
+    private val configSettings = HashMap<String, String>()
+
+    init {
+        for (param in parameters) {
+            when (param.type) {
+                ConfigParameter.BOOL_TYPE -> {
+                    configSettings[param.name] = (param.details.default != 0).toString()
+                }
+
+                ConfigParameter.INT_TYPE -> {
+                    configSettings[param.name] = param.details.default.toString()
+                }
+
+                else -> {
+                    TODO("No other types expected")
+                }
+            }
+        }
+    }
 
     override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
 
@@ -30,7 +51,11 @@ class ParameterAdapter (private val context: Context, private val parameters: Li
             ConfigParameter.BOOL_TYPE -> {
                 // The parameter is a boolean one -- inflate the bool card and set the default state
                 val cardView = inflater.inflate(R.layout.view_bool_config_card, parent, false)
-                cardView.findViewById<Switch>(R.id.input_switch).isChecked = parameter.details.default != 0
+                val switch = cardView.findViewById<Switch>(R.id.input_switch)
+                switch.isChecked = parameter.details.default != 0
+                switch.setOnCheckedChangeListener { _, b ->
+                    configSettings[parameter.name] = b.toString()
+                }
                 cardView
             }
 
@@ -60,7 +85,11 @@ class ParameterAdapter (private val context: Context, private val parameters: Li
                     }
 
                     override fun onProgressChanged(seekBar: SeekBar?, progress: Int, byUser: Boolean) {
-                        seekBarValueTextView.text = "${progress + min}"
+                        // add back the min we subtracted earlier as the seekbar starts at 0
+                        val newValue = (progress + min).toString()
+                        seekBarValueTextView.text = newValue
+                        configSettings[parameter.name] = newValue
+
                     }
                 })
 
@@ -89,6 +118,15 @@ class ParameterAdapter (private val context: Context, private val parameters: Li
 
     override fun getItemId(p0: Int): Long {
         return 0L
+    }
+
+    internal fun getConfigValuesSnapshot(): List<ConfigResult> {
+        val snapshot = ArrayList<ConfigResult>()
+        for (paramName in configSettings.keys) {
+            snapshot.add(ConfigResult(paramName, configSettings[paramName]!!))
+        }
+
+        return snapshot
     }
 
 }

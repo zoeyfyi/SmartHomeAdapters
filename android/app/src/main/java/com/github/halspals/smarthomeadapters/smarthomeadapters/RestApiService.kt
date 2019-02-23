@@ -1,9 +1,6 @@
 package com.github.halspals.smarthomeadapters.smarthomeadapters
 
-import com.github.halspals.smarthomeadapters.smarthomeadapters.model.Robot
-import com.github.halspals.smarthomeadapters.smarthomeadapters.model.Token
-import com.github.halspals.smarthomeadapters.smarthomeadapters.model.UseCase
-import com.github.halspals.smarthomeadapters.smarthomeadapters.model.User
+import com.github.halspals.smarthomeadapters.smarthomeadapters.model.*
 import okhttp3.ResponseBody
 import org.json.JSONException
 import org.json.JSONObject
@@ -57,5 +54,9 @@ interface RestApiService {
     @PUT("robot/{robotId}/usecase/{usecaseId}")
     fun registerUseCaseToRobot(
         @Path("robotId") robotId: String, @Path("usecaseId") usecaseId: String): Call<ResponseBody>
+
+    @PUT("robot/{robotId}/calibration")
+    fun setConfigParameters(
+        @Path("robotId") robotId: String, @Body params: List<ConfigResult>): Call<ResponseBody>
 
 }

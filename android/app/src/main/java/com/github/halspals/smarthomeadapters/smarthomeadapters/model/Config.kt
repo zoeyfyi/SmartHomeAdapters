@@ -34,3 +34,10 @@ data class ConfigParameter(
         const val INT_TYPE = "int"
     }
 }
+
+data class ConfigResult(
+    @SerializedName("name")
+    val name: String,
+    @SerializedName("value")
+    val value: String
+)

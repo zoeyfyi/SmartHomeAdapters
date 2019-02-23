@@ -39,5 +39,8 @@
     <string name="finish_early_button_text">Skip configuration</string>
     <string name="set_use_case_button_text">Set</string>
 
+    <!-- Strings related to ConfigureRobotFragment -->
+    <string name="finish_button_text">Save Configuration</string>
+
 
 </resources>
