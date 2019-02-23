@@ -117,6 +117,7 @@ func (s *server) GetRobots(query *infoserver.RobotsQuery, stream infoserver.Info
 		serial    string
 		nickname  string
 		robotType string
+		interfaceType string
 	)
 
 	for rows.Next() {
@@ -125,12 +126,16 @@ func (s *server) GetRobots(query *infoserver.RobotsQuery, stream infoserver.Info
 			log.Printf("Failed to scan row of robots table: %v", err)
 			return err
 		}
-
+		if robotType == "switch" {
+			interfaceType = "toggle"
+		} else{
+			interfaceType = "range"
+		}
 		err = stream.Send(&infoserver.Robot{
 			Id:            serial,
 			Nickname:      nickname,
 			RobotType:     robotType,
-			InterfaceType: robotType, // what should this be? used to be "toggle" or "range"
+			InterfaceType: interfaceType, // what should this be? used to be "toggle" or "range"
 		})
 		if err != nil {
 			return err
