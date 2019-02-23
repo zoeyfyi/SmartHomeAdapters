@@ -1,15 +1,25 @@
 {
   "name": "account-app",
   "version": "0.1.0",
-  "description": "Account app for Smart Home Adapters",
-  "main": "index.js",
+  "private": true,
+  "dependencies": {
+    "react": "^16.8.3",
+    "react-dom": "^16.8.3",
+    "react-scripts": "2.1.5"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
   },
-  "repository": {
-    "type": "git",
-    "url": "github.com/mrbenshef/SmartHomeAdapters"
+  "eslintConfig": {
+    "extends": "react-app"
   },
-  "author": "",
-  "license": "MIT"
+  "browserslist": [
+    ">0.2%",
+    "not dead",
+    "not ie <= 11",
+    "not op_mini all"
+  ]
 }
