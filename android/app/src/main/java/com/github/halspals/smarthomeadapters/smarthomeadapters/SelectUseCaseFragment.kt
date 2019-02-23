@@ -56,6 +56,7 @@ class SelectUseCaseFragment : Fragment() {
                 val useCases: List<UseCase>? = response.body()
                 if (response.isSuccessful && useCases != null) {
                     Log.v(fTag, "[getAllUseCases] Successfully got list of ${useCases.size} use cases")
+                    spinner_text_view.text = getString(R.string.select_from_spinner_text)
 
                     spinner.adapter = object : BaseAdapter() {
                         override fun getCount(): Int {
@@ -85,7 +86,7 @@ class SelectUseCaseFragment : Fragment() {
 
                     spinner.visibility = View.VISIBLE
                 } else {
-
+                    spinner_text_view.text = getString(R.string.failed_spinner_text)
                     val error = RestApiService.extractErrorFromResponse(response)
                     Log.e(fTag, "[getAllUseCases] response was unsuccessful or body was null; error: $error")
                     if (error != null) {
@@ -166,6 +167,7 @@ class SelectUseCaseFragment : Fragment() {
             }
 
             override fun onFailure(call: Call<List<UseCase>>, t: Throwable) {
+                spinner_text_view.text = getString(R.string.failed_spinner_text)
                 val errorMsg = t.message
                 Log.e(fTag, "[getAllUseCases] FAILED, got error: $errorMsg")
                 if (errorMsg != null) {

@@ -34,8 +34,9 @@
     <string name="scanned_id_textiew">Robot ID: %1$s</string>
 
     <!-- Strings related to SelectUseCaseFragment -->
-    <string name="select_from_spinner_text">Choose a use case</string>
+    <string name="select_from_spinner_text">Choose a use case for your robot!</string>
     <string name="loading_spinner_text">Loading use cases&#8230;</string>
+    <string name="failed_spinner_text">Could not fetch use cases.</string>
     <string name="finish_early_button_text">Skip configuration</string>
     <string name="set_use_case_button_text">Set</string>
 
