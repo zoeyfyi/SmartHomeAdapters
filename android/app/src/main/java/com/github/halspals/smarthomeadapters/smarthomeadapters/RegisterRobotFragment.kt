@@ -87,6 +87,7 @@ class RegisterRobotFragment : Fragment() {
                         } else {
                             val error = RestApiService.extractErrorFromResponse(response)
                             Log.e(fTag, "registerRobot got unsuccessful response, error: $error")
+                            parent.startFragment(SelectUseCaseFragment()) // TODO remove test code
                             if (error != null) {
                                 parent.snackbar_layout.snackbar(error)
                             }
