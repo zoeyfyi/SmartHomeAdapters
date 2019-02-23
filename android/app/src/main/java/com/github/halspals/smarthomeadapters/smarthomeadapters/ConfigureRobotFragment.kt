@@ -11,7 +11,7 @@ import kotlinx.android.synthetic.main.fragment_configure_robot.*
 
 /**
  * WIP: The final (optional) screen of the robot registration wizard, where the user configures the robot parameters.
- * TODO BUILD UI DYNAMICALLY PER THE ROBOT'S USE CASE
+ * TODO FETCH CONFIGS FROM SERVER
  */
 class ConfigureRobotFragment : Fragment() {
 
@@ -38,6 +38,7 @@ class ConfigureRobotFragment : Fragment() {
             )
         )
 
+        // Set up the grid's adapter to display the configuration parameters requested
         parameter_grid.adapter = ParameterAdapter(view.context, params)
     }
 

@@ -11,6 +11,14 @@ data class ConfigDetails(
     val max: Int
 )
 
+/**
+ * Model for a configuration parameter for a robot.
+ *
+ * @property name the parameter's name
+ * @property description a description of the parameter
+ * @property type the parameter's expected response type
+ * @property details fine details of the parameter's possible values
+ */
 data class ConfigParameter(
     @SerializedName("name")
     val name: String,
