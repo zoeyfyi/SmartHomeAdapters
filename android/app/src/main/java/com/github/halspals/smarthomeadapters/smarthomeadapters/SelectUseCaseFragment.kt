@@ -200,10 +200,6 @@ class SelectUseCaseFragment : Fragment() {
 
         }
 
-        // Set up the click listener for if the user wants to finish the registration wizard without use case selection
-        // or configuration
-        finish_early_button.setOnClickListener { _ -> activity?.finish() }
-
         set_usecase_button.setOnClickListener { _ -> registerUseCase(selectedUseCase) }
 
     }
@@ -222,12 +218,14 @@ class SelectUseCaseFragment : Fragment() {
         }
 
         use_case_registration_progress_bar.visibility = View.VISIBLE
+        set_usecase_button.isEnabled = false
         parent.chosenUseCase = useCase
 
         parent.restApiService.registerUseCaseToRobot(parent.robotId, useCase.id).enqueue(object : Callback<ResponseBody> {
             override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
 
                 use_case_registration_progress_bar.visibility = View.GONE
+                set_usecase_button.isEnabled = true
 
                 if (response.isSuccessful) {
                     context?.toast("Successfully set up the use case")
@@ -245,6 +243,7 @@ class SelectUseCaseFragment : Fragment() {
 
             override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
                 use_case_registration_progress_bar.visibility = View.GONE
+                set_usecase_button.isEnabled = true
                 val error = t.message
                 Log.e(fTag, "[getAllUseCases] FAILED, got error: $error")
                 if (error != null) {
