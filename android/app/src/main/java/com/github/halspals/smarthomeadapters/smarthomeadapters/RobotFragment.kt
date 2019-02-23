@@ -1,7 +1,5 @@
 package com.github.halspals.smarthomeadapters.smarthomeadapters
 
-
-import android.content.Context
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.util.Log
@@ -21,6 +19,8 @@ import retrofit2.Response
 class RobotFragment : Fragment() {
 
     private val fTag = "RobotFragment"
+
+    private lateinit var parent: MainActivity
 
     private lateinit var robotId: String
     private var robot: Robot? = null
@@ -53,6 +53,8 @@ class RobotFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        parent = (activity as MainActivity)
+
         progressBar = view.findViewById(R.id.progress_bar)
         switch = view.findViewById(R.id.robot_switch)
         seekBar = view.findViewById(R.id.robot_seek_bar)
@@ -70,7 +72,7 @@ class RobotFragment : Fragment() {
      * Fetches the robot with id of [robotId] and calls [onReceiveRobot]
      */
     private fun fetchRobot() {
-        (activity as MainActivity).restApiService.getRobot(robotId).enqueue(object: Callback<Robot> {
+        parent.restApiService.getRobot(robotId).enqueue(object: Callback<Robot> {
 
             override fun onResponse(call: Call<Robot>, response: Response<Robot>) {
                 val robot = response.body()
@@ -126,13 +128,17 @@ class RobotFragment : Fragment() {
                 seek_bar_text_view.text = robot.robotStatus.current.toString()
 
                 seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-                    override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                        val seekValue = progress + robot.robotStatus.min
-                        onSeek(seekValue)
-                        seek_bar_text_view.text = seekValue.toString()
-                    }
+                    override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {}
                     override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-                    override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+                    override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                        if (seekBar == null) {
+                            Log.w(fTag, "[onStopTrackingTouch] got null seek bar")
+                        } else {
+                            val seekValue = seekBar.progress + robot.robotStatus.min
+                            onSeek(seekValue)
+                            seek_bar_text_view.text = seekValue.toString()
+                        }
+                    }
                 })
             }
 
@@ -151,10 +157,10 @@ class RobotFragment : Fragment() {
         Log.d(fTag, "onSwitch($isOn)")
 
         // Send the update to the server
-        (activity as MainActivity).restApiService.robotToggle(robotId, isOn, mapOf()).enqueue(object: Callback<ResponseBody> {
+        parent.restApiService.robotToggle(robotId, isOn, mapOf()).enqueue(object: Callback<ResponseBody> {
             override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
                 if (response.isSuccessful) {
-                    (activity as Context).toast("Success")
+                    parent.toast("Success")
                     Log.d(fTag, "Server accepted setting switch to $isOn")
                 } else {
                     val error = RestApiService.extractErrorFromResponse(response)
@@ -182,7 +188,29 @@ class RobotFragment : Fragment() {
      */
     private fun onSeek(value: Int) {
         Log.d(fTag, "onSeek($value)")
-        // TODO: send update to server
+
+        parent.restApiService.robotRange(robotId, value, mapOf()).enqueue(object : Callback<ResponseBody> {
+            override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
+                if (response.isSuccessful) {
+                    parent.toast("Success")
+                    Log.d(fTag, "Server accepted setting range to $value")
+                } else {
+                    val error = RestApiService.extractErrorFromResponse(response)
+                    Log.e(fTag, "Setting the range was unsuccessful, error: $error")
+                    if (error != null) {
+                        snackbar_layout.snackbar(error)
+                    }
+                }
+            }
+
+            override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                val error = t.message
+                Log.e(fTag, "onSeek($value) FAILED, error: $error")
+                if (error != null) {
+                    snackbar_layout.snackbar(error)
+                }
+            }
+        })
     }
 
 }

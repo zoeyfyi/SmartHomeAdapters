@@ -45,4 +45,10 @@ interface RestApiService {
     @PATCH("robot/{id}/toggle/{current}")
     fun robotToggle(@Path("id") id: String, @Path("current") value: Boolean, @Body map: Map<String, Boolean>): Call<ResponseBody>
 
+    @PATCH("robot/{id}/range/{current}")
+    fun robotRange(
+        @Path("id") id: String,
+        @Path("current") value: Int,
+        @Body map: Map<String, Boolean>
+    ) : Call<ResponseBody>
 }
