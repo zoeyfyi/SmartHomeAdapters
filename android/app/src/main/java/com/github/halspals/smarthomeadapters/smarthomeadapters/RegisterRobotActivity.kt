@@ -81,7 +81,9 @@ class RegisterRobotActivity : AppCompatActivity() {
 
             this.robotId = robotId
 
-            startFragment(RegisterRobotFragment())
+            val qrFragment = supportFragmentManager.findFragmentById(R.id.fragmentContainer) as QRFragment
+            qrFragment.setRobotIdText(robotId)
+
         } else {
             Log.d(tag, "User quit QR scanner early")
         }
