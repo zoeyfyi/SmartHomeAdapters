@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>HalsPals Login</title>
+</head>
+<body>
+    <h1>HalsPals</h1>
+    
+    {{ if .Error }}
+    <p>{{ .Error }}</p>
+    {{ end }}
+    
+    <form action="http://localhost:4001/login" method="POST">
+        <input name="email" placeholder="john@email.com" />
+        <input name="password" placeholder="password" />
+        <button type="submit">Login</button>
+    </form>
+</body>
+</html>
