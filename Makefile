@@ -75,7 +75,7 @@ docker-userserver:
 	@docker build -f go.Dockerfile -t smarthomeadapters/userserver . --build-arg SERVICE=userserver
 
 docker-account-app:
-	@docker build -f go.Dockerfile -t smarthomeadapters/account-app . --build-arg SERVICE=account-app
+	@(cd account-app && docker build -t smarthomeadapters/account-app .)
 
 docker: docker-clientserver docker-infoserver docker-robotserver docker-switchserver docker-userserver docker-infodb docker-switchdb docker-userdb docker-account-app
 
