@@ -60,7 +60,7 @@ class QRFragment : Fragment() {
             register_button.isEnabled = false
 
             // Make the registration call
-            registerRobot(manual_code_input.text, nickname_input.text)
+            registerRobot(registration_code_input.text, nickname_input.text)
         }
 
     }
@@ -75,7 +75,7 @@ class QRFragment : Fragment() {
 
         when {
             code.isEmpty() -> {
-                manual_code_input.error = "Enter your robot's registration code"
+                registration_code_input.error = "Enter your robot's registration code"
                 register_button.isEnabled = true
             }
 
@@ -129,6 +129,6 @@ class QRFragment : Fragment() {
     }
 
     internal fun setRobotIdText(text: String) {
-        manual_code_input.setText(text)
+        registration_code_input.setText(text)
     }
 }
