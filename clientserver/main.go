@@ -351,18 +351,40 @@ func rangeHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 	}
 }
 
+func auth(h httprouter.Handle) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+
+		token := r.Header.Get("token")
+
+		user, err := userserverClient.Authorize(context.Background(), &userserver.Token{Token : token})
+
+		if err != nil {
+			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+		}
+
+		if user.Id != "" {
+			context.WithValue(r.Context(), "userId", user.Id)
+			h(w, r, ps)
+		} else {
+			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+		}
+
+	}
+}
+
+
 func createRouter() *httprouter.Router {
 	router := httprouter.New()
 
 	// register routes
-	router.GET("/ping", pingHandler)
+	router.GET("/ping", auth(pingHandler))
 	router.POST("/register", registerHandler)
 	router.POST("/login", loginHandler)
-	router.POST("/robot/:id", registerRobotHandler)
-	router.GET("/robots", robotsHandler)
-	router.GET("/robot/:id", robotHandler)
-	router.PATCH("/robot/:id/toggle/:value", toggleHandler)
-	router.PATCH("/robot/:id/range/:value", rangeHandler)
+	router.POST("/robot/:id", auth(registerRobotHandler))
+	router.GET("/robots", auth(robotsHandler))
+	router.GET("/robot/:id", auth(robotHandler))
+	router.PATCH("/robot/:id/toggle/:value", auth(toggleHandler))
+	router.PATCH("/robot/:id/range/:value", auth(rangeHandler))
 
 	return router
 }
