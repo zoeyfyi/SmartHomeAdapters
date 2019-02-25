@@ -90,7 +90,9 @@ func (s *server) SetLED(ctx context.Context, request *robotserver.LEDRequest) (*
 }
 
 func sendMessage(id string, msg string) error {
+	socketMutex.Lock()
 	socket, ok := sockets[id]
+	socketMutex.Unlock()
 
 	if !ok || socket == nil {
 		// socket was never opened
