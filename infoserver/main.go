@@ -282,6 +282,48 @@ func (s *server) CalibrateRobot(ctx context.Context, request *infoserver.Calibra
 	})
 }
 
+func (s *server) GetCalibration(ctx context.Context, request *infoserver.RobotQuery) (*infoserver.CalibrationParameters, error) {
+	robot, err := s.GetRobot(ctx, &infoserver.RobotQuery{
+		Id: request.Id,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	parameters := &infoserver.CalibrationParameters{}
+
+	switch robot.RobotType {
+	case "switch":
+		switchRobot, err := s.SwitchClient.GetSwitch(context.Background(), &switchserver.SwitchQuery{
+			Id: robot.Id,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		parameters.Parameters = append(parameters.Parameters, &infoserver.CalibrationParameter{
+			Name:  "OnAngle",
+			Value: fmt.Sprintf("%d", switchRobot.OnAngle),
+		})
+		parameters.Parameters = append(parameters.Parameters, &infoserver.CalibrationParameter{
+			Name:  "OffAngle",
+			Value: fmt.Sprintf("%d", switchRobot.OffAngle),
+		})
+		parameters.Parameters = append(parameters.Parameters, &infoserver.CalibrationParameter{
+			Name:  "RestAngle",
+			Value: fmt.Sprintf("%d", switchRobot.RestAngle),
+		})
+		parameters.Parameters = append(parameters.Parameters, &infoserver.CalibrationParameter{
+			Name:  "IsCalibrated",
+			Value: fmt.Sprintf("%t", switchRobot.IsCalibrated),
+		})
+	default:
+		return nil, status.Errorf(codes.FailedPrecondition, "Robot type \"%s\" is not recognized", robot.RobotType)
+	}
+
+	return parameters, nil
+}
+
 func connectionStr() string {
 	if username == "" {
 		username = "postgres"
