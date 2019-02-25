@@ -13,9 +13,16 @@
     <p>{{ .Error }}</p>
     {{ end }}
     
-    <form action="http://localhost:4001/consent" method="POST">
+    <form action="https://account.halspals.co.uk/consent" method="POST">
+        <input id="challenge" name="challenge" type="hidden" />
         <p>TODO: setup OAuth scopes, etc</p>
         <button type="submit">Consent</button>
     </form>
+
+    <script>
+        var urlParams = new URLSearchParams(window.location.search);
+        var challenge = urlParams.get("consent_challenge");
+        document.getElementById("challenge").setAttribute("value", challenge)
+    </script>
 </body>
 </html>

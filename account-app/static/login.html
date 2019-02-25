@@ -13,10 +13,17 @@
     <p>{{ .Error }}</p>
     {{ end }}
     
-    <form action="http://localhost:4001/login" method="POST">
+    <form action="http://account.halspals.co.uk/login" method="POST">
+        <input id="challenge" name="challenge" type="hidden" />
         <input name="email" placeholder="john@email.com" />
         <input name="password" placeholder="password" />
         <button type="submit">Login</button>
     </form>
+
+    <script>
+        var urlParams = new URLSearchParams(window.location.search);
+        var challenge = urlParams.get("login_challenge");
+        document.getElementById("challenge").setAttribute("value", challenge)
+    </script>
 </body>
 </html>
