@@ -1,6 +1,8 @@
 package com.github.halspals.smarthomeadapters.smarthomeadapters
 
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
@@ -9,13 +11,11 @@ import android.view.inputmethod.InputMethodManager
 import com.github.halspals.smarthomeadapters.smarthomeadapters.model.Token
 import com.github.halspals.smarthomeadapters.smarthomeadapters.model.User
 import kotlinx.android.synthetic.main.activity_authentication.*
+import net.openid.appauth.*
 import org.jetbrains.anko.*
 import org.jetbrains.anko.design.snackbar
-import org.json.JSONException
-import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Callback
-import retrofit2.HttpException
 import retrofit2.Response
 
 class AuthenticationActivity : AppCompatActivity() {
@@ -73,6 +73,35 @@ class AuthenticationActivity : AppCompatActivity() {
                 // The password input has dropped focus; check its validity.
                 checkPasswordInput(password_input.text.toString())
             }
+        }
+
+        // Set up Authorization configuration
+        val authServiceConfig = AuthorizationServiceConfiguration(
+            Uri.parse("https://oauth.halspals.co.uk/oauth2/auth"),
+            Uri.parse("https://oauth.halspals.co.uk/oauth2/token")
+        )
+
+        // Get an authorization code
+        val authRequest: AuthorizationRequest = AuthorizationRequest.Builder(
+            authServiceConfig,
+            "b43ce28c-f4e3-412b-8dc5-854a32a0c8db",
+            ResponseTypeValues.CODE,
+            Uri.parse("http://callback.halspals.co.uk")
+        ).build()
+
+        // Do the authorization
+        Log.d(tag, "Starting Oauth2 call")
+        val authService = AuthorizationService(this)
+        val authIntent = authService.getAuthorizationRequestIntent(authRequest)
+        startActivityForResult(authIntent, 42)
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        if (requestCode == 42) {
+            Log.d(tag, "Received result from Oauth2 call")
+            //val resp = AuthorizationResponse.fromIntent(data!!)
+        } else {
+            Log.w(tag, "Received UNEXPECTED activity result")
         }
     }
 
