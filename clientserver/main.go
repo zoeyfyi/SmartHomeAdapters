@@ -187,14 +187,9 @@ func (s RangeStatus) status() {}
 
 func robotsHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 
-	user, err := userserverClient.Authorize(context.Background(), &userserver.Token{Token: r.Header.Get("token")})
+	userId := r.Context().Value("userId")
 
-	if err != nil {
-		log.Printf("Failed to authorize user: %v", err)
-		HTTPError(w, err)
-	}
-
-	stream, err := infoserverClient.GetRobots(context.Background(), &infoserver.RobotsQuery{UserId: user.Id})
+	stream, err := infoserverClient.GetRobots(context.Background(), &infoserver.RobotsQuery{UserId: userId})
 	if err != nil {
 		HTTPError(w, err)
 		return
@@ -226,16 +221,9 @@ func robotHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 	id := ps.ByName("id")
 	log.Printf("Getting robot with id %s", id)
 
-	// also need to call auth here and pass token
+	userId := r.Context().Value("userId")
 
-	user, err := userserverClient.Authorize(context.Background(), &userserver.Token{Token: r.Header.Get("token")})
-
-	if err != nil {
-		log.Printf("Failed to authorize user: %v", err)
-		HTTPError(w, err)
-	}
-
-	robot, err := infoserverClient.GetRobot(context.Background(), &infoserver.RobotQuery{Id: id, UserId: user.Id})
+	robot, err := infoserverClient.GetRobot(context.Background(), &infoserver.RobotQuery{Id: id, UserId: userId})
 
 	if err != nil {
 		HTTPError(w, err)
@@ -278,16 +266,9 @@ func registerRobotHandler(w http.ResponseWriter, r *http.Request, ps httprouter.
 	id := ps.ByName("id")
 	log.Printf("Registering robot with id %s", id)
 
-	user, err := userserverClient.Authorize(context.Background(), &userserver.Token{Token: r.Header.Get("token")})
-
-	if err != nil {
-		log.Printf("Failed to authorize user: %v", err)
-		HTTPError(w, err)
-	}
-
 	var registerRobotBody RegisterRobotBody
 
-	err = json.NewDecoder(r.Body).Decode(&registerRobotBody)
+	err := json.NewDecoder(r.Body).Decode(&registerRobotBody)
 
 	if err != nil {
 		log.Printf("Invalid register JSON: %v", err)
@@ -295,7 +276,9 @@ func registerRobotHandler(w http.ResponseWriter, r *http.Request, ps httprouter.
 		return
 	}
 
-	registerQuery := infoserver.RegisterRobotQuery{Id: id, Nickname: registerRobotBody.Nickname, RobotType: registerRobotBody.RobotType, UserId: user.Id}
+	userId := r.Context().Value("userId")
+
+	registerQuery := infoserver.RegisterRobotQuery{Id: id, Nickname: registerRobotBody.Nickname, RobotType: registerRobotBody.RobotType, UserId: userId}
 
 	_, err = infoserverClient.RegisterRobot(context.Background(), &registerQuery)
 
@@ -377,14 +360,14 @@ func createRouter() *httprouter.Router {
 	router := httprouter.New()
 
 	// register routes
-	router.GET("/ping", auth(pingHandler))
+	router.GET("/ping", pingHandler)
 	router.POST("/register", registerHandler)
 	router.POST("/login", loginHandler)
 	router.POST("/robot/:id", auth(registerRobotHandler))
 	router.GET("/robots", auth(robotsHandler))
 	router.GET("/robot/:id", auth(robotHandler))
-	router.PATCH("/robot/:id/toggle/:value", auth(toggleHandler))
-	router.PATCH("/robot/:id/range/:value", auth(rangeHandler))
+	router.PATCH("/robot/:id/toggle/:value", toggleHandler)
+	router.PATCH("/robot/:id/range/:value", rangeHandler)
 
 	return router
 }
