@@ -105,7 +105,6 @@ type registerBody struct {
 }
 
 func registerHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-
 	var registerBody registerBody
 	err := json.NewDecoder(r.Body).Decode(&registerBody)
 	if err != nil {
