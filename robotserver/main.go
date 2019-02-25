@@ -7,6 +7,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"sync"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -25,8 +26,9 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-// socket to send messages to
-var socket *websocket.Conn
+// sockets to send messages to
+var sockets = make(map[string]*websocket.Conn)
+var socketMutex = &sync.Mutex{}
 
 type server struct{}
 
@@ -34,11 +36,15 @@ type server struct{}
 func connectHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	log.Println("Attempting to establish WebSocket connection")
 
+	id := ps.ByName("id")
+
 	// upgrade request
-	if socket != nil {
+	socketMutex.Lock()
+	if sockets[id] != nil {
 		log.Println("Closing existing socket")
-		socket.Close()
+		sockets[id].Close()
 	}
+	socketMutex.Unlock()
 
 	newSocket, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -47,7 +53,9 @@ func connectHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params
 	}
 
 	log.Println("Socket opened")
-	socket = newSocket
+	socketMutex.Lock()
+	sockets[id] = newSocket
+	socketMutex.Unlock()
 }
 
 func (s *server) SetServo(ctx context.Context, request *robotserver.ServoRequest) (*empty.Empty, error) {
@@ -60,7 +68,7 @@ func (s *server) SetServo(ctx context.Context, request *robotserver.ServoRequest
 	}
 
 	msg := fmt.Sprintf("servo %d", request.Angle)
-	if err := sendMessage(msg); err != nil {
+	if err := sendMessage(request.RobotId, msg); err != nil {
 		return nil, err
 	}
 
@@ -75,17 +83,19 @@ func (s *server) SetLED(ctx context.Context, request *robotserver.LEDRequest) (*
 		message = "led off"
 	}
 
-	if err := sendMessage(message); err != nil {
+	if err := sendMessage(request.RobotId, message); err != nil {
 		return nil, err
 	}
 	return &empty.Empty{}, nil
 }
 
-func sendMessage(msg string) error {
-	if socket == nil {
+func sendMessage(id string, msg string) error {
+	socket, ok := sockets[id]
+
+	if !ok || socket == nil {
 		// socket was never opened
 		log.Println("Socket never opened")
-		return status.New(codes.Unavailable, "Robot not connected").Err()
+		return status.Newf(codes.Unavailable, "Robot \"%s\" is not connected", id).Err()
 	}
 
 	// send LED on message to robot
@@ -106,7 +116,7 @@ func sendMessage(msg string) error {
 
 func createRouter() *httprouter.Router {
 	router := httprouter.New()
-	router.GET("/connect", connectHandler)
+	router.GET("/connect/:id", connectHandler)
 	return router
 }
 
