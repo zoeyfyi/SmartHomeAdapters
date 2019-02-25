@@ -53,6 +53,10 @@ func (c mockSwitchClient) SetSwitch(_ context.Context, _ *switchserver.SetSwitch
 	return nil, nil
 }
 
+func (c mockSwitchClient) CalibrateSwitch(_ context.Context, _ *switchserver.SwitchCalibrationParameters, _ ...grpc.CallOption) (*empty.Empty, error) {
+	return nil, nil
+}
+
 func TestMain(m *testing.M) {
 	// connect to docker
 	pool, err := dockertest.NewPool("")
