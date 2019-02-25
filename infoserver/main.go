@@ -13,6 +13,7 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/mrbenshef/SmartHomeAdapters/infoserver/infoserver"
 	"github.com/mrbenshef/SmartHomeAdapters/switchserver/switchserver"
+	"github.com/mrbenshef/SmartHomeAdapters/thermostatserver/thermostatserver"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -26,35 +27,9 @@ var (
 )
 
 type server struct {
-	DB           *sql.DB
-	SwitchClient switchserver.SwitchServerClient
-}
-
-func newRobotNotFoundError(id string) error {
-	return status.Newf(codes.NotFound, "No robot with ID \"%s\"", id).Err()
-}
-
-func newStatusRequestFailed(message string) error {
-	if message == "" {
-		return status.New(codes.Internal, "Failed to retrive status of robot").Err()
-	}
-	return status.Newf(codes.Internal, "Failed to retrive status of robot: %s", message).Err()
-}
-
-func newInvalidRobotTypeError(robotType string) error {
-	return status.Newf(codes.InvalidArgument, "Invalid robot type \"%s\"", robotType).Err()
-}
-
-func robotAlreadyExistsError(id string) error {
-	return status.Newf(codes.InvalidArgument, "Robot %s already exists ", id).Err()
-}
-
-func newRobotNotTogglableError(id string, robotType string) error {
-	return status.Newf(codes.InvalidArgument, "Robot \"%s\" of type \"%s\" cannot be toggled", id, robotType).Err()
-}
-
-func newToggleRequestFailed(message string) error {
-	return status.Newf(codes.Internal, "Toggle request failed: %s", message).Err()
+	DB               *sql.DB
+	SwitchClient     switchserver.SwitchServerClient
+	ThermostatClient thermostatserver.ThermostatServerClient
 }
 
 func (s *server) GetRobot(ctx context.Context, query *infoserver.RobotQuery) (*infoserver.Robot, error) {
@@ -70,7 +45,7 @@ func (s *server) GetRobot(ctx context.Context, query *infoserver.RobotQuery) (*i
 	row := s.DB.QueryRow("SELECT serial, nickname, robotType FROM robots WHERE serial = $1 AND registeredUserId = $2", query.Id, query.UserId)
 	err := row.Scan(&serial, &nickname, &robotType)
 	if err == sql.ErrNoRows {
-		return nil, newRobotNotFoundError(query.Id)
+		return nil, status.Newf(codes.NotFound, "Robot \"\" does not exist", query.Id)
 	} else if err != nil {
 		log.Printf("Failed to retrive robot %s: %v", query.Id, err)
 		return nil, err
@@ -98,8 +73,30 @@ func (s *server) GetRobot(ctx context.Context, query *infoserver.RobotQuery) (*i
 				},
 			},
 		}, nil
+	case "thermostat":
+		thermostat, err := s.ThermostatClient.GetThermostat(context.Background(), &thermostatserver.ThermostatQuery{
+			Id: serial,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		// return robot with status infomation
+		return &infoserver.Robot{
+			Id:            serial,
+			Nickname:      nickname,
+			RobotType:     robotType,
+			InterfaceType: "toggle",
+			RobotStatus: &infoserver.Robot_RangeStatus{
+				RangeStatus: &infoserver.RangeStatus{
+					Min:     thermostat.MinTempreture,
+					Max:     thermostat.MaxTempreture,
+					Current: thermostat.Tempreture,
+				},
+			},
+		}, nil
 	default:
-		return nil, newInvalidRobotTypeError(robotType)
+		return nil, status.Newf(codes.InvalidArgument, "Invalid robot type \"%s\"", robotType).Err()
 	}
 }
 
@@ -114,9 +111,9 @@ func (s *server) GetRobots(query *infoserver.RobotsQuery, stream infoserver.Info
 	}
 
 	var (
-		serial    string
-		nickname  string
-		robotType string
+		serial        string
+		nickname      string
+		robotType     string
 		interfaceType string
 	)
 
@@ -128,7 +125,7 @@ func (s *server) GetRobots(query *infoserver.RobotsQuery, stream infoserver.Info
 		}
 		if robotType == "switch" {
 			interfaceType = "toggle"
-		} else{
+		} else {
 			interfaceType = "range"
 		}
 		err = stream.Send(&infoserver.Robot{
@@ -201,7 +198,50 @@ func (s *server) ToggleRobot(ctx context.Context, request *infoserver.ToggleRequ
 
 	default:
 		log.Printf("robot type \"%s\" is not toggelable", robotType)
-		return nil, newRobotNotTogglableError(request.Id, robotType)
+		return nil, status.Newf(codes.InvalidArgument, "Robot \"%s\" of type \"%s\" cannot be toggled", request.Id, robotType).Err()
+	}
+
+	return &empty.Empty{}, nil
+}
+
+func (s *server) RangeRobot(ctx context.Context, request *infoserver.RangeRequest) (*empty.Empty, error) {
+	log.Printf("setting range robot %s\n", request.Id)
+
+	// get robot type
+	var robotType string
+	row := s.DB.QueryRow("SELECT robotType FROM rangeRobots WHERE serial = $1", request.Id)
+	err := row.Scan(&robotType)
+	if err != nil {
+		log.Printf("Failed to retrive the robot: %v", err)
+		return nil, err
+	}
+
+	// forward request to relevent service
+	switch robotType {
+	case "thermostat":
+		stream, err := s.ThermostatClient.SetThermostat(context.Background(), &thermostatserver.SetThermostatRequest{
+			Id:         request.Id,
+			Tempreture: request.Value,
+			Unit:       "celsius",
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		for {
+			status, err := stream.Recv()
+			if err != nil {
+				return nil, err
+			}
+
+			if status.Status == thermostatserver.SetThermostatStatus_DONE {
+				break
+			}
+		}
+
+	default:
+		log.Printf("robot type \"%s\" is not a range robot", robotType)
+		return nil, status.Newf(codes.InvalidArgument, "Robot \"%s\" of type \"%s\" is not a range robot", request.Id, robotType).Err()
 	}
 
 	return &empty.Empty{}, nil
@@ -253,9 +293,21 @@ func main() {
 	defer switchserverConn.Close()
 	switchClient := switchserver.NewSwitchServerClient(switchserverConn)
 
+	// connect to thermostatserver
+	thermostatserverConn, err := grpc.Dial("thermostatserver:80", grpc.WithInsecure())
+	if err != nil {
+		panic(err)
+	}
+	defer thermostatserverConn.Close()
+	thermostatClient := thermostatserver.NewThermostatServerClient(thermostatserverConn)
+
 	// start grpc server
 	grpcServer := grpc.NewServer()
-	infoServer := &server{DB: db, SwitchClient: switchClient}
+	infoServer := &server{
+		DB:               db,
+		SwitchClient:     switchClient,
+		ThermostatClient: thermostatClient,
+	}
 	infoserver.RegisterInfoServerServer(grpcServer, infoServer)
 	lis, err := net.Listen("tcp", ":80")
 	if err != nil {

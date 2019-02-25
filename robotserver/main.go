@@ -120,7 +120,14 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to listen: %v", err)
 	}
-	grpcServer.Serve(lis)
+
+	log.Println("Starting grpc server")
+
+	go func() {
+		grpcServer.Serve(lis)
+	}()
+
+	log.Println("Started grpc server, starting http server")
 
 	// start REST server
 	if err := http.ListenAndServe(":80", createRouter()); err != nil {

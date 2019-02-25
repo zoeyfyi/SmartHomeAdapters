@@ -21,6 +21,7 @@ require (
 	github.com/lib/pq v1.0.0
 	github.com/microcosm-cc/bluemonday v1.0.2 // indirect
 	github.com/mrbenshef/SmartHomeAdapters/switchserver v0.0.0
+	github.com/mrbenshef/SmartHomeAdapters/thermostatserver v0.0.0
 	github.com/openzipkin/zipkin-go v0.1.5 // indirect
 	github.com/ory/dockertest v3.3.4+incompatible
 	github.com/prometheus/client_model v0.0.0-20190129233127-fd36f4220a90 // indirect
@@ -53,11 +54,12 @@ require (
 	golang.org/x/sys v0.0.0-20190204203706-41f3e6584952 // indirect
 	golang.org/x/tools v0.0.0-20190206221403-44bcb96178d3 // indirect
 	google.golang.org/grpc v1.18.0
-	gopkg.in/h2non/gock.v1 v1.0.14
 	honnef.co/go/tools v0.0.0-20190128043916-71123fcbb8fe // indirect
 	sourcegraph.com/sqs/pbtypes v1.0.0 // indirect
 )
 
 replace github.com/mrbenshef/SmartHomeAdapters/switchserver => ../switchserver
+
+replace github.com/mrbenshef/SmartHomeAdapters/thermostatserver => ../thermostatserver
 
 replace github.com/mrbenshef/SmartHomeAdapters/robotserver => ../robotserver

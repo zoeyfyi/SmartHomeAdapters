@@ -4,4 +4,6 @@ CREATE TABLE robots (
     robotType text,
     registeredUserId text
 );
+
 INSERT INTO robots (serial, nickname, robotType, registeredUserId) VALUES ('123abc', 'testLightbot', 'switch', '1');
+INSERT INTO robots (serial, nickname, robotType, registeredUserId) VALUES ('qwerty', 'testThermoBot', 'thermostat', '2');

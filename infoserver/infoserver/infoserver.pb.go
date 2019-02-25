@@ -3,13 +3,14 @@
 
 package infoserver
 
+import proto "github.com/golang/protobuf/proto"
+import fmt "fmt"
+import math "math"
+import empty "github.com/golang/protobuf/ptypes/empty"
+
 import (
-	context "context"
-	fmt "fmt"
-	proto "github.com/golang/protobuf/proto"
-	empty "github.com/golang/protobuf/ptypes/empty"
+	context "golang.org/x/net/context"
 	grpc "google.golang.org/grpc"
-	math "math"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -21,7 +22,7 @@ var _ = math.Inf
 // is compatible with the proto package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
+const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
 type RobotsQuery struct {
 	UserId               string   `protobuf:"bytes,1,opt,name=userId,proto3" json:"userId,omitempty"`
@@ -34,17 +35,16 @@ func (m *RobotsQuery) Reset()         { *m = RobotsQuery{} }
 func (m *RobotsQuery) String() string { return proto.CompactTextString(m) }
 func (*RobotsQuery) ProtoMessage()    {}
 func (*RobotsQuery) Descriptor() ([]byte, []int) {
-	return fileDescriptor_09d21576b012d8ad, []int{0}
+	return fileDescriptor_infoserver_46823ffdf0b5c39a, []int{0}
 }
-
 func (m *RobotsQuery) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RobotsQuery.Unmarshal(m, b)
 }
 func (m *RobotsQuery) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_RobotsQuery.Marshal(b, m, deterministic)
 }
-func (m *RobotsQuery) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RobotsQuery.Merge(m, src)
+func (dst *RobotsQuery) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RobotsQuery.Merge(dst, src)
 }
 func (m *RobotsQuery) XXX_Size() int {
 	return xxx_messageInfo_RobotsQuery.Size(m)
@@ -74,17 +74,16 @@ func (m *RobotQuery) Reset()         { *m = RobotQuery{} }
 func (m *RobotQuery) String() string { return proto.CompactTextString(m) }
 func (*RobotQuery) ProtoMessage()    {}
 func (*RobotQuery) Descriptor() ([]byte, []int) {
-	return fileDescriptor_09d21576b012d8ad, []int{1}
+	return fileDescriptor_infoserver_46823ffdf0b5c39a, []int{1}
 }
-
 func (m *RobotQuery) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RobotQuery.Unmarshal(m, b)
 }
 func (m *RobotQuery) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_RobotQuery.Marshal(b, m, deterministic)
 }
-func (m *RobotQuery) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RobotQuery.Merge(m, src)
+func (dst *RobotQuery) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RobotQuery.Merge(dst, src)
 }
 func (m *RobotQuery) XXX_Size() int {
 	return xxx_messageInfo_RobotQuery.Size(m)
@@ -123,17 +122,16 @@ func (m *RegisterRobotQuery) Reset()         { *m = RegisterRobotQuery{} }
 func (m *RegisterRobotQuery) String() string { return proto.CompactTextString(m) }
 func (*RegisterRobotQuery) ProtoMessage()    {}
 func (*RegisterRobotQuery) Descriptor() ([]byte, []int) {
-	return fileDescriptor_09d21576b012d8ad, []int{2}
+	return fileDescriptor_infoserver_46823ffdf0b5c39a, []int{2}
 }
-
 func (m *RegisterRobotQuery) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RegisterRobotQuery.Unmarshal(m, b)
 }
 func (m *RegisterRobotQuery) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_RegisterRobotQuery.Marshal(b, m, deterministic)
 }
-func (m *RegisterRobotQuery) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RegisterRobotQuery.Merge(m, src)
+func (dst *RegisterRobotQuery) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RegisterRobotQuery.Merge(dst, src)
 }
 func (m *RegisterRobotQuery) XXX_Size() int {
 	return xxx_messageInfo_RegisterRobotQuery.Size(m)
@@ -186,17 +184,16 @@ func (m *ToggleRequest) Reset()         { *m = ToggleRequest{} }
 func (m *ToggleRequest) String() string { return proto.CompactTextString(m) }
 func (*ToggleRequest) ProtoMessage()    {}
 func (*ToggleRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_09d21576b012d8ad, []int{3}
+	return fileDescriptor_infoserver_46823ffdf0b5c39a, []int{3}
 }
-
 func (m *ToggleRequest) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ToggleRequest.Unmarshal(m, b)
 }
 func (m *ToggleRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ToggleRequest.Marshal(b, m, deterministic)
 }
-func (m *ToggleRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ToggleRequest.Merge(m, src)
+func (dst *ToggleRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ToggleRequest.Merge(dst, src)
 }
 func (m *ToggleRequest) XXX_Size() int {
 	return xxx_messageInfo_ToggleRequest.Size(m)
@@ -235,6 +232,52 @@ func (m *ToggleRequest) GetForce() bool {
 	return false
 }
 
+type RangeRequest struct {
+	Id                   string   `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Value                int64    `protobuf:"varint,2,opt,name=value,proto3" json:"value,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *RangeRequest) Reset()         { *m = RangeRequest{} }
+func (m *RangeRequest) String() string { return proto.CompactTextString(m) }
+func (*RangeRequest) ProtoMessage()    {}
+func (*RangeRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_infoserver_46823ffdf0b5c39a, []int{4}
+}
+func (m *RangeRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_RangeRequest.Unmarshal(m, b)
+}
+func (m *RangeRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_RangeRequest.Marshal(b, m, deterministic)
+}
+func (dst *RangeRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RangeRequest.Merge(dst, src)
+}
+func (m *RangeRequest) XXX_Size() int {
+	return xxx_messageInfo_RangeRequest.Size(m)
+}
+func (m *RangeRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_RangeRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_RangeRequest proto.InternalMessageInfo
+
+func (m *RangeRequest) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
+func (m *RangeRequest) GetValue() int64 {
+	if m != nil {
+		return m.Value
+	}
+	return 0
+}
+
 type Robot struct {
 	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Nickname      string `protobuf:"bytes,2,opt,name=nickname,proto3" json:"nickname,omitempty"`
@@ -253,17 +296,16 @@ func (m *Robot) Reset()         { *m = Robot{} }
 func (m *Robot) String() string { return proto.CompactTextString(m) }
 func (*Robot) ProtoMessage()    {}
 func (*Robot) Descriptor() ([]byte, []int) {
-	return fileDescriptor_09d21576b012d8ad, []int{4}
+	return fileDescriptor_infoserver_46823ffdf0b5c39a, []int{5}
 }
-
 func (m *Robot) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Robot.Unmarshal(m, b)
 }
 func (m *Robot) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_Robot.Marshal(b, m, deterministic)
 }
-func (m *Robot) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Robot.Merge(m, src)
+func (dst *Robot) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Robot.Merge(dst, src)
 }
 func (m *Robot) XXX_Size() int {
 	return xxx_messageInfo_Robot.Size(m)
@@ -339,12 +381,78 @@ func (m *Robot) GetRangeStatus() *RangeStatus {
 	return nil
 }
 
-// XXX_OneofWrappers is for the internal use of the proto package.
-func (*Robot) XXX_OneofWrappers() []interface{} {
-	return []interface{}{
+// XXX_OneofFuncs is for the internal use of the proto package.
+func (*Robot) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
+	return _Robot_OneofMarshaler, _Robot_OneofUnmarshaler, _Robot_OneofSizer, []interface{}{
 		(*Robot_ToggleStatus)(nil),
 		(*Robot_RangeStatus)(nil),
 	}
+}
+
+func _Robot_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
+	m := msg.(*Robot)
+	// robotStatus
+	switch x := m.RobotStatus.(type) {
+	case *Robot_ToggleStatus:
+		b.EncodeVarint(5<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.ToggleStatus); err != nil {
+			return err
+		}
+	case *Robot_RangeStatus:
+		b.EncodeVarint(6<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.RangeStatus); err != nil {
+			return err
+		}
+	case nil:
+	default:
+		return fmt.Errorf("Robot.RobotStatus has unexpected type %T", x)
+	}
+	return nil
+}
+
+func _Robot_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error) {
+	m := msg.(*Robot)
+	switch tag {
+	case 5: // robotStatus.toggleStatus
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(ToggleStatus)
+		err := b.DecodeMessage(msg)
+		m.RobotStatus = &Robot_ToggleStatus{msg}
+		return true, err
+	case 6: // robotStatus.rangeStatus
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(RangeStatus)
+		err := b.DecodeMessage(msg)
+		m.RobotStatus = &Robot_RangeStatus{msg}
+		return true, err
+	default:
+		return false, nil
+	}
+}
+
+func _Robot_OneofSizer(msg proto.Message) (n int) {
+	m := msg.(*Robot)
+	// robotStatus
+	switch x := m.RobotStatus.(type) {
+	case *Robot_ToggleStatus:
+		s := proto.Size(x.ToggleStatus)
+		n += 1 // tag and wire
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case *Robot_RangeStatus:
+		s := proto.Size(x.RangeStatus)
+		n += 1 // tag and wire
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case nil:
+	default:
+		panic(fmt.Sprintf("proto: unexpected type %T in oneof", x))
+	}
+	return n
 }
 
 type ToggleStatus struct {
@@ -358,17 +466,16 @@ func (m *ToggleStatus) Reset()         { *m = ToggleStatus{} }
 func (m *ToggleStatus) String() string { return proto.CompactTextString(m) }
 func (*ToggleStatus) ProtoMessage()    {}
 func (*ToggleStatus) Descriptor() ([]byte, []int) {
-	return fileDescriptor_09d21576b012d8ad, []int{5}
+	return fileDescriptor_infoserver_46823ffdf0b5c39a, []int{6}
 }
-
 func (m *ToggleStatus) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ToggleStatus.Unmarshal(m, b)
 }
 func (m *ToggleStatus) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ToggleStatus.Marshal(b, m, deterministic)
 }
-func (m *ToggleStatus) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ToggleStatus.Merge(m, src)
+func (dst *ToggleStatus) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ToggleStatus.Merge(dst, src)
 }
 func (m *ToggleStatus) XXX_Size() int {
 	return xxx_messageInfo_ToggleStatus.Size(m)
@@ -399,17 +506,16 @@ func (m *RangeStatus) Reset()         { *m = RangeStatus{} }
 func (m *RangeStatus) String() string { return proto.CompactTextString(m) }
 func (*RangeStatus) ProtoMessage()    {}
 func (*RangeStatus) Descriptor() ([]byte, []int) {
-	return fileDescriptor_09d21576b012d8ad, []int{6}
+	return fileDescriptor_infoserver_46823ffdf0b5c39a, []int{7}
 }
-
 func (m *RangeStatus) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RangeStatus.Unmarshal(m, b)
 }
 func (m *RangeStatus) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_RangeStatus.Marshal(b, m, deterministic)
 }
-func (m *RangeStatus) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RangeStatus.Merge(m, src)
+func (dst *RangeStatus) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RangeStatus.Merge(dst, src)
 }
 func (m *RangeStatus) XXX_Size() int {
 	return xxx_messageInfo_RangeStatus.Size(m)
@@ -446,42 +552,10 @@ func init() {
 	proto.RegisterType((*RobotQuery)(nil), "RobotQuery")
 	proto.RegisterType((*RegisterRobotQuery)(nil), "RegisterRobotQuery")
 	proto.RegisterType((*ToggleRequest)(nil), "ToggleRequest")
+	proto.RegisterType((*RangeRequest)(nil), "RangeRequest")
 	proto.RegisterType((*Robot)(nil), "Robot")
 	proto.RegisterType((*ToggleStatus)(nil), "ToggleStatus")
 	proto.RegisterType((*RangeStatus)(nil), "RangeStatus")
-}
-
-func init() { proto.RegisterFile("infoserver/infoserver.proto", fileDescriptor_09d21576b012d8ad) }
-
-var fileDescriptor_09d21576b012d8ad = []byte{
-	// 432 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x53, 0xd1, 0x6e, 0xd3, 0x30,
-	0x14, 0x6d, 0x1a, 0x5a, 0xd2, 0x9b, 0x04, 0x21, 0x83, 0xa6, 0x28, 0xe3, 0x61, 0x58, 0x9b, 0xb4,
-	0x27, 0x77, 0xda, 0x90, 0x78, 0xe3, 0x01, 0x09, 0xb1, 0x89, 0x27, 0xbc, 0xfe, 0x40, 0x9a, 0xdd,
-	0x44, 0x16, 0xad, 0x5d, 0x1c, 0xa7, 0xa2, 0x5f, 0xc9, 0x97, 0xf0, 0x0f, 0x28, 0xf6, 0x42, 0x1c,
-	0x2a, 0x10, 0xbc, 0xf9, 0x1c, 0x9f, 0xe3, 0x7b, 0x7d, 0x75, 0x2e, 0x9c, 0x0a, 0x59, 0xa9, 0x06,
-	0xf5, 0x1e, 0xf5, 0x72, 0x38, 0xb2, 0x9d, 0x56, 0x46, 0xe5, 0xa7, 0xb5, 0x52, 0xf5, 0x06, 0x97,
-	0x16, 0xad, 0xdb, 0x6a, 0x89, 0xdb, 0x9d, 0x39, 0xb8, 0x4b, 0x7a, 0x01, 0x31, 0x57, 0x6b, 0x65,
-	0x9a, 0xcf, 0x2d, 0xea, 0x03, 0x39, 0x81, 0x79, 0xdb, 0xa0, 0xbe, 0x7b, 0xc8, 0x82, 0xb3, 0xe0,
-	0x72, 0xc1, 0x1f, 0x11, 0x7d, 0x03, 0x60, 0x65, 0x4e, 0xf5, 0x0c, 0xa6, 0xa2, 0x57, 0x4c, 0xc5,
-	0x83, 0xe7, 0x9a, 0x8e, 0x5c, 0x7b, 0x20, 0x1c, 0x6b, 0xd1, 0x18, 0xd4, 0xff, 0xef, 0x26, 0x39,
-	0x44, 0x52, 0x94, 0x5f, 0x64, 0xb1, 0xc5, 0x2c, 0xb4, 0x37, 0xbf, 0x30, 0x79, 0x05, 0x0b, 0xdd,
-	0xbd, 0xb8, 0x3a, 0xec, 0x30, 0x7b, 0x62, 0x2f, 0x07, 0x82, 0x96, 0x90, 0xae, 0x54, 0x5d, 0x6f,
-	0x90, 0xe3, 0xd7, 0x16, 0x1b, 0xf3, 0xcf, 0x25, 0x5f, 0xc2, 0x6c, 0x5f, 0x6c, 0x5a, 0x57, 0x2f,
-	0xe2, 0x0e, 0x74, 0x6c, 0xa5, 0x74, 0xe9, 0x0a, 0x45, 0xdc, 0x01, 0xfa, 0x23, 0x80, 0x99, 0xfd,
-	0xd5, 0xd1, 0xeb, 0x7e, 0xe3, 0xd3, 0xbf, 0x35, 0x1e, 0xfe, 0xd6, 0x38, 0x39, 0x87, 0x54, 0x48,
-	0x83, 0xba, 0x2a, 0x4a, 0xf4, 0xbe, 0x36, 0x26, 0xc9, 0x0d, 0x24, 0xc6, 0x7e, 0xef, 0xde, 0x14,
-	0xa6, 0x6d, 0xb2, 0xd9, 0x59, 0x70, 0x19, 0x5f, 0xa7, 0x6c, 0xe5, 0x91, 0xb7, 0x13, 0x3e, 0x12,
-	0x91, 0x2b, 0x88, 0x75, 0x21, 0xeb, 0xde, 0x33, 0xb7, 0x9e, 0x84, 0xf1, 0x81, 0xbb, 0x9d, 0x70,
-	0x5f, 0xf2, 0x3e, 0x85, 0xd8, 0x76, 0xe6, 0x20, 0x3d, 0x87, 0xc4, 0x2f, 0x30, 0xcc, 0x2a, 0xf0,
-	0x66, 0x45, 0x3f, 0x41, 0xec, 0x3d, 0x49, 0x9e, 0x43, 0xb8, 0x2d, 0xbe, 0x59, 0x49, 0xc8, 0xbb,
-	0xa3, 0x65, 0x84, 0xb4, 0x73, 0xe9, 0x18, 0x21, 0x49, 0x06, 0x4f, 0xcb, 0x56, 0x6b, 0x94, 0xc6,
-	0x0e, 0x24, 0xe4, 0x3d, 0xbc, 0xfe, 0x1e, 0x00, 0xdc, 0xc9, 0x4a, 0xdd, 0xdb, 0x38, 0x93, 0xd7,
-	0x10, 0x7d, 0x44, 0xe3, 0x66, 0x1e, 0xb3, 0x21, 0x51, 0xf9, 0xdc, 0x01, 0x3a, 0x21, 0x17, 0xb0,
-	0xe8, 0x25, 0x0d, 0x49, 0x98, 0x17, 0xed, 0x41, 0x74, 0x15, 0x90, 0x77, 0x90, 0x8e, 0x82, 0x49,
-	0x5e, 0xb0, 0xe3, 0xa0, 0xe6, 0x27, 0xcc, 0x6d, 0x0e, 0xeb, 0x37, 0x87, 0x7d, 0xe8, 0x36, 0x87,
-	0x4e, 0xc8, 0x5b, 0x88, 0x1f, 0x03, 0xe6, 0x02, 0xc0, 0x46, 0x71, 0xfb, 0xb3, 0x71, 0x3d, 0xb7,
-	0xcc, 0xcd, 0xcf, 0x00, 0x00, 0x00, 0xff, 0xff, 0xbd, 0xe6, 0x1c, 0x4c, 0xb1, 0x03, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -500,6 +574,7 @@ type InfoServerClient interface {
 	GetRobots(ctx context.Context, in *RobotsQuery, opts ...grpc.CallOption) (InfoServer_GetRobotsClient, error)
 	RegisterRobot(ctx context.Context, in *RegisterRobotQuery, opts ...grpc.CallOption) (*empty.Empty, error)
 	ToggleRobot(ctx context.Context, in *ToggleRequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	RangeRobot(ctx context.Context, in *RangeRequest, opts ...grpc.CallOption) (*empty.Empty, error)
 }
 
 type infoServerClient struct {
@@ -569,12 +644,22 @@ func (c *infoServerClient) ToggleRobot(ctx context.Context, in *ToggleRequest, o
 	return out, nil
 }
 
+func (c *infoServerClient) RangeRobot(ctx context.Context, in *RangeRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
+	out := new(empty.Empty)
+	err := c.cc.Invoke(ctx, "/InfoServer/RangeRobot", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // InfoServerServer is the server API for InfoServer service.
 type InfoServerServer interface {
 	GetRobot(context.Context, *RobotQuery) (*Robot, error)
 	GetRobots(*RobotsQuery, InfoServer_GetRobotsServer) error
 	RegisterRobot(context.Context, *RegisterRobotQuery) (*empty.Empty, error)
 	ToggleRobot(context.Context, *ToggleRequest) (*empty.Empty, error)
+	RangeRobot(context.Context, *RangeRequest) (*empty.Empty, error)
 }
 
 func RegisterInfoServerServer(s *grpc.Server, srv InfoServerServer) {
@@ -656,6 +741,24 @@ func _InfoServer_ToggleRobot_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _InfoServer_RangeRobot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RangeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InfoServerServer).RangeRobot(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/InfoServer/RangeRobot",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InfoServerServer).RangeRobot(ctx, req.(*RangeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _InfoServer_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "InfoServer",
 	HandlerType: (*InfoServerServer)(nil),
@@ -672,6 +775,10 @@ var _InfoServer_serviceDesc = grpc.ServiceDesc{
 			MethodName: "ToggleRobot",
 			Handler:    _InfoServer_ToggleRobot_Handler,
 		},
+		{
+			MethodName: "RangeRobot",
+			Handler:    _InfoServer_RangeRobot_Handler,
+		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
@@ -681,4 +788,41 @@ var _InfoServer_serviceDesc = grpc.ServiceDesc{
 		},
 	},
 	Metadata: "infoserver/infoserver.proto",
+}
+
+func init() {
+	proto.RegisterFile("infoserver/infoserver.proto", fileDescriptor_infoserver_46823ffdf0b5c39a)
+}
+
+var fileDescriptor_infoserver_46823ffdf0b5c39a = []byte{
+	// 457 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x53, 0xc1, 0x6e, 0xd3, 0x40,
+	0x10, 0x8d, 0x6d, 0x12, 0x92, 0xb1, 0x8d, 0xd0, 0x82, 0x2a, 0x2b, 0xe5, 0x50, 0x56, 0xad, 0xd4,
+	0xd3, 0xa6, 0x6a, 0x8b, 0xb8, 0x71, 0x40, 0x42, 0xb4, 0xe2, 0xc4, 0x36, 0x3f, 0xe0, 0xb8, 0x63,
+	0xcb, 0x22, 0xd9, 0x0d, 0xeb, 0x75, 0x44, 0x7e, 0x80, 0xbf, 0xe5, 0x1f, 0x90, 0x77, 0xed, 0x7a,
+	0x4d, 0xd5, 0x88, 0xde, 0xfc, 0x66, 0xdf, 0x9b, 0xf1, 0x3c, 0xbd, 0x81, 0xe3, 0x52, 0xe4, 0xb2,
+	0x42, 0xb5, 0x43, 0xb5, 0xe8, 0x3f, 0xd9, 0x56, 0x49, 0x2d, 0xe7, 0xc7, 0x85, 0x94, 0xc5, 0x1a,
+	0x17, 0x06, 0xad, 0xea, 0x7c, 0x81, 0x9b, 0xad, 0xde, 0xdb, 0x47, 0x7a, 0x06, 0x21, 0x97, 0x2b,
+	0xa9, 0xab, 0xef, 0x35, 0xaa, 0x3d, 0x39, 0x82, 0x49, 0x5d, 0xa1, 0xba, 0xbd, 0x4f, 0xbc, 0x13,
+	0xef, 0x7c, 0xc6, 0x5b, 0x44, 0xaf, 0x01, 0x0c, 0xcd, 0xb2, 0x5e, 0x81, 0x5f, 0x76, 0x0c, 0xbf,
+	0xbc, 0x77, 0x54, 0xfe, 0x40, 0xb5, 0x03, 0xc2, 0xb1, 0x28, 0x2b, 0x8d, 0xea, 0xf9, 0x6a, 0x32,
+	0x87, 0xa9, 0x28, 0xb3, 0x1f, 0x22, 0xdd, 0x60, 0x12, 0x98, 0x97, 0x07, 0x4c, 0xde, 0xc1, 0x4c,
+	0x35, 0x1d, 0x97, 0xfb, 0x2d, 0x26, 0x2f, 0xcc, 0x63, 0x5f, 0xa0, 0x19, 0xc4, 0x4b, 0x59, 0x14,
+	0x6b, 0xe4, 0xf8, 0xb3, 0xc6, 0x4a, 0xff, 0xf7, 0xc8, 0xb7, 0x30, 0xde, 0xa5, 0xeb, 0xda, 0xce,
+	0x9b, 0x72, 0x0b, 0x9a, 0x6a, 0x2e, 0x55, 0x66, 0x07, 0x4d, 0xb9, 0x05, 0xf4, 0x1a, 0x22, 0x9e,
+	0x8a, 0xe2, 0xc9, 0x19, 0x0f, 0xbd, 0x9a, 0x11, 0x41, 0xdb, 0x8b, 0xfe, 0xf1, 0x60, 0x6c, 0xbc,
+	0x78, 0xc4, 0x77, 0xd7, 0xf5, 0x0f, 0xad, 0x1b, 0xfc, 0xb3, 0x2e, 0x39, 0x85, 0xb8, 0x14, 0x1a,
+	0x55, 0x9e, 0x66, 0xe8, 0x18, 0x32, 0x2c, 0x92, 0x2b, 0x88, 0xb4, 0x31, 0xe5, 0x4e, 0xa7, 0xba,
+	0xae, 0x92, 0xf1, 0x89, 0x77, 0x1e, 0x5e, 0xc6, 0x6c, 0xe9, 0x14, 0x6f, 0x46, 0x7c, 0x40, 0x22,
+	0x17, 0x10, 0xaa, 0x66, 0xc9, 0x56, 0x33, 0x31, 0x9a, 0x88, 0xf1, 0xbe, 0x76, 0x33, 0xe2, 0x2e,
+	0xe5, 0x73, 0x0c, 0xa1, 0xf9, 0x33, 0x0b, 0xe9, 0x29, 0x44, 0xee, 0x80, 0xde, 0x15, 0xcf, 0x71,
+	0x98, 0x7e, 0x83, 0xd0, 0x69, 0x49, 0x5e, 0x43, 0xb0, 0x49, 0x7f, 0x19, 0x4a, 0xc0, 0x9b, 0x4f,
+	0x53, 0x29, 0x45, 0x6b, 0x65, 0xf3, 0x49, 0x12, 0x78, 0x99, 0xd5, 0x4a, 0xa1, 0xd0, 0xc6, 0x90,
+	0x80, 0x77, 0xf0, 0xf2, 0xb7, 0x0f, 0x70, 0x2b, 0x72, 0x79, 0x67, 0x8e, 0x80, 0xbc, 0x87, 0xe9,
+	0x57, 0xd4, 0xd6, 0xf3, 0x90, 0xf5, 0x39, 0x9c, 0x4f, 0x2c, 0xa0, 0x23, 0x72, 0x06, 0xb3, 0x8e,
+	0x52, 0x91, 0x88, 0x39, 0x07, 0xd1, 0x93, 0x2e, 0x3c, 0xf2, 0x09, 0xe2, 0x41, 0x9c, 0xc9, 0x1b,
+	0xf6, 0x38, 0xde, 0xf3, 0x23, 0x66, 0xef, 0x8d, 0x75, 0xf7, 0xc6, 0xbe, 0x34, 0xf7, 0x46, 0x47,
+	0xe4, 0x23, 0x84, 0x6d, 0x2c, 0x6d, 0x00, 0xd8, 0x20, 0xa4, 0x07, 0x84, 0x1f, 0x00, 0x6c, 0xd4,
+	0x8c, 0x2e, 0x66, 0x6e, 0xee, 0x9e, 0x96, 0xad, 0x26, 0xa6, 0x72, 0xf5, 0x37, 0x00, 0x00, 0xff,
+	0xff, 0x3d, 0x71, 0xee, 0xa3, 0x1e, 0x04, 0x00, 0x00,
 }

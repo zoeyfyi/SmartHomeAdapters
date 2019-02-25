@@ -329,6 +329,28 @@ func toggleHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 	}
 }
 
+func rangeHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	id := ps.ByName("id")
+	value := ps.ByName("value")
+
+	log.Printf("Setting range robot %s", id)
+
+	rangeValue, err := strconv.ParseInt(value, 10, 64)
+	if err != nil {
+		HTTPError(w, errors.New("Toggle value is not a integer"))
+		return
+	}
+
+	_, err = infoserverClient.RangeRobot(context.Background(), &infoserver.RangeRequest{
+		Id:    id,
+		Value: rangeValue,
+	})
+	if err != nil {
+		HTTPError(w, err)
+		return
+	}
+}
+
 func createRouter() *httprouter.Router {
 	router := httprouter.New()
 
@@ -340,6 +362,7 @@ func createRouter() *httprouter.Router {
 	router.GET("/robots", robotsHandler)
 	router.GET("/robot/:id", robotHandler)
 	router.PATCH("/robot/:id/toggle/:value", toggleHandler)
+	router.PATCH("/robot/:id/range/:value", rangeHandler)
 
 	return router
 }
