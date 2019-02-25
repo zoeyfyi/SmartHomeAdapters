@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/mrbenshef/SmartHomeAdapters/robotserver/robotserver"
 	"github.com/mrbenshef/SmartHomeAdapters/thermostatserver/thermostatserver"
 
 	"github.com/ory/dockertest"
@@ -20,8 +21,10 @@ import (
 	_ "github.com/lib/pq"
 	"google.golang.org/grpc"
 )
+import empty "github.com/golang/protobuf/ptypes/empty"
 
 var lis *bufconn.Listener
+var servoRequests = []*robotserver.ServoRequest{}
 
 func TestMain(m *testing.M) {
 	// connect to docker
@@ -53,8 +56,10 @@ func TestMain(m *testing.M) {
 	// start test gRPC server
 	lis = bufconn.Listen(1024 * 1024)
 	s := grpc.NewServer()
+
 	thermostatserver.RegisterThermostatServerServer(s, &server{
-		DB: getDb(),
+		DB:          getDb(),
+		RobotClient: mockRobotServerClient{},
 	})
 	go func() {
 		if err := s.Serve(lis); err != nil {
@@ -67,6 +72,19 @@ func TestMain(m *testing.M) {
 	pool.Purge(resource)
 
 	os.Exit(exitCode)
+}
+
+type mockRobotServerClient struct {
+	thisIsAMock bool
+}
+
+func (c mockRobotServerClient) SetServo(ctx context.Context, in *robotserver.ServoRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
+	servoRequests = append(servoRequests, in)
+	return &empty.Empty{}, nil
+}
+
+func (c mockRobotServerClient) SetLED(ctx context.Context, in *robotserver.LEDRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
+	panic("Call to SetLED!")
 }
 
 func bufDialer(string, time.Duration) (net.Conn, error) {
@@ -103,5 +121,81 @@ func TestGetThermostat(t *testing.T) {
 
 	if !reflect.DeepEqual(thermostat, expectedThermostat) {
 		t.Errorf("Robots differ. Expected: %+v, Got: %+v", expectedThermostat, thermostat)
+	}
+}
+
+func TestSetThermostat(t *testing.T) {
+	cases := []struct {
+		thermostatRequest    *thermostatserver.SetThermostatRequest
+		expectedServoRequest *robotserver.ServoRequest
+	}{
+		{
+			thermostatRequest: &thermostatserver.SetThermostatRequest{
+				Id:         "qwerty",
+				Tempreture: 283,
+				Unit:       "kelvin",
+			},
+			expectedServoRequest: &robotserver.ServoRequest{
+				Angle: 30,
+			},
+		},
+		{
+			thermostatRequest: &thermostatserver.SetThermostatRequest{
+				Id:         "qwerty",
+				Tempreture: 293,
+				Unit:       "kelvin",
+			},
+			expectedServoRequest: &robotserver.ServoRequest{
+				Angle: 100,
+			},
+		},
+		{
+			thermostatRequest: &thermostatserver.SetThermostatRequest{
+				Id:         "qwerty",
+				Tempreture: 303,
+				Unit:       "kelvin",
+			},
+			expectedServoRequest: &robotserver.ServoRequest{
+				Angle: 170,
+			},
+		},
+	}
+
+	ctx := context.Background()
+	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithDialer(bufDialer), grpc.WithInsecure())
+	if err != nil {
+		t.Fatalf("Failed to dial bufnet: %v", err)
+	}
+	defer conn.Close()
+
+	client := thermostatserver.NewThermostatServerClient(conn)
+
+	for _, c := range cases {
+		servoRequests = []*robotserver.ServoRequest{}
+
+		stream, err := client.SetThermostat(ctx, c.thermostatRequest)
+
+		for {
+			status, err := stream.Recv()
+			if err != nil {
+				t.Errorf("Error receiving: %v", err)
+			}
+
+			if status.Status == thermostatserver.SetThermostatStatus_DONE {
+				break
+			}
+		}
+
+		if err != nil {
+			t.Errorf("Expected nil error, got: %v", err)
+		}
+
+		if len(servoRequests) != 1 {
+			t.Errorf("Expected single servo request, got: %+v (len = %d)", servoRequests, len(servoRequests))
+		}
+
+		if !reflect.DeepEqual(servoRequests[0], c.expectedServoRequest) {
+			t.Errorf("Expected request: %+v, got %+v", c.expectedServoRequest, servoRequests[0])
+		}
 	}
 }

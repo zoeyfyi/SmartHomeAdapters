@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"math"
 	"net"
 	"os"
 	"time"
@@ -93,8 +94,8 @@ func (s *server) SetThermostat(request *thermostatserver.SetThermostatRequest, s
 	}
 
 	// compute angle
-	tempretureRatio := (targetKelvin - thermostat.MinTempreture) / (thermostat.MaxTempreture - thermostat.MinTempreture)
-	angle := thermostat.MinAngle + (thermostat.MaxAngle-thermostat.MinAngle)*tempretureRatio
+	tempretureRatio := float64(targetKelvin-thermostat.MinTempreture) / float64(thermostat.MaxTempreture-thermostat.MinTempreture)
+	angle := float64(thermostat.MinAngle) + float64(thermostat.MaxAngle-thermostat.MinAngle)*tempretureRatio
 
 	stream.Send(&thermostatserver.SetThermostatStatus{
 		Status: thermostatserver.SetThermostatStatus_SETTING,
@@ -102,7 +103,7 @@ func (s *server) SetThermostat(request *thermostatserver.SetThermostatRequest, s
 
 	// set servo
 	_, err = s.RobotClient.SetServo(context.Background(), &robotserver.ServoRequest{
-		Angle: angle,
+		Angle: int64(math.Floor(angle)),
 	})
 	if err != nil {
 		return err
