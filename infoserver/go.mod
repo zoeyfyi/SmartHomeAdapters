@@ -5,12 +5,14 @@ require (
 	dmitri.shuralyov.com/app/changes v0.0.0-20181114035150-5af16e21babb // indirect
 	dmitri.shuralyov.com/service/change v0.0.0-20190203163610-217368fe4577 // indirect
 	git.apache.org/thrift.git v0.12.0 // indirect
+	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78 // indirect
+	github.com/Microsoft/go-winio v0.4.12 // indirect
 	github.com/Shopify/sarama v1.20.1 // indirect
 	github.com/coreos/go-systemd v0.0.0-20190204112023-081494f7ee4f // indirect
 	github.com/go-logfmt/logfmt v0.4.0 // indirect
 	github.com/gogo/protobuf v1.2.0 // indirect
 	github.com/golang/lint v0.0.0-20181217174547-8f45f776aaf1 // indirect
-	github.com/golang/protobuf v1.2.0
+	github.com/golang/protobuf v1.2.1-0.20181127190454-8d0c54c12466
 	github.com/googleapis/gax-go v2.0.2+incompatible // indirect
 	github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e // indirect
 	github.com/gorilla/mux v1.7.0 // indirect
@@ -19,6 +21,7 @@ require (
 	github.com/lib/pq v1.0.0
 	github.com/microcosm-cc/bluemonday v1.0.2 // indirect
 	github.com/mrbenshef/SmartHomeAdapters/switchserver v0.0.0
+	github.com/mrbenshef/SmartHomeAdapters/thermostatserver v0.0.0
 	github.com/openzipkin/zipkin-go v0.1.5 // indirect
 	github.com/ory/dockertest v3.3.4+incompatible
 	github.com/prometheus/client_model v0.0.0-20190129233127-fd36f4220a90 // indirect
@@ -56,5 +59,7 @@ require (
 )
 
 replace github.com/mrbenshef/SmartHomeAdapters/switchserver => ../switchserver
+
+replace github.com/mrbenshef/SmartHomeAdapters/thermostatserver => ../thermostatserver
 
 replace github.com/mrbenshef/SmartHomeAdapters/robotserver => ../robotserver
