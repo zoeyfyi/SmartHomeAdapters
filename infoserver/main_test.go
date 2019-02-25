@@ -210,8 +210,10 @@ func TestGetRobotWithInvalidID(t *testing.T) {
 		t.Fatalf("Expected grpc status error, got %v %T", err, err)
 	}
 
-	if status.Message() != "No robot with ID \"invalidid\"" {
-		t.Errorf("Expected \"No robot with ID \"invalidid\"\" error message, got: %s", status.Message())
+	expectedMessage := "Robot \"invalidid\" does not exist"
+
+	if status.Message() != expectedMessage {
+		t.Errorf("Expected %s error message, got: %s", expectedMessage, status.Message())
 	}
 
 	if robot != nil {

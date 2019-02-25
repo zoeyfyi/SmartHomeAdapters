@@ -45,7 +45,7 @@ func (s *server) GetRobot(ctx context.Context, query *infoserver.RobotQuery) (*i
 	row := s.DB.QueryRow("SELECT serial, nickname, robotType FROM robots WHERE serial = $1 AND registeredUserId = $2", query.Id, query.UserId)
 	err := row.Scan(&serial, &nickname, &robotType)
 	if err == sql.ErrNoRows {
-		return nil, status.Newf(codes.NotFound, "Robot \"\" does not exist", query.Id)
+		return nil, status.Newf(codes.NotFound, "Robot \"%s\" does not exist", query.Id).Err()
 	} else if err != nil {
 		log.Printf("Failed to retrive robot %s: %v", query.Id, err)
 		return nil, err
@@ -149,7 +149,7 @@ func (s *server) RegisterRobot(ctx context.Context, query *infoserver.RegisterRo
 		return nil, err
 	}
 	for rows.Next() {
-		return nil, robotAlreadyExistsError(query.Id)
+		return nil, status.Newf(codes.AlreadyExists, "Robot \"%s\" already exists", query.Id).Err()
 	}
 
 	_, err = s.DB.Exec("INSERT INTO robots (serial, nickname, robotType, registeredUserId) VALUES ($1, $2, $3, $4)", query.Id, query.Nickname, query.RobotType, query.UserId)
