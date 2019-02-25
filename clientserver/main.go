@@ -366,8 +366,8 @@ func createRouter() *httprouter.Router {
 	router.POST("/robot/:id", auth(registerRobotHandler))
 	router.GET("/robots", auth(robotsHandler))
 	router.GET("/robot/:id", auth(robotHandler))
-	router.PATCH("/robot/:id/toggle/:value", toggleHandler)
-	router.PATCH("/robot/:id/range/:value", rangeHandler)
+	router.PATCH("/robot/:id/toggle/:value", auth(toggleHandler))
+	router.PATCH("/robot/:id/range/:value", auth(rangeHandler))
 
 	return router
 }
