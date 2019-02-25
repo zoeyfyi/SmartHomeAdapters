@@ -79,5 +79,6 @@ message CalibrationParameters {
 
 message SetUsecaseRequest {
     string id = 1;
+    string userId = 3;
     string usecase = 2;
 }

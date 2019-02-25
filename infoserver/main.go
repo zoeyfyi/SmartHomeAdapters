@@ -356,7 +356,27 @@ func (s *server) GetCalibration(ctx context.Context, request *infoserver.RobotQu
 }
 
 func (s *server) SetUsecase(ctx context.Context, request *infoserver.SetUsecaseRequest) (*infoserver.Robot, error) {
-	return nil, status.Newf(codes.Unimplemented, "Not implemented").Err()
+	res, err := s.DB.Exec("UPDATE robots SET robotType = $1 WHERE serial = $2", request.Usecase, request.Id)
+	if err != nil {
+		log.Printf("Failed to update database: %v", err)
+		return nil, status.Newf(codes.Internal, "Failed to update usecase of robot \"%s\"", request.Id).Err()
+	}
+
+	// check 1 row was updated
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		log.Printf("Failed to get the amount of rows affected: %v", err)
+		return nil, status.Newf(codes.Internal, "Internal error").Err()
+	}
+	if rowsAffected != 1 {
+		log.Printf("Expected to update exactly 1 row, rows updated: %d\n", rowsAffected)
+		return nil, status.Newf(codes.Internal, "Internal error").Err()
+	}
+
+	return s.GetRobot(ctx, &infoserver.RobotQuery{
+		Id:     request.Id,
+		UserId: request.UserId,
+	})
 }
 
 func connectionStr() string {
