@@ -28,6 +28,14 @@ type loginTemplateData struct {
 	Error error
 }
 
+type hydraConsentRequest struct {
+	Skip bool `json:"skip"`
+}
+
+type hydraConsentAccept struct {
+	RedirectTo string `json:"redirect_to"` // url to redirect to
+}
+
 type consentTemplateData struct {
 	Error error
 }
@@ -124,8 +132,43 @@ func getLoginHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params
 	}
 }
 
-func postConsentHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func acceptConsent(w http.ResponseWriter, r *http.Request, challenge string) {
+	url := fmt.Sprintf("http://hydra/oauth/auth/requests/consent/%s/accept", challenge)
+	req, err := http.NewRequest("PUT", url, nil)
+	if err != nil {
+		consentTemplate.Execute(w, consentTemplateData{
+			Error: fmt.Errorf("Internal error"),
+		})
+		return
+	}
 
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		consentTemplate.Execute(w, consentTemplateData{
+			Error: fmt.Errorf("Internal error"),
+		})
+		return
+	}
+
+	if resp.Body == nil {
+		consentTemplate.Execute(w, consentTemplateData{
+			Error: fmt.Errorf("Internal error"),
+		})
+		return
+	}
+
+	var consentAccept hydraConsentAccept
+	json.NewDecoder(resp.Body).Decode(consentAccept)
+
+	// redirect back to hydra
+	http.Redirect(w, r, consentAccept.RedirectTo, http.StatusMovedPermanently)
+}
+
+func postConsentHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	// get hydra challenge
+	challenge := r.URL.Query().Get("login_challenge")
+
+	acceptConsent(w, r, challenge)
 }
 
 func getConsentHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
