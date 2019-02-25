@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log"
 	"net"
 	"os"
+	"reflect"
 	"testing"
 	"time"
 
@@ -69,4 +71,37 @@ func TestMain(m *testing.M) {
 
 func bufDialer(string, time.Duration) (net.Conn, error) {
 	return lis.Dial()
+}
+
+func TestGetThermostat(t *testing.T) {
+	ctx := context.Background()
+	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithDialer(bufDialer), grpc.WithInsecure())
+	if err != nil {
+		t.Fatalf("Failed to dial bufnet: %v", err)
+	}
+	defer conn.Close()
+
+	client := thermostatserver.NewThermostatServerClient(conn)
+
+	thermostat, err := client.GetThermostat(context.Background(), &thermostatserver.ThermostatQuery{
+		Id: "qwerty",
+	})
+
+	if err != nil {
+		t.Errorf("Expected nil error, got: %v", err)
+	}
+
+	expectedThermostat := &thermostatserver.Thermostat{
+		Id:            "qwerty",
+		Tempreture:    293,
+		MinAngle:      30,
+		MaxAngle:      170,
+		MinTempreture: 283,
+		MaxTempreture: 303,
+		IsCalibrated:  true,
+	}
+
+	if !reflect.DeepEqual(thermostat, expectedThermostat) {
+		t.Errorf("Robots differ. Expected: %+v, Got: %+v", expectedThermostat, thermostat)
+	}
 }
