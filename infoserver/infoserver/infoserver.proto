@@ -6,6 +6,7 @@ service InfoServer {
     rpc GetRobot (RobotQuery) returns (Robot) {}
     rpc GetRobots (google.protobuf.Empty) returns (stream Robot) {}
     rpc ToggleRobot (ToggleRequest) returns (google.protobuf.Empty) {}
+    rpc RangeRobot(RangeRequest) returns (google.protobuf.Empty) {}
 }
 
 message RobotQuery {
@@ -16,6 +17,11 @@ message ToggleRequest {
     string id = 1;
     bool value = 2;
     bool force = 3;
+}
+
+message RangeRequest {
+    string id = 1;
+    int64 value = 2;
 }
 
 message Robot {

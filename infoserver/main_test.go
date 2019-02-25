@@ -114,7 +114,7 @@ func TestGetRobots(t *testing.T) {
 			InterfaceType: "toggle",
 		},
 		&infoserver.Robot{
-			Id:            "T2D2",
+			Id:            "qwerty",
 			Nickname:      "testThermoBot",
 			RobotType:     "thermostat",
 			InterfaceType: "range",
