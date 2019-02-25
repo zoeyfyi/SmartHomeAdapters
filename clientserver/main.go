@@ -404,7 +404,7 @@ type parameter struct {
 	Value string `json:"value"`
 }
 
-func calibrationHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func setCalibrationHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	id := ps.ByName("id")
 
 	// decode json request
@@ -461,6 +461,30 @@ func calibrationHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Pa
 	})
 }
 
+func getCalibrationHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	id := ps.ByName("id")
+
+	params, err := infoserverClient.GetCalibration(context.Background(), &infoserver.RobotQuery{
+		Id: id,
+	})
+	if err != nil {
+		HTTPError(w, err)
+		return
+	}
+
+	var parameters []parameter
+
+	for _, p := range params.Parameters {
+		parameters = append(parameters, parameter{
+			Name:  p.Name,
+			Value: p.Value,
+		})
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(parameters)
+}
+
 func createRouter() *httprouter.Router {
 	router := httprouter.New()
 
@@ -473,7 +497,8 @@ func createRouter() *httprouter.Router {
 	router.PATCH("/robot/:id/toggle/:value", toggleHandler)
 	router.GET("/usecases", usecasesHandler)
 	router.GET("/usecase/:id", usecaseHandler)
-	router.PUT("/robot/:id/calibration", calibrationHandler)
+	router.GET("/robot/:id/calibration", getCalibrationHandler)
+	router.PUT("/robot/:id/calibration", setCalibrationHandler)
 
 	return router
 }
