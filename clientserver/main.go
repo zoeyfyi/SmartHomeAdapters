@@ -272,6 +272,7 @@ func toggleHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 
 type usecase struct {
 	ID         string                 `json:"id"`
+	Name       string                 `json:"name"`
 	Parameters []calibrationParameter `json:"parameters"`
 }
 
@@ -304,7 +305,8 @@ type calibrationParameter struct {
 // we want this to extendable, so plugins can request a list of parameters
 var usecases = map[string]usecase{
 	"1": usecase{
-		ID: "1",
+		ID:   "1",
+		Name: "Switch",
 		Parameters: []calibrationParameter{
 			calibrationParameter{
 				Name:        "On Angle",
