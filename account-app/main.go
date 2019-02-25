@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -41,7 +42,7 @@ type consentTemplateData struct {
 }
 
 func acceptLogin(w http.ResponseWriter, r *http.Request, challenge string) {
-	url := fmt.Sprintf("http://hydra/oauth/auth/requests/login/%s/accept", challenge)
+	url := fmt.Sprintf("https://oauth.halspals.co.uk/oauth/auth/requests/login/%s/accept", challenge)
 	req, err := http.NewRequest("PUT", url, nil)
 	if err != nil {
 		loginTemplate.Execute(w, loginTemplateData{
@@ -105,7 +106,7 @@ func getLoginHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params
 	challenge := r.URL.Query().Get("login_challenge")
 
 	// get infomation about the login request from hydra
-	url := fmt.Sprintf("http://hydra/oauth2/auth/requests/login/%s", challenge)
+	url := fmt.Sprintf("https://oauth.halspals.co.uk/oauth2/auth/requests/login/%s", challenge)
 	resp, err := http.DefaultClient.Get(url)
 	if err != nil {
 		loginTemplate.Execute(w, loginTemplateData{
@@ -133,7 +134,7 @@ func getLoginHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params
 }
 
 func acceptConsent(w http.ResponseWriter, r *http.Request, challenge string) {
-	url := fmt.Sprintf("http://hydra/oauth/auth/requests/consent/%s/accept", challenge)
+	url := fmt.Sprintf("https://oauth.halspals.co.uk/oauth/auth/requests/consent/%s/accept", challenge)
 	req, err := http.NewRequest("PUT", url, nil)
 	if err != nil {
 		consentTemplate.Execute(w, consentTemplateData{
@@ -181,6 +182,8 @@ func getConsentHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Para
 }
 
 func main() {
+	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+
 	router := httprouter.New()
 	router.GET("/login", getLoginHandler)
 	router.POST("/login", postLoginHandler)
