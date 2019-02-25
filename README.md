@@ -2,20 +2,6 @@
 
 [![Build Status](https://travis-ci.com/mrbenshef/SmartHomeAdapters.svg?token=xzYnEDernngLJ99poRHs&branch=master)](https://travis-ci.com/mrbenshef/SmartHomeAdapters)
 
-## Components
-
-### [Web Server](webserver/README.md)
-
-Receives sensor data and sends servo commands to robots. Exposes a REST API consumed by the android app (and other integrations). To start the servers, install docker and docker-compose then run `docker-compose up`.
-
-### [Android App](android/README.md)
-
-Inteface to setup, calibrate and control the robots
-
-### [Robot](robot/README.md)
-
-Connects the hardware to the web server.
-
 ## Git
 
 ### Commit messages
@@ -41,3 +27,30 @@ For all other code changes
 3. Have someone else review your code 
 4. Wait for merge
 5. ~3 days before a demo all the component branches will be merged into master
+
+## Development
+
+- `make check` check build dependencies are installed
+- `make build` to build everything
+    - `make build-android`
+    - `make build-clientserver`
+    - `make build-infoserver`
+    - ...
+- `make docker` builds all the docker images
+    - `make docker-push` push docker images (tagged latest)
+    - `make docker-push-test` push docker images (tagged test)
+- `make clean` deletes the build folder
+- `make lint` runs various linters
+    - `make lint-docker-compose` checks docker compose file is valid
+    - `make lint-android`
+    - `make lint-clientserver`
+    - `make lint-robotserver`
+    - ...
+- `make test` test all the projects
+    - `make test-android`
+    - `make test-clientserver`
+    - `make test-infoserver`
+    - ...
+- `make compile-reports` builds all the reports
+
+There are other commands, check the `Makefile`.
