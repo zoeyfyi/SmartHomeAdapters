@@ -330,6 +330,48 @@ var usecases = map[string]usecase{
 			},
 		},
 	},
+	"2": usecase{
+		ID:   "2",
+		Name: "Thermostat",
+		Parameters: []calibrationParameter{
+			calibrationParameter{
+				Name:        "Minimum tempreture",
+				Description: "Minimum tempreture of the thermostat",
+				Details: intParameter{
+					Min:     200,
+					Max:     400,
+					Default: 293,
+				},
+			},
+			calibrationParameter{
+				Name:        "Maximum tempreture",
+				Description: "Maximum tempreture of the thermostat",
+				Details: intParameter{
+					Min:     200,
+					Max:     400,
+					Default: 293,
+				},
+			},
+			calibrationParameter{
+				Name:        "Minimum tempreture angle",
+				Description: "Angle of the minimum tempreture",
+				Details: intParameter{
+					Min:     0,
+					Max:     180,
+					Default: 80,
+				},
+			},
+			calibrationParameter{
+				Name:        "Maximum tempreture angle",
+				Description: "Angle of the maximum tempreture",
+				Details: intParameter{
+					Min:     0,
+					Max:     180,
+					Default: 100,
+				},
+			},
+		},
+	},
 }
 
 func usecasesHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
