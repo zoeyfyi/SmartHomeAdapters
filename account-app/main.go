@@ -10,7 +10,10 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-var loginTemplate = template.Must(template.ParseFiles("static/login.html"))
+var (
+	loginTemplate   = template.Must(template.ParseFiles("static/login.html"))
+	consentTemplate = template.Must(template.ParseFiles("static/consent.html"))
+)
 
 type hydraLoginRequest struct {
 	Skip bool `json:"skip"` // weather to skip login or not
@@ -22,6 +25,10 @@ type hydraLoginAccept struct {
 }
 
 type loginTemplateData struct {
+	Error error
+}
+
+type consentTemplateData struct {
 	Error error
 }
 
@@ -109,7 +116,20 @@ func getLoginHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params
 		}
 	}
 
-	loginTemplate.Execute(w, loginTemplateData{
+	err = loginTemplate.Execute(w, loginTemplateData{
+		Error: nil,
+	})
+	if err != nil {
+		log.Printf("Error rendering template: %v", err)
+	}
+}
+
+func postConsentHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+
+}
+
+func getConsentHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	err := consentTemplate.Execute(w, consentTemplateData{
 		Error: nil,
 	})
 	if err != nil {
@@ -121,6 +141,8 @@ func main() {
 	router := httprouter.New()
 	router.GET("/login", getLoginHandler)
 	router.POST("/login", postLoginHandler)
+	router.GET("/consent", getConsentHandler)
+	router.POST("/consent", postConsentHandler)
 
 	// start server
 	if err := http.ListenAndServe(":4001", router); err != nil {
