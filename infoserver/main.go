@@ -324,6 +324,10 @@ func (s *server) GetCalibration(ctx context.Context, request *infoserver.RobotQu
 	return parameters, nil
 }
 
+func (s *server) SetUsecase(ctx context.Context, request *infoserver.SetUsecaseRequest) (*infoserver.Robot, error) {
+	return nil, status.Newf(codes.Unimplemented, "Not implemented").Err()
+}
+
 func connectionStr() string {
 	if username == "" {
 		username = "postgres"

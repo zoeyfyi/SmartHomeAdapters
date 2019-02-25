@@ -8,6 +8,7 @@ service InfoServer {
     rpc ToggleRobot (ToggleRequest) returns (google.protobuf.Empty) {}
     rpc CalibrateRobot (CalibrationRequest) returns (Robot) {}
     rpc GetCalibration(RobotQuery) returns (CalibrationParameters) {}
+    rpc SetUsecase(SetUsecaseRequest) returns (Robot) {}
 }
 
 message RobotQuery {
@@ -54,4 +55,9 @@ message CalibrationParameter {
 
 message CalibrationParameters {
     repeated CalibrationParameter parameters = 1;
+}
+
+message SetUsecaseRequest {
+    string id = 1;
+    string usecase = 2;
 }
