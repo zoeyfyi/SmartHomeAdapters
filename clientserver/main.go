@@ -187,7 +187,7 @@ func (s RangeStatus) status() {}
 
 func robotsHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 
-	userId := r.Context().Value("userId")
+	userId := r.Context().Value("userId").(string)
 
 	stream, err := infoserverClient.GetRobots(context.Background(), &infoserver.RobotsQuery{UserId: userId})
 	if err != nil {
@@ -221,7 +221,7 @@ func robotHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 	id := ps.ByName("id")
 	log.Printf("Getting robot with id %s", id)
 
-	userId := r.Context().Value("userId")
+	userId := r.Context().Value("userId").(string)
 
 	robot, err := infoserverClient.GetRobot(context.Background(), &infoserver.RobotQuery{Id: id, UserId: userId})
 
@@ -276,7 +276,7 @@ func registerRobotHandler(w http.ResponseWriter, r *http.Request, ps httprouter.
 		return
 	}
 
-	userId := r.Context().Value("userId")
+	userId := r.Context().Value("userId").(string)
 
 	registerQuery := infoserver.RegisterRobotQuery{Id: id, Nickname: registerRobotBody.Nickname, RobotType: registerRobotBody.RobotType, UserId: userId}
 
@@ -339,7 +339,7 @@ func auth(h httprouter.Handle) httprouter.Handle {
 
 		token := r.Header.Get("token")
 
-		user, err := userserverClient.Authorize(context.Background(), &userserver.Token{Token : token})
+		user, err := userserverClient.Authorize(context.Background(), &userserver.Token{Token: token})
 
 		if err != nil {
 			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
@@ -354,7 +354,6 @@ func auth(h httprouter.Handle) httprouter.Handle {
 
 	}
 }
-
 
 func createRouter() *httprouter.Router {
 	router := httprouter.New()
