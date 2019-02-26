@@ -44,13 +44,13 @@ class QRFragment : Fragment() {
 
         }
 
-        register_button.setOnClickListener { _ ->
+        next_button.setOnClickListener { _ ->
             // Dismiss the keyboard
             val inputMethodManager = parent.getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
             val currentView = parent.currentFocus ?: view
             inputMethodManager?.hideSoftInputFromWindow(currentView.windowToken, 0)
 
-            register_button.isEnabled = false
+            next_button.isEnabled = false
 
             // Make the registration call
             registerRobot(registration_code_input.text, nickname_input.text)
@@ -69,12 +69,12 @@ class QRFragment : Fragment() {
         when {
             code.isEmpty() -> {
                 registration_code_input.error = "Enter your robot's registration code"
-                register_button.isEnabled = true
+                next_button.isEnabled = true
             }
 
             nickname.isEmpty() -> {
                 nickname_input.error = "Enter a nickname for the robot"
-                register_button.isEnabled = true
+                next_button.isEnabled = true
             }
 
             else -> {
