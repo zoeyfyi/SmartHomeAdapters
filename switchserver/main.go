@@ -143,7 +143,8 @@ func (s *server) SetSwitch(request *switchserver.SetSwitchRequest, stream switch
 	}
 
 	_, err = robotserverClient.SetServo(context.Background(), &robotserver.ServoRequest{
-		Angle: angle,
+		RobotId: request.Id,
+		Angle:   angle,
 	})
 	if err != nil {
 		return err
@@ -160,7 +161,8 @@ func (s *server) SetSwitch(request *switchserver.SetSwitchRequest, stream switch
 		Status: switchserver.SetSwitchStatus_RETURNING,
 	})
 	_, err = robotserverClient.SetServo(context.Background(), &robotserver.ServoRequest{
-		Angle: robotSwitch.RestAngle,
+		RobotId: request.Id,
+		Angle:   robotSwitch.RestAngle,
 	})
 	if err != nil {
 		return err

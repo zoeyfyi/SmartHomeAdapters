@@ -8,9 +8,11 @@ service RobotServer {
 }
 
 message ServoRequest {
+    string robotId = 2;
     int64 angle = 1;
 }
 
 message LEDRequest {
+    string robotId = 2;
     bool on = 1;
 }
