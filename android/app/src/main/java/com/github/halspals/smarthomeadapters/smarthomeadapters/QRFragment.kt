@@ -10,14 +10,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import com.google.zxing.integration.android.IntentIntegrator
-import kotlinx.android.synthetic.main.activity_register_robot.*
 import kotlinx.android.synthetic.main.fragment_qr.*
-import okhttp3.ResponseBody
-import org.jetbrains.anko.design.snackbar
-import org.jetbrains.anko.toast
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
 
 /**
  * A fragment which upon a button click starts a QR scanner from the parent activity.
@@ -85,45 +78,9 @@ class QRFragment : Fragment() {
             }
 
             else -> {
-                registration_progress_bar.visibility = View.VISIBLE
-
-                parent
-                    .restApiService
-                    .registerRobot(code.toString(), nickname.toString())
-                    .enqueue(object : Callback<ResponseBody> {
-
-                        override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
-
-                            // Indicate to the user that the api call has been finished
-                            registration_progress_bar.visibility = View.GONE
-                            register_button.isEnabled = true
-
-                            if (response.isSuccessful) {
-                                // The robot was registered; move on to the next step of the wizard
-                                context?.toast("Successfully registered the robot")
-                                parent.startFragment(SelectUseCaseFragment())
-                            } else {
-                                val error = RestApiService.extractErrorFromResponse(response)
-                                Log.e(fTag, "registerRobot got unsuccessful response, error: $error")
-                                parent.startFragment(SelectUseCaseFragment()) // TODO remove test code
-                                if (error != null) {
-                                    parent.snackbar_layout.snackbar(error)
-                                }
-
-                            }
-                        }
-
-                        override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                            registration_progress_bar.visibility = View.GONE
-                            register_button.isEnabled = true
-
-                            val error = t.message
-                            Log.e(fTag, "registerRobot FAILED, got error: $error")
-                            if (error != null) {
-                                parent.snackbar_layout.snackbar(error)
-                            }
-                        }
-                    })
+                parent.robotNickname = nickname.toString()
+                parent.robotId = code.toString()
+                parent.startFragment(SelectUseCaseFragment())
             }
         }
     }

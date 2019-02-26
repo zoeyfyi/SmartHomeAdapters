@@ -19,6 +19,9 @@ class RegisterRobotActivity : AppCompatActivity() {
 
     // Keep track of the id of the robot once it has been scanned/entered
     internal lateinit var robotId: String
+    internal lateinit var robotNickname: String
+
+    internal lateinit var authToken: String
 
     // Record the chosen use case so that its parameters can be set up
     internal lateinit var chosenUseCase: UseCase
@@ -30,6 +33,10 @@ class RegisterRobotActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_register_robot)
+
+        // Get the token for the current session
+        authToken = intent.getStringExtra("token")
+        Log.d(tag, "token: $authToken")
 
         startFragment(QRFragment())
     }
@@ -78,8 +85,6 @@ class RegisterRobotActivity : AppCompatActivity() {
 
         if (robotId != null) {
             Log.d(tag, "[onActivityResult] Scanned robotId $robotId")
-
-            this.robotId = robotId
 
             val qrFragment = supportFragmentManager.findFragmentById(R.id.fragmentContainer) as QRFragment
             qrFragment.setRobotIdText(robotId)

@@ -20,7 +20,7 @@ class MainActivity :
 
     private val tag = "MainActivity"
 
-    private var authenticationToken: String? = null
+    internal lateinit var authToken: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,8 +32,8 @@ class MainActivity :
         startFragment(RobotsFragment())
 
         // Get the token for the current session
-        authenticationToken = intent.getStringExtra("token")
-        Log.d(tag, "token: $authenticationToken")
+        authToken = intent.getStringExtra("token")
+        Log.d(tag, "token: $authToken")
     }
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {

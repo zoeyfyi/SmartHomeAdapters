@@ -27,4 +27,6 @@ data class Robot(
         @SerializedName("interfaceType") val robotInterfaceType: String,
         @SerializedName("status") val robotStatus: RobotStatus,
         val iconDrawable: Int = R.drawable.basic_home // default icon
-        )
+)
+
+data class RobotRegistrationBody(val nickname: String, val robotType: String)

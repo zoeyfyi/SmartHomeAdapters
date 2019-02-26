@@ -22,6 +22,8 @@ class RobotFragment : Fragment() {
 
     private val fTag = "RobotFragment"
 
+    private lateinit var parent: MainActivity
+
     private lateinit var robotId: String
     private var robot: Robot? = null
 
@@ -53,6 +55,8 @@ class RobotFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        parent = activity as MainActivity
+
         progressBar = view.findViewById(R.id.progress_bar)
         switch = view.findViewById(R.id.robot_switch)
         seekBar = view.findViewById(R.id.robot_seek_bar)
@@ -70,7 +74,9 @@ class RobotFragment : Fragment() {
      * Fetches the robot with id of [robotId] and calls [onReceiveRobot]
      */
     private fun fetchRobot() {
-        (activity as MainActivity).restApiService.getRobot(robotId).enqueue(object: Callback<Robot> {
+        parent.restApiService
+                .getRobot(robotId, parent.authToken)
+                .enqueue(object: Callback<Robot> {
 
             override fun onResponse(call: Call<Robot>, response: Response<Robot>) {
                 val robot = response.body()
@@ -144,7 +150,10 @@ class RobotFragment : Fragment() {
         Log.d(fTag, "onSwitch($isOn)")
 
         // Send the update to the server
-        (activity as MainActivity).restApiService.robotToggle(robotId, isOn, mapOf()).enqueue(object: Callback<ResponseBody> {
+        parent.restApiService
+                .robotToggle(robotId, isOn, parent.authToken, mapOf())
+                .enqueue(object: Callback<ResponseBody> {
+
             override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
                 if (response.isSuccessful) {
                     (activity as Context).toast("Success")

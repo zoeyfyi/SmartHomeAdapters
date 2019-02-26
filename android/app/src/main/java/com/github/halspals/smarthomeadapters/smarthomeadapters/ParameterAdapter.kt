@@ -1,6 +1,7 @@
 package com.github.halspals.smarthomeadapters.smarthomeadapters
 
 import android.content.Context
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -17,6 +18,8 @@ import com.github.halspals.smarthomeadapters.smarthomeadapters.model.ConfigResul
 class ParameterAdapter (private val context: Context, private val parameters: List<ConfigParameter>):  BaseAdapter() {
 
     private val configSettings = HashMap<String, String>()
+
+    private val tag = "ParameterAdapter"
 
     init {
         for (param in parameters) {
@@ -120,10 +123,11 @@ class ParameterAdapter (private val context: Context, private val parameters: Li
         return 0L
     }
 
+    // TODO make more elegant solution than just stripping the space
     internal fun getConfigValuesSnapshot(): List<ConfigResult> {
         val snapshot = ArrayList<ConfigResult>()
         for (paramName in configSettings.keys) {
-            snapshot.add(ConfigResult(paramName, configSettings[paramName]!!))
+            snapshot.add(ConfigResult(paramName.replace(" ", ""), configSettings[paramName]!!))
         }
 
         return snapshot

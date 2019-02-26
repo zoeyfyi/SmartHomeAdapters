@@ -21,6 +21,8 @@ class RobotsFragment : Fragment() {
 
     private lateinit var robotGrid: GridView
 
+    private lateinit var parent: MainActivity
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View? {
@@ -32,11 +34,16 @@ class RobotsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        parent = activity as MainActivity
+
         add_robot_button.setOnClickListener { _ ->
-            (activity as MainActivity).startActivity<RegisterRobotActivity>()
+            parent.startActivity<RegisterRobotActivity>("token" to parent.authToken)
         }
 
-        (activity as MainActivity).restApiService.getRobots().enqueue(object : Callback<List<Robot>> {
+        parent.restApiService
+                .getRobots(parent.authToken)
+                .enqueue(object : Callback<List<Robot>> {
+
             override fun onFailure(call: Call<List<Robot>>, t: Throwable) {
                 val errorMsg = t.message
                 Log.e(fTag, "getRobots FAILED, got error: $errorMsg")
@@ -73,7 +80,7 @@ class RobotsFragment : Fragment() {
             bundle.putString("robotType", robot.robotType)
             robotFragment.arguments = bundle
 
-            (activity as MainActivity).startFragment(robotFragment, true)
+            parent.startFragment(robotFragment, true)
         }
     }
 }

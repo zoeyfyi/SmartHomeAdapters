@@ -57,7 +57,9 @@ class ConfigureRobotFragment : Fragment() {
         progress_bar.visibility = View.VISIBLE
         finish_button.isEnabled = false
 
-        parent.restApiService.setConfigParameters(parent.robotId, config).enqueue(object: Callback<ResponseBody> {
+        parent.restApiService
+                .setConfigParameters(parent.robotId, parent.authToken, config)
+                .enqueue(object: Callback<ResponseBody> {
 
             override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
 
