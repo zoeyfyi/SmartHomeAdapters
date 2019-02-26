@@ -41,7 +41,7 @@ func (s *server) GetRobot(ctx context.Context, query *infoserver.RobotQuery) (*i
 		robotType string
 	)
 
-	log.Printf("getting robot with id: %s (user id: %s)", query.Id, query.UserId)
+	log.Printf("getting robot with id: %s (user id: %s)", query.Id, quer.UserId)
 
 	// query toggleRobots table for matching robots
 	row := s.DB.QueryRow("SELECT serial, nickname, robotType FROM robots WHERE serial = $1 AND registeredUserId = $2", query.Id, query.UserId)
@@ -88,7 +88,7 @@ func (s *server) GetRobot(ctx context.Context, query *infoserver.RobotQuery) (*i
 			Id:            serial,
 			Nickname:      nickname,
 			RobotType:     robotType,
-			InterfaceType: "range",
+			InterfaceType: "toggle",
 			RobotStatus: &infoserver.Robot_RangeStatus{
 				RangeStatus: &infoserver.RangeStatus{
 					Min:     thermostat.MinTempreture,
@@ -210,16 +210,16 @@ func (s *server) RangeRobot(ctx context.Context, request *infoserver.RangeReques
 	log.Printf("setting range robot %s\n", request.Id)
 
 	// get robot type
-	var robotType string
-	row := s.DB.QueryRow("SELECT robotType FROM rangeRobots WHERE serial = $1", request.Id)
-	err := row.Scan(&robotType)
+	robot, err := s.GetRobot(ctx, &infoserver.RobotQuery {
+		Id: request.Id,
+		UserId: request.UserId,
+	})
 	if err != nil {
-		log.Printf("Failed to retrive the robot: %v", err)
 		return nil, err
 	}
 
 	// forward request to relevent service
-	switch robotType {
+	switch robot.RobotType {
 	case "thermostat":
 		stream, err := s.ThermostatClient.SetThermostat(context.Background(), &thermostatserver.SetThermostatRequest{
 			Id:         request.Id,

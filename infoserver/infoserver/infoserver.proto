@@ -38,6 +38,7 @@ message ToggleRequest {
 
 message RangeRequest {
     string id = 1;
+    string userId = 3;
     int64 value = 2;
 }
 
