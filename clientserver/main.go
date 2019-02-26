@@ -364,8 +364,8 @@ var usecases = map[string]usecase{
 				Description: "Angle to turn the servo to turn the switch off",
 				Type:        "int",
 				Details: intParameter{
-					Min:     90,
-					Max:     0,
+					Min:     0,
+					Max:     90,
 					Default: 80,
 				},
 			},
