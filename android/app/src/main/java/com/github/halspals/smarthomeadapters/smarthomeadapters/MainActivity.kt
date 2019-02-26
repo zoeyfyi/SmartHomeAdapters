@@ -1,6 +1,5 @@
 package com.github.halspals.smarthomeadapters.smarthomeadapters
 
-import android.app.FragmentManager.POP_BACK_STACK_INCLUSIVE
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.support.design.widget.BottomNavigationView
@@ -21,7 +20,7 @@ class MainActivity :
 
     private val tag = "MainActivity"
 
-    private var authenticationToken: String? = null
+    internal lateinit var authToken: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,8 +32,8 @@ class MainActivity :
         startFragment(RobotsFragment())
 
         // Get the token for the current session
-        authenticationToken = intent.getStringExtra("token")
-        Log.d(tag, "token: $authenticationToken")
+        authToken = intent.getStringExtra("token")
+        Log.d(tag, "token: $authToken")
     }
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
