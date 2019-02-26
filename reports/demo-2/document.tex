@@ -1,0 +1,131 @@
+\documentclass[a4paper]{article}
+\usepackage{array}  
+\usepackage[table]{xcolor}% http://ctan.org/pkg/xcolor
+\usepackage{geometry}
+\geometry{margin=1.25in}
+\usepackage{hhline}
+\usepackage{environ}
+ %\geometry{
+ %a4paper,z
+ %total={170mm,257mm},
+ %left=40mm,
+ %right=40mm
+ %}
+ \newcommand{\colWidth}{141mm}
+
+\begin{document} 
+\section*{Demo day: \textit{2} Group \textit{18}}
+
+% ------------GOALS----------
+
+\begin{center}
+\begin{tabular}{|p{\colWidth}|}
+	\hline
+	\cellcolor{blue!25}\large
+	\textbf{What were your goals?}
+	\\ \hline
+
+	\begin{itemize}
+		\item Web server
+			\begin{itemize}
+				\item Endpoint to register a robot to the users account
+				\item Only return the list of robots registered to the user's account
+				\item Endpoint to send calibration parameters including a range, min and max values
+				\item Endpoint to receive calibration parameters
+				\item Store current temperature settings
+				\item Endpoint to get the current temperature
+				\item Endpoint to update the current temperature
+			\end{itemize}
+		\item Android
+			\begin{itemize}
+				\item UI for registering a new robot
+				\item Dynamically build UI for calibrating the robot
+				\item Send calibration parameters back to the server
+				\item UI to choose the desired temperature
+				\item Send the desired temperature to the server
+			\end{itemize}
+		\item Robot
+			\begin{itemize}
+				\item Assign each robot a hard-coded ID
+				\item Construct the LEGO dial grip
+			\end{itemize}
+	\end{itemize} \\
+
+	\hline
+\end{tabular}
+\vskip 5mm
+
+% ------------ORGANISATION----------
+
+\begin{tabular}{|p{\colWidth}|}
+	\hline
+	\cellcolor{blue!25}\large
+	\textbf{Summarise how your group organised the workload to achieve your goals.}
+	\\ \hline
+	\vtop to 120mm{
+		}
+  \\
+  \hline
+\end{tabular}
+\vskip 5mm
+
+% ------------ACHIEVEMENTS----------
+
+\begin{tabular}{|p{\colWidth}|}
+	\hline
+	\cellcolor{blue!25}\large
+	\textbf{What were your main achievements?}
+	\\ \hline
+	\vtop to 95mm{
+	
+	}
+  \\
+  \hline
+\end{tabular}
+\vskip 5mm
+
+% ------------NOT ACHIEVED----------
+
+\begin{tabular}{|p{\colWidth}|}
+	\hline
+	\cellcolor{blue!25}\large
+	\textbf{What did you not achieve? Briefly explain why.}
+	\\ \hline
+	\vtop to 95mm{
+
+  }
+  \\
+  \hline
+\end{tabular}
+\vskip 5mm
+
+% ------------QUANTITIVE----------
+
+\begin{tabular}{|p{\colWidth}|}
+	\hline
+	\cellcolor{blue!25}\large
+	\textbf{Include any quantitative data you have collected (this can be a graph/table with a few words)}
+	\\ \hline
+	\vtop to 135mm{
+  }
+  \\
+  \hline
+\end{tabular}
+\vskip 5mm
+
+% ------------NEXT STEPS----------
+
+\begin{tabular}{|p{\colWidth}|}
+	\hline
+	\cellcolor{blue!25}\large
+	\textbf{Say briefly what changes you will make to your plan for the next demo.}
+	\\ \hline
+	\vtop to 45mm{
+  	}
+  \\
+  \hline
+\end{tabular}
+
+\end{center}
+  
+\end{document}
