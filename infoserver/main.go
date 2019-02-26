@@ -88,7 +88,7 @@ func (s *server) GetRobot(ctx context.Context, query *infoserver.RobotQuery) (*i
 			Id:            serial,
 			Nickname:      nickname,
 			RobotType:     robotType,
-			InterfaceType: "toggle",
+			InterfaceType: "range",
 			RobotStatus: &infoserver.Robot_RangeStatus{
 				RangeStatus: &infoserver.RangeStatus{
 					Min:     thermostat.MinTempreture,
