@@ -1,8 +1,6 @@
 package com.github.halspals.smarthomeadapters.smarthomeadapters
 
-import com.github.halspals.smarthomeadapters.smarthomeadapters.model.Robot
-import com.github.halspals.smarthomeadapters.smarthomeadapters.model.Token
-import com.github.halspals.smarthomeadapters.smarthomeadapters.model.User
+import com.github.halspals.smarthomeadapters.smarthomeadapters.model.*
 import okhttp3.ResponseBody
 import org.json.JSONException
 import org.json.JSONObject
@@ -23,10 +21,18 @@ interface RestApiService {
                     .create(RestApiService::class.java)
         }
 
-        fun <T> extractErrorFromResponse(response: Response<T>): String? = try {
-            JSONObject(response.errorBody()?.string()).getString("error")
-        } catch (e: JSONException) {
-            response.message()
+        fun <T> extractErrorFromResponse(response: Response<T>): String? {
+
+            val errorBody = response.errorBody()
+            return if (errorBody != null) {
+               try {
+                    JSONObject(errorBody.string()).getString("error")
+                } catch (e: JSONException) {
+                    response.message()
+                }
+            } else {
+                response.message()
+            }
         }
     }
 
@@ -37,13 +43,31 @@ interface RestApiService {
     fun loginUser(@Body user: User): Call<Token>
 
     @GET("robots")
-    fun getRobots(): Call<List<Robot>>
+    fun getRobots(@Header("token") token: String): Call<List<Robot>>
 
     @GET("robot/{id}")
-    fun getRobot(@Path("id") id: String): Call<Robot>
+    fun getRobot(@Path("id") id: String, @Header("token") token: String): Call<Robot>
+
+    @POST("robot/{id}")
+    fun registerRobot(
+            @Path("id") id: String,
+            @Header("token") token: String,
+            @Body robot: RobotRegistrationBody): Call<ResponseBody>
 
     @PATCH("robot/{id}/toggle/{current}")
-    fun robotToggle(@Path("id") id: String, @Path("current") value: Boolean, @Body map: Map<String, Boolean>): Call<ResponseBody>
+    fun robotToggle(
+            @Path("id") id: String, @Path("current") value: Boolean,
+            @Header("token") token: String,
+            @Body map: Map<String, Boolean>): Call<ResponseBody>
+
+    @GET("usecases")
+    fun getAllUseCases(@Header("token") token: String): Call<List<UseCase>>
+
+    @PUT("robot/{robotId}/calibration")
+    fun setConfigParameters(
+            @Path("robotId") robotId: String,
+            @Header("token") token: String,
+            @Body params: List<ConfigResult>): Call<ResponseBody>
 
     @PATCH("robot/{id}/range/{current}")
     fun robotRange(

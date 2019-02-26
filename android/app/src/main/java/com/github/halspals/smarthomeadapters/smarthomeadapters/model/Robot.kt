@@ -33,3 +33,5 @@ data class Robot(
         const val TYPE_RANGE = "range"
     }
 }
+
+data class RobotRegistrationBody(val nickname: String, val robotType: String)
