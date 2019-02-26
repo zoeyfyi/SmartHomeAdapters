@@ -71,9 +71,9 @@ interface RestApiService {
 
     @PATCH("robot/{id}/range/{current}")
     fun robotRange(
-        @Path("id") id: String,
-        @Path("current") value: Int,
-        @Header("token") token: String,
-        @Body map: Map<String, Boolean>
+            @Path("id") id: String,
+            @Path("current") value: Int,
+            @Header("token") token: String,
+            @Body map: Map<String, Boolean>
     ) : Call<ResponseBody>
 }
