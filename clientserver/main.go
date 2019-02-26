@@ -584,8 +584,6 @@ func createRouter() *httprouter.Router {
 	router.GET("/usecases", auth(usecasesHandler))
 	router.GET("/usecase/:id", auth(usecaseHandler))
 	router.GET("/robot/:id/calibration", auth(getCalibrationHandler))
-	router.PUT("/robot/:id/calibration", auth(setCalibrationHandler))
-	router.PATCH("/robot/:id/range/:value", auth(rangeHandler))
 
 	return router
 }
