@@ -163,7 +163,8 @@ class SelectUseCaseFragment : Fragment() {
                     parent.startFragment(ConfigureRobotFragment())
                 } else {
                     val error = RestApiService.extractErrorFromResponse(response)
-                    Log.d(fTag, "[registerRobotAndUseCase] Got unsuccessful response when registering robot and use case: $error")
+                    Log.d(fTag, "[registerRobotAndUseCase] Got unsuccessful response when registering robot and "
+                            + "use case: $error")
                     if (error != null) {
                         parent.snackbar_layout.snackbar(error)
                     }
