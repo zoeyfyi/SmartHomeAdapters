@@ -105,7 +105,6 @@ type registerBody struct {
 }
 
 func registerHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-
 	var registerBody registerBody
 	err := json.NewDecoder(r.Body).Decode(&registerBody)
 	if err != nil {
@@ -312,6 +311,221 @@ func toggleHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 	}
 }
 
+type usecase struct {
+	ID         string                 `json:"id"`
+	Name       string                 `json:"name"`
+	Parameters []calibrationParameter `json:"parameters"`
+}
+
+type parameterDetails interface {
+	parameterDetails()
+}
+
+type intParameter struct {
+	Min     int `json:"min"`
+	Max     int `json:"max"`
+	Default int `json:"default"`
+}
+
+func (p intParameter) parameterDetails() {}
+
+type booleanParameter struct {
+	Default bool `json:"default"`
+}
+
+func (p booleanParameter) parameterDetails() {}
+
+type calibrationParameter struct {
+	Name        string           `json:"name"`
+	Description string           `json:"description"`
+	Type        string           `json:"type"`
+	Details     parameterDetails `json:"details"`
+}
+
+// TODO: load from some kind of resource file
+// we want this to extendable, so plugins can request a list of parameters
+var usecases = map[string]usecase{
+	"1": usecase{
+		ID:   "1",
+		Name: "Switch",
+		Parameters: []calibrationParameter{
+			calibrationParameter{
+				Name:        "On Angle",
+				Description: "Angle to turn the servo to turn the switch on",
+				Type:        "int",
+				Details: intParameter{
+					Min:     90,
+					Max:     180,
+					Default: 100,
+				},
+			},
+			calibrationParameter{
+				Name:        "Off Angle",
+				Description: "Angle to turn the servo to turn the switch off",
+				Type:        "int",
+				Details: intParameter{
+					Min:     90,
+					Max:     0,
+					Default: 80,
+				},
+			},
+		},
+	},
+	"2": usecase{
+		ID:   "2",
+		Name: "Thermostat",
+		Parameters: []calibrationParameter{
+			calibrationParameter{
+				Name:        "Minimum tempreture",
+				Description: "Minimum tempreture of the thermostat",
+				Details: intParameter{
+					Min:     200,
+					Max:     400,
+					Default: 293,
+				},
+			},
+			calibrationParameter{
+				Name:        "Maximum tempreture",
+				Description: "Maximum tempreture of the thermostat",
+				Details: intParameter{
+					Min:     200,
+					Max:     400,
+					Default: 293,
+				},
+			},
+			calibrationParameter{
+				Name:        "Minimum tempreture angle",
+				Description: "Angle of the minimum tempreture",
+				Details: intParameter{
+					Min:     0,
+					Max:     180,
+					Default: 80,
+				},
+			},
+			calibrationParameter{
+				Name:        "Maximum tempreture angle",
+				Description: "Angle of the maximum tempreture",
+				Details: intParameter{
+					Min:     0,
+					Max:     180,
+					Default: 100,
+				},
+			},
+		},
+	},
+}
+
+func usecasesHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	// map -> list
+	usecaseList := make([]usecase, 0, len(usecases))
+	for _, usecase := range usecases {
+		usecaseList = append(usecaseList, usecase)
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(usecaseList)
+}
+
+func usecaseHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	id := ps.ByName("id")
+
+	usecase, ok := usecases[id]
+	if !ok {
+		err := status.Newf(codes.NotFound, "No usecase with id \"%s\"", id).Err()
+		HTTPError(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(usecase)
+}
+
+type parameter struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
+}
+
+func setCalibrationHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	id := ps.ByName("id")
+
+	// decode json request
+	var parameters []parameter
+	err := json.NewDecoder(r.Body).Decode(&parameters)
+	if err != nil {
+		log.Printf("Invalid calibration JSON: %v", err)
+		HTTPError(w, errors.New("Invalid JSON"))
+		return
+	}
+
+	// build infoserver calibration request
+	request := &infoserver.CalibrationRequest{}
+	request.Id = id
+	for _, param := range parameters {
+		request.Parameters = append(request.Parameters, &infoserver.CalibrationParameter{
+			Name:  param.Name,
+			Value: param.Value,
+		})
+	}
+
+	// send request
+	robot, err := infoserverClient.CalibrateRobot(context.Background(), request)
+	if err != nil {
+		HTTPError(w, err)
+		return
+	}
+
+	// convert robot status
+	var status Status
+	switch robotStatus := robot.RobotStatus.(type) {
+	case *infoserver.Robot_ToggleStatus:
+		status = ToggleStatus{
+			Value: robotStatus.ToggleStatus.Value,
+		}
+	case *infoserver.Robot_RangeStatus:
+		status = RangeStatus{
+			Min:     int(robotStatus.RangeStatus.Min),
+			Max:     int(robotStatus.RangeStatus.Max),
+			Current: int(robotStatus.RangeStatus.Current),
+		}
+	default:
+		panic(fmt.Sprintf("%T is not a valid robot status", robotStatus))
+	}
+
+	// encode robot responce
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(Robot{
+		ID:            robot.Id,
+		Nickname:      robot.Nickname,
+		RobotType:     robot.RobotType,
+		InterfaceType: robot.InterfaceType,
+		Status:        status,
+	})
+}
+
+func getCalibrationHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	id := ps.ByName("id")
+
+	params, err := infoserverClient.GetCalibration(context.Background(), &infoserver.RobotQuery{
+		Id: id,
+	})
+	if err != nil {
+		HTTPError(w, err)
+		return
+	}
+
+	var parameters []parameter
+
+	for _, p := range params.Parameters {
+		parameters = append(parameters, parameter{
+			Name:  p.Name,
+			Value: p.Value,
+		})
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(parameters)
+}
+
 func rangeHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	id := ps.ByName("id")
 	value := ps.ByName("value")
@@ -367,6 +581,9 @@ func createRouter() *httprouter.Router {
 	router.GET("/robot/:id", auth(robotHandler))
 	router.PATCH("/robot/:id/toggle/:value", auth(toggleHandler))
 	router.PATCH("/robot/:id/range/:value", auth(rangeHandler))
+	router.GET("/usecases", auth(usecasesHandler))
+	router.GET("/usecase/:id", auth(usecaseHandler))
+	router.GET("/robot/:id/calibration", auth(getCalibrationHandler))
 
 	return router
 }

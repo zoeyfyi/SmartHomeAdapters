@@ -8,8 +8,10 @@ import (
 	"log"
 	"net"
 	"os"
+	"strconv"
 
 	"github.com/golang/protobuf/ptypes/empty"
+	"github.com/golang/protobuf/ptypes/wrappers"
 	_ "github.com/lib/pq"
 	"github.com/mrbenshef/SmartHomeAdapters/infoserver/infoserver"
 	"github.com/mrbenshef/SmartHomeAdapters/switchserver/switchserver"
@@ -245,6 +247,136 @@ func (s *server) RangeRobot(ctx context.Context, request *infoserver.RangeReques
 	}
 
 	return &empty.Empty{}, nil
+}
+
+func (s *server) CalibrateRobot(ctx context.Context, request *infoserver.CalibrationRequest) (*infoserver.Robot, error) {
+	robot, err := s.GetRobot(ctx, &infoserver.RobotQuery{
+		Id: request.Id,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	switch robot.RobotType {
+	case "switch":
+		parameters := &switchserver.SwitchCalibrationParameters{
+			Id: request.Id,
+		}
+
+		// parse parameters
+		for _, param := range request.Parameters {
+			switch param.Name {
+			case "OnAngle":
+				angle, err := strconv.ParseInt(param.Value, 10, 64)
+				if err != nil {
+					log.Printf("Failed to parse OnAngle parameter value: %v", err)
+					return nil, status.Errorf(codes.InvalidArgument, "Expected integer for field OnAngle")
+				}
+				parameters.OnAngle = &wrappers.Int64Value{Value: angle}
+			case "OffAngle":
+				angle, err := strconv.ParseInt(param.Value, 10, 64)
+				if err != nil {
+					log.Printf("Failed to parse OffAngle parameter value: %v", err)
+					return nil, status.Errorf(codes.InvalidArgument, "Expected integer for field OffAngle")
+				}
+				parameters.OffAngle = &wrappers.Int64Value{Value: angle}
+			case "RestAngle":
+				angle, err := strconv.ParseInt(param.Value, 10, 64)
+				if err != nil {
+					log.Printf("Failed to parse RestAngle parameter value: %v", err)
+					return nil, status.Errorf(codes.InvalidArgument, "Expected integer for field RestAngle")
+				}
+				parameters.RestAngle = &wrappers.Int64Value{Value: angle}
+			case "IsCalibrated":
+				isCalibrated, err := strconv.ParseBool(param.Value)
+				if err != nil {
+					log.Printf("Failed to parse IsCalibrated parameter value: %v", err)
+					return nil, status.Errorf(codes.InvalidArgument, "Expected boolean for field IsCalibrated")
+				}
+				parameters.IsCalibrated = &wrappers.BoolValue{Value: isCalibrated}
+			default:
+				return nil, status.Errorf(codes.InvalidArgument, "\"%s\" is not a parameter", param.Name)
+			}
+		}
+
+		// send calibration request
+		_, err := s.SwitchClient.CalibrateSwitch(ctx, parameters)
+		if err != nil {
+			return nil, err
+		}
+	default:
+		return nil, status.Errorf(codes.FailedPrecondition, "Robot type \"%s\" is not recognized", robot.RobotType)
+	}
+
+	return s.GetRobot(ctx, &infoserver.RobotQuery{
+		Id: request.Id,
+	})
+}
+
+func (s *server) GetCalibration(ctx context.Context, request *infoserver.RobotQuery) (*infoserver.CalibrationParameters, error) {
+	robot, err := s.GetRobot(ctx, &infoserver.RobotQuery{
+		Id: request.Id,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	parameters := &infoserver.CalibrationParameters{}
+
+	switch robot.RobotType {
+	case "switch":
+		switchRobot, err := s.SwitchClient.GetSwitch(context.Background(), &switchserver.SwitchQuery{
+			Id: robot.Id,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		parameters.Parameters = append(parameters.Parameters, &infoserver.CalibrationParameter{
+			Name:  "OnAngle",
+			Value: fmt.Sprintf("%d", switchRobot.OnAngle),
+		})
+		parameters.Parameters = append(parameters.Parameters, &infoserver.CalibrationParameter{
+			Name:  "OffAngle",
+			Value: fmt.Sprintf("%d", switchRobot.OffAngle),
+		})
+		parameters.Parameters = append(parameters.Parameters, &infoserver.CalibrationParameter{
+			Name:  "RestAngle",
+			Value: fmt.Sprintf("%d", switchRobot.RestAngle),
+		})
+		parameters.Parameters = append(parameters.Parameters, &infoserver.CalibrationParameter{
+			Name:  "IsCalibrated",
+			Value: fmt.Sprintf("%t", switchRobot.IsCalibrated),
+		})
+	default:
+		return nil, status.Errorf(codes.FailedPrecondition, "Robot type \"%s\" is not recognized", robot.RobotType)
+	}
+
+	return parameters, nil
+}
+
+func (s *server) SetUsecase(ctx context.Context, request *infoserver.SetUsecaseRequest) (*infoserver.Robot, error) {
+	res, err := s.DB.Exec("UPDATE robots SET robotType = $1 WHERE serial = $2", request.Usecase, request.Id)
+	if err != nil {
+		log.Printf("Failed to update database: %v", err)
+		return nil, status.Newf(codes.Internal, "Failed to update usecase of robot \"%s\"", request.Id).Err()
+	}
+
+	// check 1 row was updated
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		log.Printf("Failed to get the amount of rows affected: %v", err)
+		return nil, status.Newf(codes.Internal, "Internal error").Err()
+	}
+	if rowsAffected != 1 {
+		log.Printf("Expected to update exactly 1 row, rows updated: %d\n", rowsAffected)
+		return nil, status.Newf(codes.Internal, "Internal error").Err()
+	}
+
+	return s.GetRobot(ctx, &infoserver.RobotQuery{
+		Id:     request.Id,
+		UserId: request.UserId,
+	})
 }
 
 func connectionStr() string {

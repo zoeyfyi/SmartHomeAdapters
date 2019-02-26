@@ -7,6 +7,9 @@ service InfoServer {
     rpc GetRobots (RobotsQuery) returns (stream Robot) {}
     rpc RegisterRobot (RegisterRobotQuery) returns (google.protobuf.Empty) {}
     rpc ToggleRobot (ToggleRequest) returns (google.protobuf.Empty) {}
+    rpc CalibrateRobot (CalibrationRequest) returns (Robot) {}
+    rpc GetCalibration(RobotQuery) returns (CalibrationParameters) {}
+    rpc SetUsecase(SetUsecaseRequest) returns (Robot) {}
     rpc RangeRobot(RangeRequest) returns (google.protobuf.Empty) {}
 }
 
@@ -58,4 +61,24 @@ message RangeStatus {
     int64 max = 1;
     int64 min = 2;
     int64 current = 3;
+}
+
+message CalibrationRequest {
+    string id = 1;
+    repeated CalibrationParameter parameters = 2;
+}
+
+message CalibrationParameter {
+    string name = 1;
+    string value = 2;
+}
+
+message CalibrationParameters {
+    repeated CalibrationParameter parameters = 1;
+}
+
+message SetUsecaseRequest {
+    string id = 1;
+    string userId = 3;
+    string usecase = 2;
 }

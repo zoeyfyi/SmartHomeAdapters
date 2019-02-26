@@ -194,6 +194,59 @@ func (s *server) SetSwitch(request *switchserver.SetSwitchRequest, stream switch
 	return nil
 }
 
+func (s *server) CalibrateSwitch(ctx context.Context, parameters *switchserver.SwitchCalibrationParameters) (*empty.Empty, error) {
+	fields := make([]string, 0, 4)
+	values := make([]interface{}, 0, 4)
+
+	if parameters.OnAngle != nil {
+		fields = append(fields, "OnAngle")
+		values = append(values, parameters.OnAngle.GetValue())
+	}
+	if parameters.OffAngle != nil {
+		fields = append(fields, "OffAngle")
+		values = append(values, parameters.OffAngle.GetValue())
+	}
+	if parameters.RestAngle != nil {
+		fields = append(fields, "RestAngle")
+		values = append(values, parameters.RestAngle.GetValue())
+	}
+	if parameters.IsCalibrated != nil {
+		fields = append(fields, "IsCalibrated")
+		values = append(values, parameters.IsCalibrated.GetValue())
+	}
+
+	// build query string
+	queryString := "UPDATE switches SET "
+	for i, field := range fields {
+		queryString += fmt.Sprintf("%s = $%d", field, i+1)
+		if i != len(fields)-1 {
+			queryString += ", "
+		}
+	}
+	queryString += fmt.Sprintf(" WHERE serial = $%d", len(fields)+1)
+	log.Printf("query string: %s, values: %v", queryString, append(values, parameters.Id))
+
+	// update database
+	res, err := s.DB.Exec(queryString, append(values, parameters.Id)...)
+	if err != nil {
+		log.Printf("Failed to update database: %v", err)
+		return nil, status.Newf(codes.Internal, "Failed to update calibration of switch \"%s\"", parameters.Id).Err()
+	}
+
+	// check 1 row was updated
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		log.Printf("Failed to get the amount of rows affected: %v", err)
+		return nil, status.Newf(codes.Internal, "Internal error").Err()
+	}
+	if rowsAffected != 1 {
+		log.Printf("Expected to update exactly 1 row, rows updated: %d\n", rowsAffected)
+		return nil, status.Newf(codes.Internal, "Internal error").Err()
+	}
+
+	return &empty.Empty{}, nil
+}
+
 func connectionStr() string {
 	if username == "" {
 		username = "postgres"

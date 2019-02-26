@@ -53,6 +53,10 @@ func (c mockSwitchClient) SetSwitch(_ context.Context, _ *switchserver.SetSwitch
 	return nil, nil
 }
 
+func (c mockSwitchClient) CalibrateSwitch(_ context.Context, _ *switchserver.SwitchCalibrationParameters, _ ...grpc.CallOption) (*empty.Empty, error) {
+	return nil, nil
+}
+
 func TestMain(m *testing.M) {
 	// connect to docker
 	pool, err := dockertest.NewPool("")
@@ -219,4 +223,26 @@ func TestGetRobotWithInvalidID(t *testing.T) {
 	if robot != nil {
 		t.Errorf("Robot was not nil")
 	}
+}
+
+func TestSetRobotUsecase(t *testing.T) {
+	ctx := context.Background()
+	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithDialer(bufDialer), grpc.WithInsecure())
+	if err != nil {
+		t.Fatalf("Failed to dial bufnet: %v", err)
+	}
+	defer conn.Close()
+
+	client := infoserver.NewInfoServerClient(conn)
+	_, err = client.SetUsecase(ctx, &infoserver.SetUsecaseRequest{
+		Id:      "qwerty",
+		UserId:  "1",
+		Usecase: "switch",
+	})
+
+	expectedError := "rpc error: code = NotFound desc = Switch does not exist"
+	if err.Error() != expectedError {
+		t.Fatalf("Expected error: %s, got error: %v", expectedError, err)
+	}
+
 }
