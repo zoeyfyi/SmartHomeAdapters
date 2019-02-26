@@ -65,6 +65,7 @@ message RangeStatus {
 
 message CalibrationRequest {
     string id = 1;
+    string userId = 3;
     repeated CalibrationParameter parameters = 2;
 }
 

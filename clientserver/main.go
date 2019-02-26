@@ -462,8 +462,10 @@ func setCalibrationHandler(w http.ResponseWriter, r *http.Request, ps httprouter
 	}
 
 	// build infoserver calibration request
-	request := &infoserver.CalibrationRequest{}
-	request.Id = id
+	request := &infoserver.CalibrationRequest{
+		Id:     id,
+		UserId: r.Context().Value("userId").(string),
+	}
 	for _, param := range parameters {
 		request.Parameters = append(request.Parameters, &infoserver.CalibrationParameter{
 			Name:  param.Name,

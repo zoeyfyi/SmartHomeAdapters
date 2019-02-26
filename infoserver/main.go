@@ -41,7 +41,7 @@ func (s *server) GetRobot(ctx context.Context, query *infoserver.RobotQuery) (*i
 		robotType string
 	)
 
-	log.Println("getting robot with id: " + query.Id)
+	log.Printf("getting robot with id: %s (user id: %s)", query.Id, query.UserId)
 
 	// query toggleRobots table for matching robots
 	row := s.DB.QueryRow("SELECT serial, nickname, robotType FROM robots WHERE serial = $1 AND registeredUserId = $2", query.Id, query.UserId)
@@ -251,7 +251,8 @@ func (s *server) RangeRobot(ctx context.Context, request *infoserver.RangeReques
 
 func (s *server) CalibrateRobot(ctx context.Context, request *infoserver.CalibrationRequest) (*infoserver.Robot, error) {
 	robot, err := s.GetRobot(ctx, &infoserver.RobotQuery{
-		Id: request.Id,
+		Id:     request.Id,
+		UserId: request.UserId,
 	})
 	if err != nil {
 		return nil, err
@@ -309,13 +310,15 @@ func (s *server) CalibrateRobot(ctx context.Context, request *infoserver.Calibra
 	}
 
 	return s.GetRobot(ctx, &infoserver.RobotQuery{
-		Id: request.Id,
+		Id:     request.Id,
+		UserId: request.UserId,
 	})
 }
 
 func (s *server) GetCalibration(ctx context.Context, request *infoserver.RobotQuery) (*infoserver.CalibrationParameters, error) {
 	robot, err := s.GetRobot(ctx, &infoserver.RobotQuery{
-		Id: request.Id,
+		Id:     request.Id,
+		UserId: request.UserId,
 	})
 	if err != nil {
 		return nil, err
