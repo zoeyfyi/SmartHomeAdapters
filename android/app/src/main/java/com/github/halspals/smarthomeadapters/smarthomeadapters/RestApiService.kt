@@ -73,6 +73,7 @@ interface RestApiService {
     fun robotRange(
         @Path("id") id: String,
         @Path("current") value: Int,
+        @Header("token") token: String,
         @Body map: Map<String, Boolean>
     ) : Call<ResponseBody>
 }

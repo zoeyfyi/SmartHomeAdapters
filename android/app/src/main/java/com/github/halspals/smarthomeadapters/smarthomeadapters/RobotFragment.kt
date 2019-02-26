@@ -194,7 +194,10 @@ class RobotFragment : Fragment() {
     private fun onSeek(value: Int) {
         Log.d(fTag, "onSeek($value)")
 
-        parent.restApiService.robotRange(robotId, value, mapOf()).enqueue(object : Callback<ResponseBody> {
+        parent.restApiService
+                .robotRange(robotId, value, parent.authToken, mapOf())
+                .enqueue(object : Callback<ResponseBody> {
+
             override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
                 if (response.isSuccessful) {
                     parent.toast("Success")
