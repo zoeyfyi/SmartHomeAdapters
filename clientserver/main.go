@@ -546,7 +546,7 @@ func rangeHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 
 	_, err = infoserverClient.RangeRobot(context.Background(), &infoserver.RangeRequest{
 		Id:     id,
-		UserId: r.Context().Value("userId"),
+		UserId: r.Context().Value("userId").(string),
 		Value:  rangeValue,
 	})
 	if err != nil {

@@ -41,7 +41,7 @@ func (s *server) GetRobot(ctx context.Context, query *infoserver.RobotQuery) (*i
 		robotType string
 	)
 
-	log.Printf("getting robot with id: %s (user id: %s)", query.Id, quer.UserId)
+	log.Printf("getting robot with id: %s (user id: %s)", query.Id, query.UserId)
 
 	// query toggleRobots table for matching robots
 	row := s.DB.QueryRow("SELECT serial, nickname, robotType FROM robots WHERE serial = $1 AND registeredUserId = $2", query.Id, query.UserId)
@@ -210,8 +210,8 @@ func (s *server) RangeRobot(ctx context.Context, request *infoserver.RangeReques
 	log.Printf("setting range robot %s\n", request.Id)
 
 	// get robot type
-	robot, err := s.GetRobot(ctx, &infoserver.RobotQuery {
-		Id: request.Id,
+	robot, err := s.GetRobot(ctx, &infoserver.RobotQuery{
+		Id:     request.Id,
 		UserId: request.UserId,
 	})
 	if err != nil {
@@ -242,8 +242,8 @@ func (s *server) RangeRobot(ctx context.Context, request *infoserver.RangeReques
 		}
 
 	default:
-		log.Printf("robot type \"%s\" is not a range robot", robotType)
-		return nil, status.Newf(codes.InvalidArgument, "Robot \"%s\" of type \"%s\" is not a range robot", request.Id, robotType).Err()
+		log.Printf("robot type \"%s\" is not a range robot", robot.RobotType)
+		return nil, status.Newf(codes.InvalidArgument, "Robot \"%s\" of type \"%s\" is not a range robot", request.Id, robot.RobotType).Err()
 	}
 
 	return &empty.Empty{}, nil
