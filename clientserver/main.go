@@ -550,22 +550,16 @@ func rangeHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 
 func auth(h httprouter.Handle) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-
 		token := r.Header.Get("token")
-
 		user, err := userserverClient.Authorize(context.Background(), &userserver.Token{Token: token})
 
-		if err != nil {
+		if err != nil || user.Id == "" {
 			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+			return
 		}
 
-		if user.Id != "" {
-			context.WithValue(r.Context(), "userId", user.Id)
-			h(w, r, ps)
-		} else {
-			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
-		}
-
+		context.WithValue(r.Context(), "userId", user.Id)
+		h(w, r, ps)
 	}
 }
 
