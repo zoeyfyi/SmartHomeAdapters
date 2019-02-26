@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/julienschmidt/httprouter"
 	"github.com/mrbenshef/SmartHomeAdapters/infoserver/infoserver"
 	"github.com/mrbenshef/SmartHomeAdapters/userserver/userserver"
@@ -106,6 +105,7 @@ type registerBody struct {
 }
 
 func registerHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+
 	var registerBody registerBody
 	err := json.NewDecoder(r.Body).Decode(&registerBody)
 	if err != nil {
@@ -113,6 +113,8 @@ func registerHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params
 		HTTPError(w, errors.New("Invalid JSON"))
 		return
 	}
+
+	log.Printf("Registering user with email: %s", registerBody.Email)
 
 	_, err = userserverClient.Register(context.Background(), &userserver.RegisterRequest{
 		Email:    registerBody.Email,
@@ -141,6 +143,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		return
 	}
 
+	log.Printf("Logging in user with email: %s", loginBody.Email)
 	token, err := userserverClient.Login(context.Background(), &userserver.LoginRequest{
 		Email:    loginBody.Email,
 		Password: loginBody.Password,
@@ -183,7 +186,10 @@ type RangeStatus struct {
 func (s RangeStatus) status() {}
 
 func robotsHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	stream, err := infoserverClient.GetRobots(context.Background(), &empty.Empty{})
+
+	userId := r.Context().Value("userId").(string)
+
+	stream, err := infoserverClient.GetRobots(context.Background(), &infoserver.RobotsQuery{UserId: userId})
 	if err != nil {
 		HTTPError(w, err)
 		return
@@ -215,7 +221,10 @@ func robotHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 	id := ps.ByName("id")
 	log.Printf("Getting robot with id %s", id)
 
-	robot, err := infoserverClient.GetRobot(context.Background(), &infoserver.RobotQuery{Id: id})
+	userId := r.Context().Value("userId").(string)
+
+	robot, err := infoserverClient.GetRobot(context.Background(), &infoserver.RobotQuery{Id: id, UserId: userId})
+
 	if err != nil {
 		HTTPError(w, err)
 		return
@@ -248,6 +257,39 @@ func robotHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 	})
 }
 
+type RegisterRobotBody struct {
+	Nickname  string `json:"nickname"`
+	RobotType string `json:"robotType"`
+}
+
+func registerRobotHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	id := ps.ByName("id")
+	log.Printf("Registering robot with id %s", id)
+
+	var registerRobotBody RegisterRobotBody
+
+	err := json.NewDecoder(r.Body).Decode(&registerRobotBody)
+
+	if err != nil {
+		log.Printf("Invalid register JSON: %v", err)
+		HTTPError(w, errors.New("Invalid JSON"))
+		return
+	}
+
+	userId := r.Context().Value("userId").(string)
+
+	registerQuery := infoserver.RegisterRobotQuery{Id: id, Nickname: registerRobotBody.Nickname, RobotType: registerRobotBody.RobotType, UserId: userId}
+
+	_, err = infoserverClient.RegisterRobot(context.Background(), &registerQuery)
+
+	if err != nil {
+		HTTPError(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+
+}
 func toggleHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	id := ps.ByName("id")
 	value := ps.ByName("value")
@@ -270,6 +312,49 @@ func toggleHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 	}
 }
 
+func rangeHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	id := ps.ByName("id")
+	value := ps.ByName("value")
+
+	log.Printf("Setting range robot %s", id)
+
+	rangeValue, err := strconv.ParseInt(value, 10, 64)
+	if err != nil {
+		HTTPError(w, errors.New("Toggle value is not a integer"))
+		return
+	}
+
+	_, err = infoserverClient.RangeRobot(context.Background(), &infoserver.RangeRequest{
+		Id:    id,
+		Value: rangeValue,
+	})
+	if err != nil {
+		HTTPError(w, err)
+		return
+	}
+}
+
+func auth(h httprouter.Handle) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+
+		token := r.Header.Get("token")
+
+		user, err := userserverClient.Authorize(context.Background(), &userserver.Token{Token: token})
+
+		if err != nil {
+			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+		}
+
+		if user.Id != "" {
+			context.WithValue(r.Context(), "userId", user.Id)
+			h(w, r, ps)
+		} else {
+			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+		}
+
+	}
+}
+
 func createRouter() *httprouter.Router {
 	router := httprouter.New()
 
@@ -277,9 +362,11 @@ func createRouter() *httprouter.Router {
 	router.GET("/ping", pingHandler)
 	router.POST("/register", registerHandler)
 	router.POST("/login", loginHandler)
-	router.GET("/robots", robotsHandler)
-	router.GET("/robot/:id", robotHandler)
-	router.PATCH("/robot/:id/toggle/:value", toggleHandler)
+	router.POST("/robot/:id", auth(registerRobotHandler))
+	router.GET("/robots", auth(robotsHandler))
+	router.GET("/robot/:id", auth(robotHandler))
+	router.PATCH("/robot/:id/toggle/:value", auth(toggleHandler))
+	router.PATCH("/robot/:id/range/:value", auth(rangeHandler))
 
 	return router
 }
