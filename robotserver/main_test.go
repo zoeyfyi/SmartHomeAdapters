@@ -61,11 +61,10 @@ func TestConnectToWebSocket(t *testing.T) {
 	s := newServer(t)
 	defer s.Server.Close()
 
-	_, _, err := websocket.DefaultDialer.Dial(s.URL+"/connect", nil)
+	_, _, err := websocket.DefaultDialer.Dial(s.URL+"/connect/testrobot", nil)
 	if err != nil {
 		t.Fatalf("Error dialing: %v", err)
 	}
-	defer func() { socket = nil }()
 }
 
 func TestSendLEDCommand(t *testing.T) {
@@ -73,18 +72,14 @@ func TestSendLEDCommand(t *testing.T) {
 		ledRequest      *robotserver.LEDRequest
 		expectedMessage string
 	}{
-		{&robotserver.LEDRequest{On: true}, "led on"},
-		{&robotserver.LEDRequest{On: false}, "led off"},
+		{&robotserver.LEDRequest{RobotId: "testrobot", On: true}, "led on"},
+		{&robotserver.LEDRequest{RobotId: "testrobot", On: false}, "led off"},
 	}
 
 	s := newServer(t)
 	defer s.Server.Close()
 
-	ws, _, _ := websocket.DefaultDialer.Dial(s.URL+"/connect", nil)
-	// NOTE: we need to clear the socket in main.go otherwise it may not close in time
-	// before the next test. Once we have add handling for multiple robots we can replace
-	// this with `ws.close()`
-	defer func() { socket = nil }()
+	ws, _, _ := websocket.DefaultDialer.Dial(s.URL+"/connect/testrobot", nil)
 
 	for _, r := range requests {
 		ctx := context.Background()
@@ -97,18 +92,18 @@ func TestSendLEDCommand(t *testing.T) {
 		client := robotserver.NewRobotServerClient(conn)
 		_, err = client.SetLED(context.Background(), r.ledRequest)
 		if err != nil {
-			t.Errorf("Error with request: %v", err)
+			t.Fatalf("Error with request: %v", err)
 		}
 
 		typ, msg, err := ws.ReadMessage()
 		if err != nil {
-			t.Errorf("Error reading websocket message: %v", err)
+			t.Fatalf("Error reading websocket message: %v", err)
 		}
 		if typ != websocket.TextMessage {
-			t.Errorf("Expected websocket.TextMessage type, got type: %v", typ)
+			t.Fatalf("Expected websocket.TextMessage type, got type: %v", typ)
 		}
 		if string(msg) != r.expectedMessage {
-			t.Errorf("Expected message: \"%s\", got message: \"%s\"", r.expectedMessage, msg)
+			t.Fatalf("Expected message: \"%s\", got message: \"%s\"", r.expectedMessage, msg)
 		}
 	}
 }
@@ -121,22 +116,22 @@ func TestUnavailableWhenRobotNotConnected(t *testing.T) {
 	}
 	defer conn.Close()
 
-	expectedError := "rpc error: code = Unavailable desc = Robot not connected"
+	expectedError := "rpc error: code = Unavailable desc = Robot \"notconnected\" is not connected"
 
 	client := robotserver.NewRobotServerClient(conn)
-	_, err = client.SetLED(context.Background(), &robotserver.LEDRequest{On: false})
+	_, err = client.SetLED(context.Background(), &robotserver.LEDRequest{RobotId: "notconnected", On: false})
 	if err.Error() != expectedError {
-		t.Errorf("Expected error: \"%s\", got error: %s", expectedError, err.Error())
+		t.Fatalf("Expected error: \"%s\", got error: %s", expectedError, err.Error())
 	}
 
-	_, err = client.SetLED(context.Background(), &robotserver.LEDRequest{On: true})
+	_, err = client.SetLED(context.Background(), &robotserver.LEDRequest{RobotId: "notconnected", On: true})
 	if err.Error() != expectedError {
-		t.Errorf("Expected error: \"%s\", got error: %s", expectedError, err.Error())
+		t.Fatalf("Expected error: \"%s\", got error: %s", expectedError, err.Error())
 	}
 
-	_, err = client.SetServo(context.Background(), &robotserver.ServoRequest{Angle: 0})
+	_, err = client.SetServo(context.Background(), &robotserver.ServoRequest{RobotId: "notconnected", Angle: 0})
 	if err.Error() != expectedError {
-		t.Errorf("Expected error: \"%s\", got error: %s", expectedError, err.Error())
+		t.Fatalf("Expected error: \"%s\", got error: %s", expectedError, err.Error())
 	}
 }
 
@@ -145,19 +140,15 @@ func TestSendServoCommand(t *testing.T) {
 		servoRequest    *robotserver.ServoRequest
 		expectedMessage string
 	}{
-		{&robotserver.ServoRequest{Angle: 0}, "servo 0"},
-		{&robotserver.ServoRequest{Angle: 90}, "servo 90"},
-		{&robotserver.ServoRequest{Angle: 180}, "servo 180"},
+		{&robotserver.ServoRequest{RobotId: "testrobot", Angle: 0}, "servo 0"},
+		{&robotserver.ServoRequest{RobotId: "testrobot", Angle: 90}, "servo 90"},
+		{&robotserver.ServoRequest{RobotId: "testrobot", Angle: 180}, "servo 180"},
 	}
 
 	s := newServer(t)
 	defer s.Server.Close()
 
-	ws, _, _ := websocket.DefaultDialer.Dial(s.URL+"/connect", nil)
-	// NOTE: we need to clear the socket in main.go otherwise it may not close in time
-	// before the next test. Once we have add handling for multiple robots we can replace
-	// this with `ws.close()`
-	defer func() { socket = nil }()
+	ws, _, _ := websocket.DefaultDialer.Dial(s.URL+"/connect/testrobot", nil)
 
 	for _, r := range requests {
 		ctx := context.Background()
@@ -170,18 +161,18 @@ func TestSendServoCommand(t *testing.T) {
 		client := robotserver.NewRobotServerClient(conn)
 		_, err = client.SetServo(context.Background(), r.servoRequest)
 		if err != nil {
-			t.Errorf("Error with request: %v", err)
+			t.Fatalf("Error with request: %v", err)
 		}
 
 		typ, msg, err := ws.ReadMessage()
 		if err != nil {
-			t.Errorf("Error reading websocket message: %v", err)
+			t.Fatalf("Error reading websocket message: %v", err)
 		}
 		if typ != websocket.TextMessage {
-			t.Errorf("Expected websocket.TextMessage type, got type: %v", typ)
+			t.Fatalf("Expected websocket.TextMessage type, got type: %v", typ)
 		}
 		if string(msg) != r.expectedMessage {
-			t.Errorf("Expected message: \"%s\", got message: \"%s\"", r.expectedMessage, msg)
+			t.Fatalf("Expected message: \"%s\", got message: \"%s\"", r.expectedMessage, msg)
 		}
 	}
 }
