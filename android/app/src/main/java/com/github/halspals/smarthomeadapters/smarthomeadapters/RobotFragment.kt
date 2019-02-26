@@ -53,11 +53,7 @@ class RobotFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-<<<<<<< HEAD
-        parent = (activity as MainActivity)
-=======
         parent = activity as MainActivity
->>>>>>> robot-registration
 
         progressBar = view.findViewById(R.id.progress_bar)
         switch = view.findViewById(R.id.robot_switch)
@@ -76,13 +72,9 @@ class RobotFragment : Fragment() {
      * Fetches the robot with id of [robotId] and calls [onReceiveRobot]
      */
     private fun fetchRobot() {
-<<<<<<< HEAD
-        parent.restApiService.getRobot(robotId).enqueue(object: Callback<Robot> {
-=======
         parent.restApiService
                 .getRobot(robotId, parent.authToken)
                 .enqueue(object: Callback<Robot> {
->>>>>>> robot-registration
 
             override fun onResponse(call: Call<Robot>, response: Response<Robot>) {
                 val robot = response.body()
@@ -167,14 +159,10 @@ class RobotFragment : Fragment() {
         Log.d(fTag, "onSwitch($isOn)")
 
         // Send the update to the server
-<<<<<<< HEAD
-        parent.restApiService.robotToggle(robotId, isOn, mapOf()).enqueue(object: Callback<ResponseBody> {
-=======
         parent.restApiService
                 .robotToggle(robotId, isOn, parent.authToken, mapOf())
                 .enqueue(object: Callback<ResponseBody> {
 
->>>>>>> robot-registration
             override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
                 if (response.isSuccessful) {
                     parent.toast("Success")
