@@ -554,12 +554,13 @@ func auth(h httprouter.Handle) httprouter.Handle {
 		user, err := userserverClient.Authorize(context.Background(), &userserver.Token{Token: token})
 
 		if err != nil || user.Id == "" {
+			log.Printf("Authentication error: %v", err)
 			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 			return
 		}
 
-		context.WithValue(r.Context(), "userId", user.Id)
-		h(w, r, ps)
+		log.Printf("User ID is: %s", user.Id)
+		h(w, r.WithContext(context.WithValue(nil, "userId", user.Id)), ps)
 	}
 }
 
