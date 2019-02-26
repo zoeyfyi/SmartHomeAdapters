@@ -194,8 +194,9 @@ class RobotFragment : Fragment() {
     private fun onSeek(value: Int) {
         Log.d(fTag, "onSeek($value)")
 
+        // TODO make more elegant solution than just going K->C by removing 273
         parent.restApiService
-                .robotRange(robotId, value, parent.authToken, mapOf())
+                .robotRange(robotId, value-273, parent.authToken, mapOf())
                 .enqueue(object : Callback<ResponseBody> {
 
             override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
