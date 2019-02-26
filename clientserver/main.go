@@ -378,6 +378,7 @@ var usecases = map[string]usecase{
 			calibrationParameter{
 				Name:        "Minimum tempreture",
 				Description: "Minimum tempreture of the thermostat",
+				Type:        "int",
 				Details: intParameter{
 					Min:     200,
 					Max:     400,
@@ -387,6 +388,7 @@ var usecases = map[string]usecase{
 			calibrationParameter{
 				Name:        "Maximum tempreture",
 				Description: "Maximum tempreture of the thermostat",
+				Type:        "int",
 				Details: intParameter{
 					Min:     200,
 					Max:     400,
@@ -396,6 +398,7 @@ var usecases = map[string]usecase{
 			calibrationParameter{
 				Name:        "Minimum tempreture angle",
 				Description: "Angle of the minimum tempreture",
+				Type:        "int",
 				Details: intParameter{
 					Min:     0,
 					Max:     180,
@@ -405,6 +408,7 @@ var usecases = map[string]usecase{
 			calibrationParameter{
 				Name:        "Maximum tempreture angle",
 				Description: "Angle of the maximum tempreture",
+				Type:        "int",
 				Details: intParameter{
 					Min:     0,
 					Max:     180,
