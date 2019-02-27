@@ -146,6 +146,16 @@
 	\textbf{Include any quantitative data you have collected (this can be a graph/table with a few words)}
 	\\ \hline
 	\vtop to 135mm{
+		\begin{tabular}{ | c | c | }
+			\hline
+			Mean NodeMCU powerdraw when connected to an AP & 61.5mA \\
+			Mean NodeMCU powerdraw when not connected to an AP &  93mA \\
+			Mean NodeMCU powerdraw when in deep sleep mode & 0.1mA \\
+			\hline
+		\end{tabular}
+
+		Using a 3000mAh battery, we estimate that when using the board in WiFi mode it would last about a day.
+		If we manage to get the board to be in deep sleep 80\% of the time, this increases to ~15 days.
   }
   \\
   \hline
