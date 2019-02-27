@@ -302,8 +302,9 @@ func toggleHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 	}
 
 	_, err = infoserverClient.ToggleRobot(context.Background(), &infoserver.ToggleRequest{
-		Id:    id,
-		Value: toggleValue,
+		Id:     id,
+		UserId: r.Context().Value("userId").(string),
+		Value:  toggleValue,
 	})
 	if err != nil {
 		HTTPError(w, err)
@@ -545,8 +546,9 @@ func rangeHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 	}
 
 	_, err = infoserverClient.RangeRobot(context.Background(), &infoserver.RangeRequest{
-		Id:    id,
-		Value: rangeValue,
+		Id:     id,
+		UserId: r.Context().Value("userId").(string),
+		Value:  rangeValue,
 	})
 	if err != nil {
 		HTTPError(w, err)

@@ -88,7 +88,7 @@ func (s *server) GetRobot(ctx context.Context, query *infoserver.RobotQuery) (*i
 			Id:            serial,
 			Nickname:      nickname,
 			RobotType:     robotType,
-			InterfaceType: "toggle",
+			InterfaceType: "range",
 			RobotStatus: &infoserver.Robot_RangeStatus{
 				RangeStatus: &infoserver.RangeStatus{
 					Min:     thermostat.MinTempreture,
@@ -167,16 +167,16 @@ func (s *server) ToggleRobot(ctx context.Context, request *infoserver.ToggleRequ
 	log.Printf("toggling robot %s\n", request.Id)
 
 	// get robot type
-	var robotType string
-	row := s.DB.QueryRow("SELECT robotType FROM toggleRobots WHERE serial = $1 AND registeredUserId = $2", request.Id, request.UserId)
-	err := row.Scan(&robotType)
+	robot, err := s.GetRobot(ctx, &infoserver.RobotQuery{
+		Id:     request.Id,
+		UserId: request.UserId,
+	})
 	if err != nil {
-		log.Printf("Failed to retrive list of robots: %v", err)
 		return nil, err
 	}
 
 	// forward request to relevent service
-	switch robotType {
+	switch robot.RobotType {
 	case "switch":
 		stream, err := s.SwitchClient.SetSwitch(context.Background(), &switchserver.SetSwitchRequest{
 			Id:    request.Id,
@@ -199,8 +199,8 @@ func (s *server) ToggleRobot(ctx context.Context, request *infoserver.ToggleRequ
 		}
 
 	default:
-		log.Printf("robot type \"%s\" is not toggelable", robotType)
-		return nil, status.Newf(codes.InvalidArgument, "Robot \"%s\" of type \"%s\" cannot be toggled", request.Id, robotType).Err()
+		log.Printf("robot type \"%s\" is not toggelable", robot.RobotType)
+		return nil, status.Newf(codes.InvalidArgument, "Robot \"%s\" of type \"%s\" cannot be toggled", request.Id, robot.RobotType).Err()
 	}
 
 	return &empty.Empty{}, nil
@@ -210,16 +210,16 @@ func (s *server) RangeRobot(ctx context.Context, request *infoserver.RangeReques
 	log.Printf("setting range robot %s\n", request.Id)
 
 	// get robot type
-	var robotType string
-	row := s.DB.QueryRow("SELECT robotType FROM rangeRobots WHERE serial = $1", request.Id)
-	err := row.Scan(&robotType)
+	robot, err := s.GetRobot(ctx, &infoserver.RobotQuery{
+		Id:     request.Id,
+		UserId: request.UserId,
+	})
 	if err != nil {
-		log.Printf("Failed to retrive the robot: %v", err)
 		return nil, err
 	}
 
 	// forward request to relevent service
-	switch robotType {
+	switch robot.RobotType {
 	case "thermostat":
 		stream, err := s.ThermostatClient.SetThermostat(context.Background(), &thermostatserver.SetThermostatRequest{
 			Id:         request.Id,
@@ -242,8 +242,8 @@ func (s *server) RangeRobot(ctx context.Context, request *infoserver.RangeReques
 		}
 
 	default:
-		log.Printf("robot type \"%s\" is not a range robot", robotType)
-		return nil, status.Newf(codes.InvalidArgument, "Robot \"%s\" of type \"%s\" is not a range robot", request.Id, robotType).Err()
+		log.Printf("robot type \"%s\" is not a range robot", robot.RobotType)
+		return nil, status.Newf(codes.InvalidArgument, "Robot \"%s\" of type \"%s\" is not a range robot", request.Id, robot.RobotType).Err()
 	}
 
 	return &empty.Empty{}, nil

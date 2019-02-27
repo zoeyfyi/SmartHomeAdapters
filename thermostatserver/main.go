@@ -103,7 +103,8 @@ func (s *server) SetThermostat(request *thermostatserver.SetThermostatRequest, s
 
 	// set servo
 	_, err = s.RobotClient.SetServo(context.Background(), &robotserver.ServoRequest{
-		Angle: int64(math.Floor(angle)),
+		RobotId: thermostat.Id,
+		Angle:   int64(math.Floor(angle)),
 	})
 	if err != nil {
 		return err
