@@ -146,6 +146,8 @@
 	\textbf{Include any quantitative data you have collected (this can be a graph/table with a few words)}
 	\\ \hline
 	\vtop to 135mm{
+		Power draw analysis:
+
 		\begin{tabular}{ | c | c | }
 			\hline
 			Mean NodeMCU powerdraw when connected to an AP & 61.5mA \\
@@ -156,6 +158,26 @@
 
 		Using a 3000mAh battery, we estimate that when using the board in WiFi mode it would last about a day.
 		If we manage to get the board to be in deep sleep 80\% of the time, this increases to ~15 days.
+		We also plan on switching to a more minimal ESP setup, which will draw less current than the NodeMCU board.
+
+		\vspace{2mm}
+		
+		Comparison of average server response times, tested over 1hr with JMeter, from last demo and this one:
+
+		\begin{tabular}{ | c | c | c |}
+			\hline
+			Task & This Demo & Last Demo \\
+			\hline
+			Login request & 653ms & 1992ms \\
+			Listing all robots & 259ms & 48ms \\
+			Getting one robot & 254ms & 50ms \\
+			Calibration request & 251ms & N/A \\
+			\hline
+		\end{tabular}
+
+		The faster login response time can be attributed to having upgraded the server RAM and switching to gRPC for intra-server message passing.
+		The slower response times for the other tasks is due to the fact that they now require authenticating the user.
+
   }
   \\
   \hline
