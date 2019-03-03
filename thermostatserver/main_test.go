@@ -136,6 +136,7 @@ func TestSetThermostat(t *testing.T) {
 				Unit:       "kelvin",
 			},
 			expectedServoRequest: &robotserver.ServoRequest{
+				RobotId: "qwerty",
 				Angle: 30,
 			},
 		},
@@ -146,6 +147,7 @@ func TestSetThermostat(t *testing.T) {
 				Unit:       "kelvin",
 			},
 			expectedServoRequest: &robotserver.ServoRequest{
+				RobotId: "qwerty",
 				Angle: 100,
 			},
 		},
@@ -156,6 +158,7 @@ func TestSetThermostat(t *testing.T) {
 				Unit:       "kelvin",
 			},
 			expectedServoRequest: &robotserver.ServoRequest{
+				RobotId: "qwerty",
 				Angle: 170,
 			},
 		},
