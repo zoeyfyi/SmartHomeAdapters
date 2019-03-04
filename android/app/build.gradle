@@ -48,4 +48,11 @@ dependencies {
 
     // ZXING dependency
     implementation 'com.journeyapps:zxing-android-embedded:3.6.0'
+
+    // Dependency for TriState Toggle Button
+    implementation 'com.github.BeppiMenozzi:TriStateToggleButton:1.1.4'
+
+    // Dependency for Croller (fancy circular seekbar)
+    implementation 'com.sdsmdg.harjot:croller:1.0.7'
+
 }

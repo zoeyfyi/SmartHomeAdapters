@@ -8,6 +8,9 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import com.github.halspals.smarthomeadapters.smarthomeadapters.model.Robot
+import com.sdsmdg.harjot.crollerTest.Croller
+import com.sdsmdg.harjot.crollerTest.OnCrollerChangeListener
+import it.beppi.tristatetogglebutton_library.TriStateToggleButton
 import kotlinx.android.synthetic.main.fragment_robot.*
 import okhttp3.ResponseBody
 import org.jetbrains.anko.design.snackbar
@@ -26,8 +29,8 @@ class RobotFragment : Fragment() {
     private var robot: Robot? = null
 
     private lateinit var progressBar: ProgressBar
-    private lateinit var switch: Switch
-    private lateinit var seekBar: SeekBar
+    private lateinit var switch: TriStateToggleButton
+    private lateinit var seekBar: Croller
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -116,10 +119,35 @@ class RobotFragment : Fragment() {
         when(robot.robotInterfaceType) {
             Robot.TYPE_TOGGLE -> {
                 switch.visibility = View.VISIBLE
-                switch.isChecked = robot.robotStatus.value
+                switch.toggleStatus = if (robot.robotStatus.value) {
+                    TriStateToggleButton.ToggleStatus.on
+                } else {
+                    TriStateToggleButton.ToggleStatus.off
+                }
 
-                switch.setOnCheckedChangeListener { _, isOn ->
-                    onSwitch(isOn)
+                switch.setOnToggleChanged { toggleStatus, _, _ ->
+                    Log.d(fTag, "[switch onToggle]: $toggleStatus")
+
+                    when (toggleStatus) {
+                        null -> Log.e(fTag, "Switch got null toggleStatus")
+                        TriStateToggleButton.ToggleStatus.on -> {
+                            onSwitch(
+                                    true,
+                                    TriStateToggleButton.ToggleStatus.on,
+                                    TriStateToggleButton.ToggleStatus.off)
+                            switch.toggleStatus = TriStateToggleButton.ToggleStatus.mid
+                        }
+                        TriStateToggleButton.ToggleStatus.off -> {
+                            onSwitch(
+                                    false,
+                                    TriStateToggleButton.ToggleStatus.off,
+                                    TriStateToggleButton.ToggleStatus.on)
+                            switch.toggleStatus = TriStateToggleButton.ToggleStatus.mid
+                        }
+                        TriStateToggleButton.ToggleStatus.mid -> {
+                            Log.e(fTag, "Switch should not get event for toggle set to mid")
+                        }
+                    }
                 }
             }
 
@@ -127,18 +155,18 @@ class RobotFragment : Fragment() {
                 seekBar.visibility = View.VISIBLE
                 seekBar.max = robot.robotStatus.max - robot.robotStatus.min
                 seekBar.progress = robot.robotStatus.current - robot.robotStatus.min
-                seek_bar_text_view.text = robot.robotStatus.current.toString()
+                seekBar.label = robot.robotStatus.current.toString()
 
-                seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-                    override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {}
-                    override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-                    override fun onStopTrackingTouch(seekBar: SeekBar?) {
-                        if (seekBar == null) {
-                            Log.w(fTag, "[onStopTrackingTouch] got null seek bar")
+                seekBar.setOnCrollerChangeListener(object : OnCrollerChangeListener {
+                    override fun onProgressChanged(croller: Croller?, progress: Int) {}
+                    override fun onStartTrackingTouch(croller: Croller?) {}
+                    override fun onStopTrackingTouch(croller: Croller?) {
+                        if (croller == null) {
+                            Log.w(fTag, "[onStopTrackingTouch] got null Croller")
                         } else {
-                            val seekValue = seekBar.progress + robot.robotStatus.min
+                            val seekValue = croller.progress + robot.robotStatus.min
                             onSeek(seekValue)
-                            seek_bar_text_view.text = seekValue.toString()
+                            croller.label = seekValue.toString()
                         }
                     }
                 })
@@ -154,9 +182,16 @@ class RobotFragment : Fragment() {
      * onSwitch is called whenever the switch changes states
      *
      * @param isOn whether the switch is on/off
+     * @param goToSuccess the toggle status to go to for the switch on success
+     * @param goToFailure the toggle status to go to for the switch on failure
      */
-    private fun onSwitch(isOn: Boolean) {
+    private fun onSwitch(
+            isOn: Boolean,
+            goToSuccess: TriStateToggleButton.ToggleStatus,
+            goToFailure: TriStateToggleButton.ToggleStatus)
+    {
         Log.d(fTag, "onSwitch($isOn)")
+        progressBar.visibility = View.VISIBLE
 
         // Send the update to the server
         parent.restApiService
@@ -164,12 +199,16 @@ class RobotFragment : Fragment() {
                 .enqueue(object: Callback<ResponseBody> {
 
             override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
+                progressBar.visibility = View.INVISIBLE
+
                 if (response.isSuccessful) {
                     parent.toast("Success")
                     Log.d(fTag, "Server accepted setting switch to $isOn")
+                    switch.toggleStatus = goToSuccess
                 } else {
                     val error = RestApiService.extractErrorFromResponse(response)
                     Log.e(fTag, "Setting the switch was unsuccessful, error: $error")
+                    switch.toggleStatus = goToFailure
                     if (error != null) {
                         snackbar_layout.snackbar(error)
                     }
@@ -177,8 +216,10 @@ class RobotFragment : Fragment() {
             }
 
             override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                progressBar.visibility = View.INVISIBLE
                 val error = t.message
                 Log.e(fTag, "onSwitch($isOn) FAILED, error: $error")
+                switch.toggleStatus = goToFailure
                 if (error != null) {
                     snackbar_layout.snackbar(error)
                 }
@@ -193,6 +234,7 @@ class RobotFragment : Fragment() {
      */
     private fun onSeek(value: Int) {
         Log.d(fTag, "onSeek($value)")
+        progressBar.visibility = View.VISIBLE
 
         // TODO make more elegant solution than just going K->C by removing 273
         parent.restApiService
@@ -200,6 +242,7 @@ class RobotFragment : Fragment() {
                 .enqueue(object : Callback<ResponseBody> {
 
             override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
+                progressBar.visibility = View.INVISIBLE
                 if (response.isSuccessful) {
                     parent.toast("Success")
                     Log.d(fTag, "Server accepted setting range to $value")
@@ -213,6 +256,7 @@ class RobotFragment : Fragment() {
             }
 
             override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                progressBar.visibility = View.INVISIBLE
                 val error = t.message
                 Log.e(fTag, "onSeek($value) FAILED, error: $error")
                 if (error != null) {
