@@ -1,7 +1,5 @@
 package com.github.halspals.smarthomeadapters.smarthomeadapters
 
-
-import android.content.Context
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.util.Log
@@ -10,7 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import com.github.halspals.smarthomeadapters.smarthomeadapters.model.Robot
-import kotlinx.android.synthetic.main.activity_authentication.*
+import kotlinx.android.synthetic.main.fragment_robot.*
 import okhttp3.ResponseBody
 import org.jetbrains.anko.design.snackbar
 import org.jetbrains.anko.toast
@@ -116,7 +114,7 @@ class RobotFragment : Fragment() {
         seekBar.visibility = View.INVISIBLE
 
         when(robot.robotInterfaceType) {
-            "toggle" -> {
+            Robot.TYPE_TOGGLE -> {
                 switch.visibility = View.VISIBLE
                 switch.isChecked = robot.robotStatus.value
 
@@ -124,19 +122,30 @@ class RobotFragment : Fragment() {
                     onSwitch(isOn)
                 }
             }
-            "range" -> {
+
+            Robot.TYPE_RANGE -> {
                 seekBar.visibility = View.VISIBLE
-                seekBar.max = robot.robotStatus.max
-                seekBar.min = robot.robotStatus.min
-                seekBar.progress = robot.robotStatus.current
+                seekBar.max = robot.robotStatus.max - robot.robotStatus.min
+                seekBar.progress = robot.robotStatus.current - robot.robotStatus.min
+                seek_bar_text_view.text = robot.robotStatus.current.toString()
 
                 seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-                    override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                        onSeek(progress)
-                    }
+                    override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {}
                     override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-                    override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+                    override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                        if (seekBar == null) {
+                            Log.w(fTag, "[onStopTrackingTouch] got null seek bar")
+                        } else {
+                            val seekValue = seekBar.progress + robot.robotStatus.min
+                            onSeek(seekValue)
+                            seek_bar_text_view.text = seekValue.toString()
+                        }
+                    }
                 })
+            }
+
+            else -> {
+                TODO("No other robot interface types exepcted")
             }
         }
     }
@@ -156,7 +165,7 @@ class RobotFragment : Fragment() {
 
             override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
                 if (response.isSuccessful) {
-                    (activity as Context).toast("Success")
+                    parent.toast("Success")
                     Log.d(fTag, "Server accepted setting switch to $isOn")
                 } else {
                     val error = RestApiService.extractErrorFromResponse(response)
@@ -184,7 +193,33 @@ class RobotFragment : Fragment() {
      */
     private fun onSeek(value: Int) {
         Log.d(fTag, "onSeek($value)")
-        // TODO: send update to server
+
+        // TODO make more elegant solution than just going K->C by removing 273
+        parent.restApiService
+                .robotRange(robotId, value-273, parent.authToken, mapOf())
+                .enqueue(object : Callback<ResponseBody> {
+
+            override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
+                if (response.isSuccessful) {
+                    parent.toast("Success")
+                    Log.d(fTag, "Server accepted setting range to $value")
+                } else {
+                    val error = RestApiService.extractErrorFromResponse(response)
+                    Log.e(fTag, "Setting the range was unsuccessful, error: $error")
+                    if (error != null) {
+                        snackbar_layout.snackbar(error)
+                    }
+                }
+            }
+
+            override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                val error = t.message
+                Log.e(fTag, "onSeek($value) FAILED, error: $error")
+                if (error != null) {
+                    snackbar_layout.snackbar(error)
+                }
+            }
+        })
     }
 
 }
