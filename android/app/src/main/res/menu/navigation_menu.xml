@@ -3,17 +3,17 @@
 
     <item
         android:id="@+id/robots_nav"
-        android:icon="@drawable/temp_art"
+        android:icon="@drawable/basic_robots_art"
         android:title="@string/nav_bar_robots"/>
 
     <item
         android:id="@+id/triggers_nav"
-        android:icon="@drawable/temp_art"
+        android:icon="@drawable/basic_triggers_art"
         android:title="@string/nav_bar_triggers"/>
 
     <item
         android:id="@+id/settings_nav"
-        android:icon="@drawable/temp_art"
+        android:icon="@drawable/basic_settings_art"
         android:title="@string/nav_bar_settings"/>
 
 </menu>
