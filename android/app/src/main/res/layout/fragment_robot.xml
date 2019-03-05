@@ -6,8 +6,6 @@
                                              android:layout_height="match_parent"
                                              tools:context=".RobotFragment" android:id="@+id/frameLayout">
 
-    <!-- TODO: Update blank fragment layout -->
-
     <it.beppi.tristatetogglebutton_library.TriStateToggleButton
             android:layout_width="wrap_content"
             android:layout_height="28dp"
@@ -16,7 +14,10 @@
             android:layout_marginEnd="8dp" app:layout_constraintStart_toStartOf="parent"
             android:layout_marginStart="8dp" android:layout_marginBottom="8dp"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:tbIsMidSelectable="false"/>
+            app:tbIsMidSelectable="false"
+            app:tbOffColor="@color/colorOff"
+            app:tbOnColor="@color/colorOn"
+            app:tbMidColor="@color/colorIntermediate"/>
 
     <com.sdsmdg.harjot.crollerTest.Croller
         android:id="@+id/robot_seek_bar"
@@ -27,18 +28,18 @@
         android:layout_marginTop="32dp"
         android:layout_marginEnd="32dp"
         android:layout_marginBottom="32dp"
-        app:back_circle_color="#EDEDED"
-        app:indicator_color="#0B3C49"
+        app:back_circle_color="@color/colorPrimary"
+        app:indicator_color="@color/colorPrimaryDark"
         app:indicator_width="10"
         app:is_continuous="true"
-        app:label_color="#000000"
+        app:label_color="@color/colorOn"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:main_circle_color="#FFFFFF"
         app:max="1000"
-        app:progress_primary_color="#0B3C49"
+        app:progress_primary_color="@color/colorPrimaryDark"
         app:progress_secondary_color="#EEEEEE" />
 
     <ProgressBar

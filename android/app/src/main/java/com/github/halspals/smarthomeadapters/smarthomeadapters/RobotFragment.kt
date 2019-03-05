@@ -32,6 +32,9 @@ class RobotFragment : Fragment() {
     private lateinit var switch: TriStateToggleButton
     private lateinit var seekBar: Croller
 
+    private var intermediateColor: Int? = null
+    private var finishedColor: Int? = null
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -61,6 +64,9 @@ class RobotFragment : Fragment() {
         progressBar = view.findViewById(R.id.progress_bar)
         switch = view.findViewById(R.id.robot_switch)
         seekBar = view.findViewById(R.id.robot_seek_bar)
+
+        intermediateColor = view.context.getColor(R.color.colorIntermediate)
+        finishedColor = view.context.getColor(R.color.colorOn)
 
         // set initial visibility
         progressBar.visibility = View.VISIBLE
@@ -152,10 +158,10 @@ class RobotFragment : Fragment() {
             }
 
             Robot.TYPE_RANGE -> {
-                seekBar.visibility = View.VISIBLE
                 seekBar.max = robot.robotStatus.max - robot.robotStatus.min
                 seekBar.progress = robot.robotStatus.current - robot.robotStatus.min
                 seekBar.label = robot.robotStatus.current.toString()
+                seekBar.visibility = View.VISIBLE
 
                 seekBar.setOnCrollerChangeListener(object : OnCrollerChangeListener {
                     override fun onProgressChanged(croller: Croller?, progress: Int) {}
@@ -166,7 +172,6 @@ class RobotFragment : Fragment() {
                         } else {
                             val seekValue = croller.progress + robot.robotStatus.min
                             onSeek(seekValue)
-                            croller.label = seekValue.toString()
                         }
                     }
                 })
@@ -236,13 +241,24 @@ class RobotFragment : Fragment() {
         Log.d(fTag, "onSeek($value)")
         progressBar.visibility = View.VISIBLE
 
+        seekBar.label = value.toString()
+        seekBar.isEnabled = false
+        val startColor = intermediateColor
+        if (startColor != null) { seekBar.labelColor = startColor }
+        val endColor = finishedColor
+
         // TODO make more elegant solution than just going K->C by removing 273
         parent.restApiService
                 .robotRange(robotId, value-273, parent.authToken, mapOf())
                 .enqueue(object : Callback<ResponseBody> {
 
             override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
+                // Indicate that the async call has finished
                 progressBar.visibility = View.INVISIBLE
+                seekBar.isEnabled = true
+                if (endColor != null) { seekBar.labelColor = endColor }
+
+                // Handle the callback
                 if (response.isSuccessful) {
                     parent.toast("Success")
                     Log.d(fTag, "Server accepted setting range to $value")
@@ -256,7 +272,12 @@ class RobotFragment : Fragment() {
             }
 
             override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                // Indicate that the async call has finished
                 progressBar.visibility = View.INVISIBLE
+                seekBar.isEnabled = true
+                if (endColor != null) { seekBar.labelColor = endColor }
+
+                // Handle the error throwable
                 val error = t.message
                 Log.e(fTag, "onSeek($value) FAILED, error: $error")
                 if (error != null) {
