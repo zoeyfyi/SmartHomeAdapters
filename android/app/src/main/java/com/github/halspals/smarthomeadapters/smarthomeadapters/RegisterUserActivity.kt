@@ -9,6 +9,7 @@ import android.view.inputmethod.InputMethodManager
 import com.github.halspals.smarthomeadapters.smarthomeadapters.model.Token
 import com.github.halspals.smarthomeadapters.smarthomeadapters.model.User
 import kotlinx.android.synthetic.main.activity_register_user.*
+import okhttp3.ResponseBody
 import org.jetbrains.anko.*
 import org.jetbrains.anko.design.snackbar
 import retrofit2.Call
@@ -96,14 +97,9 @@ class RegisterUserActivity : AppCompatActivity() {
      *
      */
     private fun registerNewUser(user: User) {
-        restApiService.registerUser(user).enqueue(object : Callback<User> {
-            override fun onResponse(call: Call<User>, response: Response<User>) {
-                val responseUser = response.body()
+        restApiService.registerUser(user).enqueue(object : Callback<ResponseBody> {
+            override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
                 if (response.isSuccessful) {
-                    assert(user == responseUser) {
-                        "Returned user doesn't equal expected user. " +
-                                "Expected {$user}, received {$responseUser}"
-                    }
                     toast("Registered; now signing you in...")
                     signInUser(user)
                 } else {
@@ -112,7 +108,7 @@ class RegisterUserActivity : AppCompatActivity() {
                 }
             }
 
-            override fun onFailure(call: Call<User>, error: Throwable) {
+            override fun onFailure(call: Call<ResponseBody>, error: Throwable) {
                 handleCallbackError(error.message, enableFurtherRegistration = true)
             }
         })
