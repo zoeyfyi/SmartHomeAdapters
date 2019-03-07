@@ -14,12 +14,15 @@ COPY switchserver/go.mod switchserver/go.mod
 COPY switchserver/go.sum switchserver/go.sum
 COPY userserver/go.mod userserver/go.mod
 COPY userserver/go.sum userserver/go.sum
+COPY thermostatserver/go.mod thermostatserver/go.mod
+COPY thermostatserver/go.sum thermostatserver/go.sum
 
 RUN cd clientserver && go mod download
 RUN cd infoserver && go mod download
 RUN cd robotserver && go mod download
 RUN cd switchserver && go mod download
 RUN cd userserver && go mod download
+RUN cd thermostatserver && go mod download
 
 # build server
 ARG SERVICE

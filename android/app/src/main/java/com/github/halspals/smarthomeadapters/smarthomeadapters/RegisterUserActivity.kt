@@ -11,8 +11,6 @@ import com.github.halspals.smarthomeadapters.smarthomeadapters.model.User
 import kotlinx.android.synthetic.main.activity_register_user.*
 import org.jetbrains.anko.*
 import org.jetbrains.anko.design.snackbar
-import org.json.JSONException
-import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -161,7 +159,7 @@ class RegisterUserActivity : AppCompatActivity() {
      * Handles an error received by an api call, displaying the message to the user.
      *
      * @param error the error received from the api call
-     * @param whether to allow the user to press register again
+     * @param enableFurtherRegistration whether to allow the user to press register again
      */
     private fun handleCallbackError(error: String?, enableFurtherRegistration: Boolean = false) {
 

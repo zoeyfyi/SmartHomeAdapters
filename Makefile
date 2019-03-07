@@ -40,11 +40,15 @@ build-userserver: check-go-deps
 	@(cd userserver && go generate)
 	@(cd userserver && go build -o ../build/userserver)
 
+build-thermostatserver: check-go-deps
+	@(cd thermostatserver && go generate)
+	@(cd thermostatserver && go build -o ../build/thermostatserver)
+
 build-android:
 	@(cd android && ./gradlew assembleDebug)
 	@cp android/app/build/outputs/apk/debug/app-debug.apk build/app-debug.apk
 
-build: build-clientserver build-infoserver build-robotserver build-switchserver build-userserver build-android
+build: build-clientserver build-infoserver build-robotserver build-switchserver build-userserver build-thermostatserver build-android
 
 #
 # DOCKER
@@ -74,10 +78,13 @@ docker-userdb:
 docker-userserver:
 	@docker build -f go.Dockerfile -t smarthomeadapters/userserver . --build-arg SERVICE=userserver
 
-docker-account-app:
-	@(cd account-app && docker build -t smarthomeadapters/account-app .)
+docker-thermostatserver:
+	@docker build -f go.Dockerfile -t smarthomeadapters/thermostatserver . --build-arg SERVICE=thermostatserver
 
-docker: docker-clientserver docker-infoserver docker-robotserver docker-switchserver docker-userserver docker-infodb docker-switchdb docker-userdb docker-account-app
+docker-thermodb:
+	@(cd thermodb && docker build -t smarthomeadapters/thermodb .)
+
+docker: docker-clientserver docker-infoserver docker-robotserver docker-switchserver docker-userserver docker-thermostatserver docker-infodb docker-switchdb docker-userdb docker-thermodb
 
 docker-push:
 	@docker tag smarthomeadapters/clientserver smarthomeadapters/clientserver:latest
@@ -96,8 +103,10 @@ docker-push:
 	@docker push smarthomeadapters/userdb:latest
 	@docker tag smarthomeadapters/userserver smarthomeadapters/userserver:latest
 	@docker push smarthomeadapters/userserver:latest
-	@docker tag smarthomeadapters/account-app smarthomeadapters/account-app:latest
-	@docker push smarthomeadapters/account-app:latest
+	@docker tag smarthomeadapters/thermodb smarthomeadapters/thermodb:latest
+	@docker push smarthomeadapters/thermodb:latest
+	@docker tag smarthomeadapters/thermostatserver smarthomeadapters/thermostatserver:latest
+	@docker push smarthomeadapters/thermostatserver:latest
 
 docker-push-test:
 	@docker tag smarthomeadapters/clientserver smarthomeadapters/clientserver:test
@@ -116,8 +125,10 @@ docker-push-test:
 	@docker push smarthomeadapters/userdb:test
 	@docker tag smarthomeadapters/userserver smarthomeadapters/userserver:test
 	@docker push smarthomeadapters/userserver:test
-	@docker tag smarthomeadapters/account-app smarthomeadapters/account-app:test
-	@docker push smarthomeadapters/account-app:test
+	@docker tag smarthomeadapters/thermodb smarthomeadapters/thermodb:test
+	@docker push smarthomeadapters/thermodb:test
+	@docker tag smarthomeadapters/thermostatserver smarthomeadapters/thermostatserver:test
+	@docker push smarthomeadapters/thermostatserver:test
 
 #
 # CLEAN
@@ -145,13 +156,16 @@ lint-switchserver:
 lint-userserver:
 	@(cd userserver && gometalinter --disable=gocyclo --enable=gofmt ./...)
 
+lint-thermostatserver:
+	@(cd thermostatserver && gometalinter --disable=gocyclo --enable=gofmt ./...)
+
 lint-android:
 	@(cd android && ./gradlew lint)
 
 lint-docker-compose:
 	docker-compose config
 
-lint: lint-clientserver lint-infoserver lint-robotserver lint-switchserver lint-userserver lint-android lint-docker-compose
+lint: lint-clientserver lint-infoserver lint-robotserver lint-switchserver lint-userserver lint-thermostatserver lint-android lint-docker-compose
 
 #
 # TEST
@@ -172,10 +186,13 @@ test-switchserver:
 test-userserver:
 	@(cd userserver && go test)
 
+test-thermostatserver:
+	@(cd thermostatserver && go test)
+
 test-android:
 	@(cd android && ./gradlew test)
 
-test-services: test-clientserver test-infoserver test-robotserver test-switchserver test-userserver
+test-services: test-clientserver test-infoserver test-robotserver test-switchserver test-userserver test-thermostatserver
 
 test: test-services test-android
 

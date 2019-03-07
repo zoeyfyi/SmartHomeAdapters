@@ -22,6 +22,8 @@ class RobotFragment : Fragment() {
 
     private val fTag = "RobotFragment"
 
+    private lateinit var parent: MainActivity
+
     private lateinit var robotId: String
     private var robot: Robot? = null
 
@@ -38,7 +40,7 @@ class RobotFragment : Fragment() {
         val robotIdArgument = arguments?.getString("robotId")
         if (robotIdArgument == null) {
             // no id passed, try to go back
-            Log.d(tag, "No robotId passed to robotFragment")
+            Log.d(fTag, "No robotId passed to robotFragment")
             context?.toast("Oops, something went wrong")
             fragmentManager?.popBackStack()
             return null
@@ -52,6 +54,8 @@ class RobotFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        parent = activity as MainActivity
 
         progressBar = view.findViewById(R.id.progress_bar)
         switch = view.findViewById(R.id.robot_switch)
@@ -70,18 +74,31 @@ class RobotFragment : Fragment() {
      * Fetches the robot with id of [robotId] and calls [onReceiveRobot]
      */
     private fun fetchRobot() {
-        // TODO: fetch robot from server
-        // TODO: remove test code
-
-        (activity as MainActivity).restApiService.getRobot(robotId).enqueue(object: Callback<Robot> {
-            override fun onFailure(call: Call<Robot>, t: Throwable) {
-                Log.e(fTag, t.message)
-            }
+        parent.restApiService
+                .getRobot(robotId, parent.authToken)
+                .enqueue(object: Callback<Robot> {
 
             override fun onResponse(call: Call<Robot>, response: Response<Robot>) {
-                Log.d(fTag, "received")
-                Log.d(fTag, "body: ${response.body()}")
-                onReceiveRobot(response.body()!!)
+                val robot = response.body()
+
+                if (response.isSuccessful && robot != null) {
+                    Log.d(fTag, "Successfully retrieved $robot")
+                    onReceiveRobot(robot)
+                } else {
+                    val error = RestApiService.extractErrorFromResponse(response)
+                    Log.e(fTag, "Getting the robot was unsuccessful, error: $error")
+                    if (error != null) {
+                        snackbar_layout.snackbar(error)
+                    }
+                }
+            }
+
+            override fun onFailure(call: Call<Robot>, t: Throwable) {
+                val error = t.message
+                Log.e(fTag, "fetchRobot() failed: $error")
+                if (error != null) {
+                    snackbar_layout.snackbar(error)
+                }
             }
         })
     }
@@ -92,10 +109,7 @@ class RobotFragment : Fragment() {
      * @param robot the robot
      */
     private fun onReceiveRobot(robot: Robot) {
-        Log.d(fTag, "receive propagating")
         this.robot = robot
-
-        Log.d(fTag, robot.toString())
 
         progressBar.visibility = View.INVISIBLE
         switch.visibility = View.INVISIBLE
@@ -136,14 +150,17 @@ class RobotFragment : Fragment() {
         Log.d(fTag, "onSwitch($isOn)")
 
         // Send the update to the server
-        (activity as MainActivity).restApiService.robotToggle(robotId, isOn, mapOf()).enqueue(object: Callback<ResponseBody> {
+        parent.restApiService
+                .robotToggle(robotId, isOn, parent.authToken, mapOf())
+                .enqueue(object: Callback<ResponseBody> {
+
             override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
                 if (response.isSuccessful) {
                     (activity as Context).toast("Success")
                     Log.d(fTag, "Server accepted setting switch to $isOn")
                 } else {
                     val error = RestApiService.extractErrorFromResponse(response)
-                    Log.e(fTag, "Getting the robot was unsuccessful, error: $error")
+                    Log.e(fTag, "Setting the switch was unsuccessful, error: $error")
                     if (error != null) {
                         snackbar_layout.snackbar(error)
                     }
@@ -152,7 +169,7 @@ class RobotFragment : Fragment() {
 
             override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
                 val error = t.message
-                Log.e(fTag, "Robot get FAILED, error: $error")
+                Log.e(fTag, "onSwitch($isOn) FAILED, error: $error")
                 if (error != null) {
                     snackbar_layout.snackbar(error)
                 }

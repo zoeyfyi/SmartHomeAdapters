@@ -53,6 +53,10 @@ func (c mockSwitchClient) SetSwitch(_ context.Context, _ *switchserver.SetSwitch
 	return nil, nil
 }
 
+func (c mockSwitchClient) CalibrateSwitch(_ context.Context, _ *switchserver.SwitchCalibrationParameters, _ ...grpc.CallOption) (*empty.Empty, error) {
+	return nil, nil
+}
+
 func TestMain(m *testing.M) {
 	// connect to docker
 	pool, err := dockertest.NewPool("")
@@ -114,7 +118,7 @@ func TestGetRobots(t *testing.T) {
 			InterfaceType: "toggle",
 		},
 		&infoserver.Robot{
-			Id:            "T2D2",
+			Id:            "qwerty",
 			Nickname:      "testThermoBot",
 			RobotType:     "thermostat",
 			InterfaceType: "range",
@@ -129,7 +133,7 @@ func TestGetRobots(t *testing.T) {
 	defer conn.Close()
 
 	client := infoserver.NewInfoServerClient(conn)
-	stream, err := client.GetRobots(context.Background(), &empty.Empty{})
+	stream, err := client.GetRobots(context.Background(), &infoserver.RobotsQuery{UserId: "1"})
 	if err != nil {
 		t.Fatalf("Could not get robots: %v", err)
 	}
@@ -149,6 +153,7 @@ func TestGetRobots(t *testing.T) {
 	if !reflect.DeepEqual(robots, expectedRobots) {
 		t.Fatalf("Expected: %+v, Got: %+v", expectedRobots, robots)
 	}
+
 }
 
 func TestGetRobotWithValidID(t *testing.T) {
@@ -181,7 +186,8 @@ func TestGetRobotWithValidID(t *testing.T) {
 		defer conn.Close()
 
 		client := infoserver.NewInfoServerClient(conn)
-		robot, err := client.GetRobot(context.Background(), &infoserver.RobotQuery{Id: c.id})
+		robot, err := client.GetRobot(context.Background(), &infoserver.RobotQuery{Id: c.id, UserId: "1"})
+
 		if err != nil {
 			t.Fatalf("Could not get robot: %v", err)
 		}
@@ -201,18 +207,42 @@ func TestGetRobotWithInvalidID(t *testing.T) {
 	defer conn.Close()
 
 	client := infoserver.NewInfoServerClient(conn)
-	robot, err := client.GetRobot(context.Background(), &infoserver.RobotQuery{Id: "invalidid"})
+	robot, err := client.GetRobot(context.Background(), &infoserver.RobotQuery{Id: "invalidid", UserId: "1"})
 
 	status, ok := status.FromError(err)
 	if !ok {
 		t.Fatalf("Expected grpc status error, got %v %T", err, err)
 	}
 
-	if status.Message() != "No robot with ID \"invalidid\"" {
-		t.Errorf("Expected \"No robot with ID \"invalidid\"\" error message, got: %s", status.Message())
+	expectedMessage := "Robot \"invalidid\" does not exist"
+
+	if status.Message() != expectedMessage {
+		t.Errorf("Expected %s error message, got: %s", expectedMessage, status.Message())
 	}
 
 	if robot != nil {
 		t.Errorf("Robot was not nil")
 	}
+}
+
+func TestSetRobotUsecase(t *testing.T) {
+	ctx := context.Background()
+	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithDialer(bufDialer), grpc.WithInsecure())
+	if err != nil {
+		t.Fatalf("Failed to dial bufnet: %v", err)
+	}
+	defer conn.Close()
+
+	client := infoserver.NewInfoServerClient(conn)
+	_, err = client.SetUsecase(ctx, &infoserver.SetUsecaseRequest{
+		Id:      "qwerty",
+		UserId:  "1",
+		Usecase: "switch",
+	})
+
+	expectedError := "rpc error: code = NotFound desc = Switch does not exist"
+	if err.Error() != expectedError {
+		t.Fatalf("Expected error: %s, got error: %v", expectedError, err)
+	}
+
 }

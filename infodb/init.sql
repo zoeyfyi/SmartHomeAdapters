@@ -1,14 +1,9 @@
-CREATE TABLE toggleRobots (
-    serial text not null unique,
-    nickname text,
-    robotType text
-);
-CREATE TABLE rangeRobots (
+CREATE TABLE robots (
     serial text not null unique,
     nickname text,
     robotType text,
-    minimum integer,
-    maximum integer
+    registeredUserId text
 );
-INSERT INTO toggleRobots (serial, nickname, robotType) VALUES ('123abc', 'testLightbot', 'switch');
-INSERT INTO rangeRobots (serial, nickname, robotType, minimum, maximum) VALUES ('T2D2', 'testThermoBot', 'thermostat', 0, 100);
+
+INSERT INTO robots (serial, nickname, robotType, registeredUserId) VALUES ('123abc', 'testLightbot', 'switch', '1');
+INSERT INTO robots (serial, nickname, robotType, registeredUserId) VALUES ('qwerty', 'testThermoBot', 'thermostat', '1');
