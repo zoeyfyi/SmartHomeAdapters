@@ -16,6 +16,8 @@ COPY userserver/go.mod userserver/go.mod
 COPY userserver/go.sum userserver/go.sum
 COPY thermostatserver/go.mod thermostatserver/go.mod
 COPY thermostatserver/go.sum thermostatserver/go.sum
+COPY boltlockserver/go.mod boltlockserver/go.mod
+COPY boltlockserver/go.sum boltlockserver/go.sum
 
 RUN cd clientserver && go mod download
 RUN cd infoserver && go mod download
@@ -23,6 +25,7 @@ RUN cd robotserver && go mod download
 RUN cd switchserver && go mod download
 RUN cd userserver && go mod download
 RUN cd thermostatserver && go mod download
+RUN cd boltlockserver && go mod download
 
 # build server
 ARG SERVICE

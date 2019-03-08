@@ -122,6 +122,30 @@ services:
       - DB_PASSWORD=password
       - DB_DATABASE=postgres
       - DB_URL=thermodb
+  boltlockdb:
+    build:
+      context: ./boltlockdb
+    restart: always
+    environment:
+    - POSTGRES_PASSWORD=password
+    volumes:
+    - boltlockdb_data:/var/lib/postgresql/data
+  boltlockserver:
+    build:
+      context: .
+      dockerfile: go.Dockerfile
+      args:
+        SERVICE: boltlockserver
+    depends_on:
+    - boltlockdb
+    restart: always
+    ports:
+    - 8085:80
+    environment:
+    - DB_USERNAME=postgres
+    - DB_PASSWORD=password
+    - DB_DATABASE=postgres
+    - DB_URL=boltlockdb
   robotserver:
     build: 
       context: .
@@ -137,3 +161,4 @@ volumes:
   infodb_data:
   switchdb_data:
   thermodb_data:
+  boltlockdb_data:
