@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/wrappers.proto";
+
+service BoltlockServer {
+    rpc AddBoltlock(AddBoltlockRequest) returns (Boltlock) {}
+    rpc RemoveBoltlock(RemoveBoltlockRequest) returns (google.protobuf.Empty) {}
+    rpc GetBoltlock(BoltlockQuery) returns (Boltlock) {}
+    rpc SetBoltlock(SetBoltlockRequest) returns (stream SetBoltlockStatus) {}
+    rpc CalibrateBoltlock(BoltlockCalibrationParameters) returns (google.protobuf.Empty) {}
+}
+
+message Boltlock {
+    string id = 1;
+    bool isOn = 2;
+    int64 onAngle = 3;
+    int64 offAngle = 4;
+    bool isCalibrated = 5;
+}
+
+message AddBoltlockRequest {
+    string id = 1;
+    bool isOn = 2;
+}
+
+message RemoveBoltlockRequest {
+    string id = 1;
+}
+
+message BoltlockQuery {
+    string id = 1;
+}
+
+message SetBoltlockRequest {
+    string id = 1;
+    bool on = 2;
+    bool force = 3;
+}
+
+message SetBoltlockStatus {
+    enum Status {
+        SETTING = 0;
+        WAITING = 1;
+        RETURNING = 2;
+        DONE = 3;
+    }
+    Status status = 1;
+}
+
+message BoltlockCalibrationParameters {
+    string id = 1;
+    google.protobuf.Int64Value onAngle = 2;
+    google.protobuf.Int64Value offAngle = 3;
+    google.protobuf.BoolValue isCalibrated = 4;
+}
