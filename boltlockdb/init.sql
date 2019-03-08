@@ -1,7 +1,7 @@
-CREATE TABLE switches (
+CREATE TABLE boltlocks (
     -- ID of the robot
     serial text not null unique,
-    -- Weather the switch is on or off
+    -- Weather the boltlock is on or off
     isOn boolean not null,
     -- Angles to set servo too
     onAngle int not null,
