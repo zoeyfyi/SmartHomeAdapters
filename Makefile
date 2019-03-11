@@ -97,6 +97,8 @@ docker-boltlockdb:
 
 docker: docker-clientserver docker-infoserver docker-robotserver docker-switchserver docker-userserver docker-thermostatserver docker-infodb docker-switchdb docker-userdb docker-thermodb docker-boltlockserver docker-boltlockdb
 
+docker-dbs: docker-infodb docker-switchdb docker-userdb docker-thermodb
+
 docker-push:
 	@docker tag smarthomeadapters/clientserver smarthomeadapters/clientserver:latest
 	@docker push smarthomeadapters/clientserver:latest
@@ -239,4 +241,4 @@ compile-reports:
 ci-test-android: 
 	@docker run -it --rm -v $$PWD/android:/root/tmp budtmo/docker-android-x86-9.0 bash -c "(cd tmp && ./gradlew test)"
 
-ci: test-services ci-test-android compile-reports lint-docker-compose
+ci: docker-dbs test-services ci-test-android compile-reports lint-docker-compose
