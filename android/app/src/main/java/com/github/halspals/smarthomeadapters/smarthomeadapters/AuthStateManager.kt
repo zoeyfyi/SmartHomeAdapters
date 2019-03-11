@@ -1,4 +1,4 @@
-package com.github.halspals.smarthomeadapters.smarthomeadapters.model
+package com.github.halspals.smarthomeadapters.smarthomeadapters
 
 import android.content.Context
 import android.util.Log
