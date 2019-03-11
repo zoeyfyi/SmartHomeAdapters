@@ -13,8 +13,9 @@ import (
 )
 
 var (
-	loginTemplate   = template.Must(template.ParseFiles("static/login.html"))
-	consentTemplate = template.Must(template.ParseFiles("static/consent.html"))
+	// CHANGE THESE PATHS
+	loginTemplate   = template.Must(template.ParseFiles("/app/static/login.html"))
+	consentTemplate = template.Must(template.ParseFiles("/app/static/consent.html"))
 )
 
 type hydraLoginRequest struct {
@@ -83,7 +84,9 @@ func acceptLogin(w http.ResponseWriter, r *http.Request, challenge string) {
 
 func postLoginHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	// get hydra challenge
-	challenge := r.URL.Query().Get("login_challenge")
+	// should be login_challenge but need to fix template
+	r.ParseForm()
+	challenge := r.Form.Get("challenge")
 
 	// parse post form
 	r.ParseForm()
@@ -114,7 +117,7 @@ func getLoginHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params
 	challenge := r.URL.Query().Get("login_challenge")
 
 	// get infomation about the login request from hydra
-	url := fmt.Sprintf("https://oauth.halspals.co.uk/oauth2/auth/requests/login/%s", challenge)
+	url := fmt.Sprintf("https://hydra.halspals.co.uk/oauth2/auth/requests/login/%s", challenge)
 	resp, err := http.DefaultClient.Get(url)
 	if err != nil {
 		loginTemplate.Execute(w, loginTemplateData{
@@ -186,7 +189,8 @@ func acceptConsent(w http.ResponseWriter, r *http.Request, challenge string) {
 func postConsentHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	// get hydra challenge
 	// is consent_challenge
-	challenge := r.URL.Query().Get("login_challenge")
+	r.ParseForm()
+	challenge := r.Form.Get("challenge")
 
 	acceptConsent(w, r, challenge)
 }

@@ -44,11 +44,15 @@ build-thermostatserver: check-go-deps
 	@(cd thermostatserver && go generate)
 	@(cd thermostatserver && go build -o ../build/thermostatserver)
 
+build-account-app: check-go-deps
+	@(cd account-app && go generate)
+	@(cd account-app && go build -o ../build/account-app)
+
 build-android:
 	@(cd android && ./gradlew assembleDebug)
 	@cp android/app/build/outputs/apk/debug/app-debug.apk build/app-debug.apk
 
-build: build-clientserver build-infoserver build-robotserver build-switchserver build-userserver build-thermostatserver build-android
+build: build-clientserver build-infoserver build-robotserver build-switchserver build-userserver build-thermostatserver build-android build-account-app
 
 #
 # DOCKER
@@ -81,10 +85,13 @@ docker-userserver:
 docker-thermostatserver:
 	@docker build -f go.Dockerfile -t smarthomeadapters/thermostatserver . --build-arg SERVICE=thermostatserver
 
+docker-account-app:
+	@docker build -f go.Dockerfile -t smarthomeadapters/account-app . --build-arg SERVICE=account-app
+
 docker-thermodb:
 	@(cd thermodb && docker build -t smarthomeadapters/thermodb .)
 
-docker: docker-clientserver docker-infoserver docker-robotserver docker-switchserver docker-userserver docker-thermostatserver docker-infodb docker-switchdb docker-userdb docker-thermodb
+docker: docker-clientserver docker-infoserver docker-robotserver docker-switchserver docker-userserver docker-thermostatserver docker-infodb docker-switchdb docker-userdb docker-thermodb docker-account-app
 
 docker-push:
 	@docker tag smarthomeadapters/clientserver smarthomeadapters/clientserver:latest
@@ -129,6 +136,8 @@ docker-push-test:
 	@docker push smarthomeadapters/thermodb:test
 	@docker tag smarthomeadapters/thermostatserver smarthomeadapters/thermostatserver:test
 	@docker push smarthomeadapters/thermostatserver:test
+	@docker tag smarthomeadapters/account-app smarthomeadapters/account-app:test
+	@docker push smarthomeadapters/account-app:test
 
 #
 # CLEAN
