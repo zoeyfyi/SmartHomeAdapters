@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
@@ -42,15 +43,21 @@ type consentTemplateData struct {
 }
 
 func acceptLogin(w http.ResponseWriter, r *http.Request, challenge string) {
-	url := fmt.Sprintf("https://oauth.halspals.co.uk/oauth/auth/requests/login/%s/accept", challenge)
-	req, err := http.NewRequest("PUT", url, nil)
+	url := fmt.Sprintf("https://hydra.halspals.co.uk/oauth2/auth/requests/login/%s/accept", challenge)
+
+	// need to put headers/data in here
+	//
+	jsonData := []byte(`{ "remember":false, "subject":"subject123"}`)
+
+	// redirect is wrong tho
+	req, err := http.NewRequest("PUT", url, bytes.NewBuffer(jsonData))
 	if err != nil {
 		loginTemplate.Execute(w, loginTemplateData{
 			Error: fmt.Errorf("Internal error"),
 		})
 		return
 	}
-
+	req.Header.Set("Content-Type", "application/json")
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		loginTemplate.Execute(w, loginTemplateData{
@@ -68,6 +75,7 @@ func acceptLogin(w http.ResponseWriter, r *http.Request, challenge string) {
 
 	var loginAccept hydraLoginAccept
 	json.NewDecoder(resp.Body).Decode(loginAccept)
+	// is loginAccept.RedirectTo not null here?
 
 	// redirect back to hydra
 	http.Redirect(w, r, loginAccept.RedirectTo, http.StatusMovedPermanently)
@@ -134,8 +142,16 @@ func getLoginHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params
 }
 
 func acceptConsent(w http.ResponseWriter, r *http.Request, challenge string) {
-	url := fmt.Sprintf("https://oauth.halspals.co.uk/oauth/auth/requests/consent/%s/accept", challenge)
-	req, err := http.NewRequest("PUT", url, nil)
+	url := fmt.Sprintf("https://hydra.halspals.co.uk/oauth2/auth/requests/consent/%s/accept", challenge)
+
+	// need to put json data here
+
+	// need to fix redirect as well
+
+
+	jsonData := []byte(`{ "remember":false, "grant_scope":["openid"]}`)
+
+	req, err := http.NewRequest("PUT", url, bytes.NewBuffer(jsonData))
 	if err != nil {
 		consentTemplate.Execute(w, consentTemplateData{
 			Error: fmt.Errorf("Internal error"),
@@ -143,6 +159,8 @@ func acceptConsent(w http.ResponseWriter, r *http.Request, challenge string) {
 		return
 	}
 
+
+	req.Header.Set("Content-Type", "application/json")
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		consentTemplate.Execute(w, consentTemplateData{
@@ -160,13 +178,14 @@ func acceptConsent(w http.ResponseWriter, r *http.Request, challenge string) {
 
 	var consentAccept hydraConsentAccept
 	json.NewDecoder(resp.Body).Decode(consentAccept)
-
+	// the .RedirectTo url is null?
 	// redirect back to hydra
 	http.Redirect(w, r, consentAccept.RedirectTo, http.StatusMovedPermanently)
 }
 
 func postConsentHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	// get hydra challenge
+	// is consent_challenge
 	challenge := r.URL.Query().Get("login_challenge")
 
 	acceptConsent(w, r, challenge)
