@@ -44,11 +44,15 @@ build-thermostatserver: check-go-deps
 	@(cd thermostatserver && go generate)
 	@(cd thermostatserver && go build -o ../build/thermostatserver)
 
+build-boltlockserver: check-go-deps
+	@(cd boltlockserver && go generate)
+	@(cd boltlockserver && go build -o ../build/boltlockserver)
+
 build-android:
 	@(cd android && ./gradlew assembleDebug)
 	@cp android/app/build/outputs/apk/debug/app-debug.apk build/app-debug.apk
 
-build: build-clientserver build-infoserver build-robotserver build-switchserver build-userserver build-thermostatserver build-android
+build: build-clientserver build-infoserver build-robotserver build-switchserver build-userserver build-thermostatserver build-boltlockserver build-android
 
 #
 # DOCKER
@@ -84,7 +88,14 @@ docker-thermostatserver:
 docker-thermodb:
 	@(cd thermodb && docker build -t smarthomeadapters/thermodb .)
 
-docker: docker-clientserver docker-infoserver docker-robotserver docker-switchserver docker-userserver docker-thermostatserver docker-infodb docker-switchdb docker-userdb docker-thermodb
+docker-boltlockserver:
+	@docker build -f go.Dockerfile -t smarthomeadapters/boltlockserver . --build-arg SERVICE=boltlockserver
+
+docker-boltlockdb:
+	@(cd boltlockdb && docker build -t smarthomeadapters/boltlockdb .)
+
+
+docker: docker-clientserver docker-infoserver docker-robotserver docker-switchserver docker-userserver docker-thermostatserver docker-infodb docker-switchdb docker-userdb docker-thermodb docker-boltlockserver docker-boltlockdb
 
 docker-push:
 	@docker tag smarthomeadapters/clientserver smarthomeadapters/clientserver:latest
@@ -107,6 +118,10 @@ docker-push:
 	@docker push smarthomeadapters/thermodb:latest
 	@docker tag smarthomeadapters/thermostatserver smarthomeadapters/thermostatserver:latest
 	@docker push smarthomeadapters/thermostatserver:latest
+	@docker tag smarthomeadapters/boltlockdb smarthomeadapters/boltlockdb:latest
+	@docker push smarthomeadapters/boltlockdb:latest
+	@docker tag smarthomeadapters/boltlockserver smarthomeadapters/boltlockserver:latest
+	@docker push smarthomeadapters/boltlockserver:latest
 
 docker-push-test:
 	@docker tag smarthomeadapters/clientserver smarthomeadapters/clientserver:test
@@ -129,6 +144,10 @@ docker-push-test:
 	@docker push smarthomeadapters/thermodb:test
 	@docker tag smarthomeadapters/thermostatserver smarthomeadapters/thermostatserver:test
 	@docker push smarthomeadapters/thermostatserver:test
+	@docker tag smarthomeadapters/boltlockdb smarthomeadapters/boltlockdb:test
+	@docker push smarthomeadapters/boltlockdb:test
+	@docker tag smarthomeadapters/boltlockserver smarthomeadapters/boltlockserver:test
+	@docker push smarthomeadapters/boltlockserver:test
 
 #
 # CLEAN
@@ -159,13 +178,16 @@ lint-userserver:
 lint-thermostatserver:
 	@(cd thermostatserver && gometalinter --disable=gocyclo --enable=gofmt ./...)
 
+lint-boltlockserver:
+	@(cd boltlockserver && gometalinter --disable=gocyclo --enable=gofmt ./...)
+
 lint-android:
 	@(cd android && ./gradlew lint)
 
 lint-docker-compose:
 	docker-compose config
 
-lint: lint-clientserver lint-infoserver lint-robotserver lint-switchserver lint-userserver lint-thermostatserver lint-android lint-docker-compose
+lint: lint-clientserver lint-infoserver lint-robotserver lint-switchserver lint-userserver lint-thermostatserver lint-android lint-docker-compose lint-boltlockserver
 
 #
 # TEST
@@ -189,10 +211,13 @@ test-userserver:
 test-thermostatserver:
 	@(cd thermostatserver && go test)
 
+test-boltlockserver:
+	@(cd boltlockserver && go test)
+
 test-android:
 	@(cd android && ./gradlew test)
 
-test-services: test-clientserver test-infoserver test-robotserver test-switchserver test-userserver test-thermostatserver
+test-services: test-clientserver test-infoserver test-robotserver test-switchserver test-userserver test-thermostatserver test-boltlockserver
 
 test: test-services test-android
 
