@@ -28,7 +28,7 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
       {
         String command = String((char *) payload);
         command.trim();
-        executeCommand(command);
+        executeCommandSequence(command);
       }
       
       break;
@@ -39,69 +39,72 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
 	}
 }
 
-void executeCommand(String command) {
-      Serial.print("Received command: ");
-      Serial.print(command);
-      Serial.println();
+void executeCommandSequence(String command) {
+      const char* delim = ";";
+      char *cmdtok = strtok(const_cast<char*>(command.c_str()), delim);
+      while (cmdtok != nullptr) {
+        String cmd = String(cmdtok);
+        
+        if(cmd == "led on") {
+          Serial.println("Turning LED on");
+          digitalWrite(LED_BUILTIN, LOW);
+        } else if (cmd == "led off") {
+          Serial.println("Turning LED off");
+          digitalWrite(LED_BUILTIN, HIGH);
+        } else if (cmd.startsWith("servo")) {
+          // convert characters after "servo " to int
+          int angle = cmd.substring(6).toInt();
+  
+          Serial.print("Setting servo to %d degrees\n", angle);
 
-      // process LED commands
-      if (command.startsWith("led")) {
-        if(command == "led on") {
-            Serial.println("Turning LED on");
-            digitalWrite(LED_BUILTIN, LOW);
-        } else if (command == "led off") {
-            Serial.println("Turning LED off");
-            digitalWrite(LED_BUILTIN, HIGH);
+          // write to the servo so it moves to this angle when it is attached
+          servo.write(angle);
+
+          // attach the servo
+          servo.attach(SERVO_PIN);
+          delay(500); // wait for movement
+
+          // this cuts the signal to the servo, and prevents it from moving after the detach
+          // this took _way_ to long to figure out
+          servo.writeMicroseconds(0);
+          delay(500);
+
+          // detach the servo
+          servo.detach();
+        } else if (cmd.startsWith("delay")) {
+          int microseconds = cmd.substring(6).toInt();
+          Serial.print("Delaying for %d ms\n", microseconds);
+          delay(microseconds);
+        } else {
+          Serial.printf("Invalid command: %s\n", cmd);
         }
-      }
 
-      if (command.startsWith("servo")) {
-        // convert characters after "servo " to int
-        int angle = command.substring(6).toInt();
+        cmdtok = strtok(nullptr, delim);
+      } 
 
-        Serial.print("Setting servo to ");
-        Serial.print(angle);
-        Serial.println(" degrees");
-
-        servo.write(angle);
-      }
 }
 
 void setup() {
-  // setup servo
-  servo.attach(SERVO_PIN);
-  
-  // use pin 7/8 as our LED indicators
   pinMode(STATUS_PIN, OUTPUT);
   pinMode(LED_BUILTIN, OUTPUT);
 
   // begin serial communications
   Serial.begin(9600);
-  delay(10);
-  Serial.println('\n');
+  while(!Serial) {}
+  Serial.println("Serial connected");
 
   // connect to the network
   WiFi.begin(ssid, password);             
-  Serial.print("Connecting to \"");
-  Serial.print(ssid); 
-  Serial.print("\"");
-  Serial.println("...");
+  Serial.printf("Connecting to \"%s\"...\n", ssid);
 
-  int i = 0;
   while (WiFi.status() != WL_CONNECTED) {
     // wait for the Wi-Fi to connect
-    digitalWrite(STATUS_PIN, HIGH);
-    delay(500);
-    digitalWrite(STATUS_PIN, LOW);
-    delay(500);
+    delay(1000);
     Serial.print('-');
   }
+  Serial.println("\nConnection established!");  
   
-  Serial.println('\n');
-  Serial.println("Connection established!");  
-  
-  Serial.print("IP address:\t");
-  Serial.println(WiFi.localIP());
+  Serial.printf("IP address:\t%s\n", WiFi.localIP());
 
   digitalWrite(STATUS_PIN, HIGH);
 
@@ -109,7 +112,7 @@ void setup() {
 
   // connect to websocket server
   Serial.println("Connecting to WebSocket server");
-  socket.begin("192.168.0.12", 8080, "/connect");
+  socket.begin("192.168.0.2", 8080, "/");
   socket.onEvent(webSocketEvent);
   socket.setReconnectInterval(1000);
 }
