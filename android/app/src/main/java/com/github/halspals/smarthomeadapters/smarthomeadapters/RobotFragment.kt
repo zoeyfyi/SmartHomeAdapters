@@ -9,6 +9,7 @@ import android.view.ViewGroup
 import android.widget.*
 import com.github.halspals.smarthomeadapters.smarthomeadapters.model.Robot
 import kotlinx.android.synthetic.main.fragment_robot.*
+import net.openid.appauth.AuthorizationException
 import okhttp3.ResponseBody
 import org.jetbrains.anko.design.snackbar
 import org.jetbrains.anko.toast
@@ -72,33 +73,41 @@ class RobotFragment : Fragment() {
      * Fetches the robot with id of [robotId] and calls [onReceiveRobot]
      */
     private fun fetchRobot() {
-        parent.restApiService
-                .getRobot(robotId, parent.authToken)
-                .enqueue(object: Callback<Robot> {
+        parent.authState.performActionWithFreshTokens(parent.authService)
+        { accessToken: String?, _: String?, ex: AuthorizationException? ->
+            // TODO am I supposed to use the accessToken or idToken (aka _)
+            if (accessToken == null) {
+                Log.e(fTag, "[fetchRobot] got null access token, exception: $ex")
+            } else {
+                parent.restApiService
+                        .getRobot(robotId, accessToken)
+                        .enqueue(object: Callback<Robot> {
 
-            override fun onResponse(call: Call<Robot>, response: Response<Robot>) {
-                val robot = response.body()
+                            override fun onResponse(call: Call<Robot>, response: Response<Robot>) {
+                                val robot = response.body()
 
-                if (response.isSuccessful && robot != null) {
-                    Log.d(fTag, "Successfully retrieved $robot")
-                    onReceiveRobot(robot)
-                } else {
-                    val error = RestApiService.extractErrorFromResponse(response)
-                    Log.e(fTag, "Getting the robot was unsuccessful, error: $error")
-                    if (error != null) {
-                        snackbar_layout.snackbar(error)
-                    }
-                }
+                                if (response.isSuccessful && robot != null) {
+                                    Log.d(fTag, "Successfully retrieved $robot")
+                                    onReceiveRobot(robot)
+                                } else {
+                                    val error = RestApiService.extractErrorFromResponse(response)
+                                    Log.e(fTag, "Getting the robot was unsuccessful, error: $error")
+                                    if (error != null) {
+                                        snackbar_layout.snackbar(error)
+                                    }
+                                }
+                            }
+
+                            override fun onFailure(call: Call<Robot>, t: Throwable) {
+                                val error = t.message
+                                Log.e(fTag, "fetchRobot() failed: $error")
+                                if (error != null) {
+                                    snackbar_layout.snackbar(error)
+                                }
+                            }
+                        })
             }
-
-            override fun onFailure(call: Call<Robot>, t: Throwable) {
-                val error = t.message
-                Log.e(fTag, "fetchRobot() failed: $error")
-                if (error != null) {
-                    snackbar_layout.snackbar(error)
-                }
-            }
-        })
+        }
     }
 
     /**
@@ -159,31 +168,39 @@ class RobotFragment : Fragment() {
         Log.d(fTag, "onSwitch($isOn)")
 
         // Send the update to the server
-        parent.restApiService
-                .robotToggle(robotId, isOn, parent.authToken, mapOf())
-                .enqueue(object: Callback<ResponseBody> {
+        parent.authState.performActionWithFreshTokens(parent.authService)
+        { accessToken: String?, _: String?, ex: AuthorizationException? ->
+            // TODO am I supposed to use the accessToken or idToken (aka _)
+            if (accessToken == null) {
+                Log.e(fTag, "[onSwitch] got null access token, exception: $ex")
+            } else {
+                parent.restApiService
+                        .robotToggle(robotId, isOn, accessToken, mapOf())
+                        .enqueue(object: Callback<ResponseBody> {
 
-            override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
-                if (response.isSuccessful) {
-                    parent.toast("Success")
-                    Log.d(fTag, "Server accepted setting switch to $isOn")
-                } else {
-                    val error = RestApiService.extractErrorFromResponse(response)
-                    Log.e(fTag, "Setting the switch was unsuccessful, error: $error")
-                    if (error != null) {
-                        snackbar_layout.snackbar(error)
-                    }
-                }
-            }
+                            override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
+                                if (response.isSuccessful) {
+                                    parent.toast("Success")
+                                    Log.d(fTag, "Server accepted setting switch to $isOn")
+                                } else {
+                                    val error = RestApiService.extractErrorFromResponse(response)
+                                    Log.e(fTag, "Setting the switch was unsuccessful, error: $error")
+                                    if (error != null) {
+                                        snackbar_layout.snackbar(error)
+                                    }
+                                }
+                            }
 
-            override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                val error = t.message
-                Log.e(fTag, "onSwitch($isOn) FAILED, error: $error")
-                if (error != null) {
-                    snackbar_layout.snackbar(error)
-                }
+                            override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                                val error = t.message
+                                Log.e(fTag, "onSwitch($isOn) FAILED, error: $error")
+                                if (error != null) {
+                                    snackbar_layout.snackbar(error)
+                                }
+                            }
+                        })
             }
-        })
+        }
     }
 
     /**
@@ -194,32 +211,40 @@ class RobotFragment : Fragment() {
     private fun onSeek(value: Int) {
         Log.d(fTag, "onSeek($value)")
 
-        // TODO make more elegant solution than just going K->C by removing 273
-        parent.restApiService
-                .robotRange(robotId, value-273, parent.authToken, mapOf())
-                .enqueue(object : Callback<ResponseBody> {
+        parent.authState.performActionWithFreshTokens(parent.authService)
+        { accessToken: String?, _: String?, ex: AuthorizationException? ->
+            // TODO am I supposed to use the accessToken or idToken (aka _)
+            if (accessToken == null) {
+                Log.e(fTag, "[onSeek] got null access token, exception: $ex")
+            } else {
+                // TODO make more elegant solution than just going K->C by removing 273
+                parent.restApiService
+                        .robotRange(robotId, value-273, accessToken, mapOf())
+                        .enqueue(object : Callback<ResponseBody> {
 
-            override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
-                if (response.isSuccessful) {
-                    parent.toast("Success")
-                    Log.d(fTag, "Server accepted setting range to $value")
-                } else {
-                    val error = RestApiService.extractErrorFromResponse(response)
-                    Log.e(fTag, "Setting the range was unsuccessful, error: $error")
-                    if (error != null) {
-                        snackbar_layout.snackbar(error)
-                    }
-                }
-            }
+                            override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
+                                if (response.isSuccessful) {
+                                    parent.toast("Success")
+                                    Log.d(fTag, "Server accepted setting range to $value")
+                                } else {
+                                    val error = RestApiService.extractErrorFromResponse(response)
+                                    Log.e(fTag, "Setting the range was unsuccessful, error: $error")
+                                    if (error != null) {
+                                        snackbar_layout.snackbar(error)
+                                    }
+                                }
+                            }
 
-            override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                val error = t.message
-                Log.e(fTag, "onSeek($value) FAILED, error: $error")
-                if (error != null) {
-                    snackbar_layout.snackbar(error)
-                }
+                            override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                                val error = t.message
+                                Log.e(fTag, "onSeek($value) FAILED, error: $error")
+                                if (error != null) {
+                                    snackbar_layout.snackbar(error)
+                                }
+                            }
+                        })
             }
-        })
+        }
     }
 
 }

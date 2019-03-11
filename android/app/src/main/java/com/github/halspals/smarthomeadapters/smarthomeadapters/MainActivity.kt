@@ -8,6 +8,7 @@ import android.support.v4.app.FragmentManager
 import android.util.Log
 import android.view.MenuItem
 import kotlinx.android.synthetic.main.activity_main.*
+import net.openid.appauth.AuthorizationService
 
 class MainActivity :
         AppCompatActivity(),
@@ -16,6 +17,14 @@ class MainActivity :
 
     internal val restApiService by lazy {
         RestApiService.new()
+    }
+
+    internal val authState by lazy {
+        readAuthState(this)
+    }
+
+    internal val authService by lazy {
+        AuthorizationService(this)
     }
 
     private val tag = "MainActivity"

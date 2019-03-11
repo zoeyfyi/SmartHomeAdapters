@@ -14,12 +14,11 @@ class AuthenticationActivity : AppCompatActivity() {
     private val tag = "AuthenticationActivity"
 
     private val authRequest: AuthorizationRequest by lazy {
-        // Otherwise set up Authorization config and get the auth request code
         val authServiceConfig = AuthorizationServiceConfiguration(
                 Uri.parse("https://oauth.halspals.co.uk/oauth2/auth"),
                 Uri.parse("https://oauth.halspals.co.uk/oauth2/token")
         )
-        // Get an authorization code
+
         AuthorizationRequest.Builder(
                 authServiceConfig,
                 "b43ce28c-f4e3-412b-8dc5-854a32a0c8db",
@@ -27,10 +26,12 @@ class AuthenticationActivity : AppCompatActivity() {
                 Uri.parse("http://callback.halspals.co.uk")
         ).build()
     }
+
     private val authService: AuthorizationService by lazy {
         AuthorizationService(this)
     }
-    internal val authState: AuthState by lazy {
+
+    private val authState: AuthState by lazy {
         readAuthState(this)
     }
 

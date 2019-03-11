@@ -14,6 +14,7 @@ import com.github.halspals.smarthomeadapters.smarthomeadapters.model.RobotRegist
 import com.github.halspals.smarthomeadapters.smarthomeadapters.model.UseCase
 import kotlinx.android.synthetic.main.activity_register_robot.*
 import kotlinx.android.synthetic.main.fragment_select_use_case.*
+import net.openid.appauth.AuthorizationException
 import okhttp3.ResponseBody
 import org.jetbrains.anko.design.snackbar
 import org.jetbrains.anko.toast
@@ -44,9 +45,46 @@ class SelectUseCaseFragment : Fragment() {
         parent = activity as RegisterRobotActivity
 
         // Get the use cases from the server
+        parent.authState.performActionWithFreshTokens(parent.authService)
+        { accessToken: String?, _: String?, ex: AuthorizationException? ->
+            // TODO am I supposed to use the accessToken or idToken (aka _)
+            if (accessToken == null) {
+                Log.e(fTag, "[onViewCreated] got null access token, exception: $ex")
+            } else {
+                fetchUseCases(accessToken, view)
+            }
+        }
+
+        // Set up the selection listener for the use case spinner
+        spinner.onItemSelectedListener = object: AdapterView.OnItemSelectedListener {
+
+            override fun onNothingSelected(p0: AdapterView<*>?) {
+                selectedUseCase = null
+            }
+
+            override fun onItemSelected(adapter: AdapterView<*>?, view: View?, pos: Int, p3: Long) {
+
+                val useCase = adapter?.getItemAtPosition(pos) as? UseCase
+
+                selectedUseCase = if (useCase != null) {
+                    Log.v(fTag, "[onItemSelected] User selected use case $useCase")
+                    useCase
+                } else {
+                    Log.e(fTag, "[onItemSelected] User indicated position $pos but adapter or item was null")
+                    parent.snackbar_layout.snackbar("Could not fetch your chosen use case")
+                    null
+                }
+            }
+
+        }
+
+        set_usecase_button.setOnClickListener { _ -> registerRobotAndUseCase(selectedUseCase) }
+    }
+
+    private fun fetchUseCases(token: String, view: View) {
         Log.v(fTag, "Getting use cases")
         parent.restApiService
-                .getAllUseCases(parent.authToken)
+                .getAllUseCases(token)
                 .enqueue(object : Callback<List<UseCase>> {
 
             override fun onResponse(call: Call<List<UseCase>>, response: Response<List<UseCase>>) {
@@ -103,31 +141,6 @@ class SelectUseCaseFragment : Fragment() {
 
         })
 
-        // Set up the selection listener for the use case spinner
-        spinner.onItemSelectedListener = object: AdapterView.OnItemSelectedListener {
-
-            override fun onNothingSelected(p0: AdapterView<*>?) {
-                selectedUseCase = null
-            }
-
-            override fun onItemSelected(adapter: AdapterView<*>?, view: View?, pos: Int, p3: Long) {
-
-                val useCase = adapter?.getItemAtPosition(pos) as? UseCase
-
-                selectedUseCase = if (useCase != null) {
-                    Log.v(fTag, "[onItemSelected] User selected use case $useCase")
-                    useCase
-                } else {
-                    Log.e(fTag, "[onItemSelected] User indicated position $pos but adapter or item was null")
-                    parent.snackbar_layout.snackbar("Could not fetch your chosen use case")
-                    null
-                }
-            }
-
-        }
-
-        set_usecase_button.setOnClickListener { _ -> registerRobotAndUseCase(selectedUseCase) }
-
     }
 
     /**
@@ -146,43 +159,49 @@ class SelectUseCaseFragment : Fragment() {
         set_usecase_button.isEnabled = false
         parent.chosenUseCase = useCase
 
-        parent.restApiService
-                .registerRobot(
-                        parent.robotId,
-                        parent.authToken,
-                        RobotRegistrationBody(parent.robotNickname, useCase.name.toLowerCase()))
-                .enqueue(object : Callback<ResponseBody> {
+        parent.authState.performActionWithFreshTokens(parent.authService)
+        { accessToken: String?, _: String?, ex: AuthorizationException? ->
+            // TODO am I supposed to use the accessToken or idToken (aka _)
+            if (accessToken == null) {
+                Log.e(fTag, "[registerRobotAndUseCase] got null access token, exception: $ex")
+            } else {
+                parent.restApiService
+                        .registerRobot(
+                                parent.robotId,
+                                accessToken,
+                                RobotRegistrationBody(parent.robotNickname, useCase.name.toLowerCase()))
+                        .enqueue(object : Callback<ResponseBody> {
 
-            override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
+                            override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
 
-                use_case_registration_progress_bar.visibility = View.GONE
-                set_usecase_button.isEnabled = true
+                                use_case_registration_progress_bar.visibility = View.GONE
+                                set_usecase_button.isEnabled = true
 
-                if (response.isSuccessful) {
-                    context?.toast("Successfully registered the robot")
-                    parent.startFragment(ConfigureRobotFragment())
-                } else {
-                    val error = RestApiService.extractErrorFromResponse(response)
-                    Log.d(fTag, "[registerRobotAndUseCase] Got unsuccessful response when registering robot and "
-                            + "use case: $error")
-                    if (error != null) {
-                        parent.snackbar_layout.snackbar(error)
-                    }
-                }
+                                if (response.isSuccessful) {
+                                    context?.toast("Successfully registered the robot")
+                                    parent.startFragment(ConfigureRobotFragment())
+                                } else {
+                                    val error = RestApiService.extractErrorFromResponse(response)
+                                    Log.d(fTag, "[registerRobotAndUseCase] Got unsuccessful response when registering robot and "
+                                            + "use case: $error")
+                                    if (error != null) {
+                                        parent.snackbar_layout.snackbar(error)
+                                    }
+                                }
 
+                            }
+
+                            override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                                use_case_registration_progress_bar.visibility = View.GONE
+                                set_usecase_button.isEnabled = true
+                                val error = t.message
+                                Log.e(fTag, "[registerRobotAndUseCase] FAILED, got error: $error")
+                                if (error != null) {
+                                    parent.snackbar_layout.snackbar(error)
+                                }
+                            }
+                        })
             }
-
-            override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                use_case_registration_progress_bar.visibility = View.GONE
-                set_usecase_button.isEnabled = true
-                val error = t.message
-                Log.e(fTag, "[registerRobotAndUseCase] FAILED, got error: $error")
-                if (error != null) {
-                    parent.snackbar_layout.snackbar(error)
-                }
-            }
-        })
+        }
     }
-
-
 }

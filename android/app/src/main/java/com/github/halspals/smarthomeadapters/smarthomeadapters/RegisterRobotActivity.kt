@@ -9,6 +9,7 @@ import android.util.Log
 import com.github.halspals.smarthomeadapters.smarthomeadapters.model.UseCase
 import com.google.zxing.integration.android.IntentIntegrator
 import com.google.zxing.integration.android.IntentResult
+import net.openid.appauth.AuthorizationService
 
 /**
  * The activity forming the base of the robot registration wizard.
@@ -28,6 +29,14 @@ class RegisterRobotActivity : AppCompatActivity() {
 
     internal val restApiService by lazy {
         RestApiService.new()
+    }
+
+    internal val authState by lazy {
+        readAuthState(this)
+    }
+
+    internal val authService by lazy {
+        AuthorizationService(this)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

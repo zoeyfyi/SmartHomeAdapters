@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import kotlinx.android.synthetic.main.activity_register_robot.*
 import kotlinx.android.synthetic.main.fragment_configure_robot.*
+import net.openid.appauth.AuthorizationException
 import okhttp3.ResponseBody
 import org.jetbrains.anko.design.snackbar
 import org.jetbrains.anko.toast
@@ -57,39 +58,47 @@ class ConfigureRobotFragment : Fragment() {
         progress_bar.visibility = View.VISIBLE
         finish_button.isEnabled = false
 
-        parent.restApiService
-                .setConfigParameters(parent.robotId, parent.authToken, config)
-                .enqueue(object: Callback<ResponseBody> {
+        parent.authState.performActionWithFreshTokens(parent.authService)
+        { accessToken: String?, _: String?, ex: AuthorizationException? ->
+            // TODO am I supposed to use the accessToken or idToken (aka _)
+            if (accessToken == null) {
+                Log.e(fTag, "[setConfigParametersAndFinish] got null access token, exception: $ex")
+            } else {
+                parent.restApiService
+                        .setConfigParameters(parent.robotId, accessToken, config)
+                        .enqueue(object: Callback<ResponseBody> {
 
-            override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
+                            override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
 
-                progress_bar.visibility = View.GONE
-                finish_button.isEnabled = true
+                                progress_bar.visibility = View.GONE
+                                finish_button.isEnabled = true
 
-                if (response.isSuccessful) {
-                    Log.v(fTag, "[setConfigParameters] Success")
-                    parent.toast("Saved successfully")
-                    parent.finish()
-                } else {
-                    val error = RestApiService.extractErrorFromResponse(response)
-                    Log.e(fTag, "[setConfigParameters] got unsuccessful response, error: $error")
-                    if (error != null) {
-                        parent.snackbar_layout.snackbar(error)
-                    }
-                }
+                                if (response.isSuccessful) {
+                                    Log.v(fTag, "[setConfigParameters] Success")
+                                    parent.toast("Saved successfully")
+                                    parent.finish()
+                                } else {
+                                    val error = RestApiService.extractErrorFromResponse(response)
+                                    Log.e(fTag, "[setConfigParameters] got unsuccessful response, error: $error")
+                                    if (error != null) {
+                                        parent.snackbar_layout.snackbar(error)
+                                    }
+                                }
+                            }
+
+                            override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+
+                                progress_bar.visibility = View.GONE
+                                finish_button.isEnabled = true
+
+                                val error = t.message
+                                Log.e(fTag, "[setConfigParameters] FAILED, error: $error")
+                                if (error != null) {
+                                    parent.snackbar_layout.snackbar(error)
+                                }
+                            }
+                        })
             }
-
-            override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-
-                progress_bar.visibility = View.GONE
-                finish_button.isEnabled = true
-
-                val error = t.message
-                Log.e(fTag, "[setConfigParameters] FAILED, error: $error")
-                if (error != null) {
-                    parent.snackbar_layout.snackbar(error)
-                }
-            }
-        })
+        }
     }
 }

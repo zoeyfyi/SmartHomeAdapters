@@ -9,6 +9,8 @@ import android.view.ViewGroup
 import android.widget.GridView
 import com.github.halspals.smarthomeadapters.smarthomeadapters.model.Robot
 import kotlinx.android.synthetic.main.fragment_robots.*
+import net.openid.appauth.AuthState
+import net.openid.appauth.AuthorizationException
 import org.jetbrains.anko.design.snackbar
 import org.jetbrains.anko.startActivity
 import retrofit2.Call
@@ -40,32 +42,45 @@ class RobotsFragment : Fragment() {
             parent.startActivity<RegisterRobotActivity>("token" to parent.authToken)
         }
 
+        parent.authState.performActionWithFreshTokens(parent.authService)
+        { accessToken, _, ex ->
+            // TODO am I supposed to use the accessToken or idToken (aka _)
+            if (accessToken == null) {
+                Log.e(fTag, "[performActionWithFreshTokens] got null access token, "
+                        + "exception: $ex")
+            } else {
+                fetchRobots(accessToken, view)
+            }
+        }
+    }
+
+    private fun fetchRobots(token: String, view: View) {
         parent.restApiService
-                .getRobots(parent.authToken)
+                .getRobots(token)
                 .enqueue(object : Callback<List<Robot>> {
 
-            override fun onFailure(call: Call<List<Robot>>, t: Throwable) {
-                val errorMsg = t.message
-                Log.e(fTag, "getRobots FAILED, got error: $errorMsg")
-                if (errorMsg != null) {
-                    snackbar_layout.snackbar(errorMsg)
-                }
-            }
-
-            override fun onResponse(call: Call<List<Robot>>, response: Response<List<Robot>>) {
-                val robots = response.body()
-                if (response.isSuccessful && robots != null) {
-                    displayRobots(view, robots)
-                } else {
-                    val error = RestApiService.extractErrorFromResponse(response)
-
-                    Log.e(fTag, "getRobots got unsuccessful response, error: $error")
-                    if (error != null) {
-                        snackbar_layout.snackbar(error)
+                    override fun onFailure(call: Call<List<Robot>>, t: Throwable) {
+                        val errorMsg = t.message
+                        Log.e(fTag, "getRobots FAILED, got error: $errorMsg")
+                        if (errorMsg != null) {
+                            snackbar_layout.snackbar(errorMsg)
+                        }
                     }
-                }
-            }
-        })
+
+                    override fun onResponse(call: Call<List<Robot>>, response: Response<List<Robot>>) {
+                        val robots = response.body()
+                        if (response.isSuccessful && robots != null) {
+                            displayRobots(view, robots)
+                        } else {
+                            val error = RestApiService.extractErrorFromResponse(response)
+
+                            Log.e(fTag, "getRobots got unsuccessful response, error: $error")
+                            if (error != null) {
+                                snackbar_layout.snackbar(error)
+                            }
+                        }
+                    }
+                })
     }
 
     private fun displayRobots(view: View, robots: List<Robot>) {
