@@ -62,13 +62,15 @@ class ConfigureRobotFragment : Fragment() {
         { accessToken: String?, _: String?, ex: AuthorizationException? ->
             // TODO am I supposed to use the accessToken or idToken (aka _)
             if (accessToken == null) {
-                Log.e(fTag, "[setConfigParametersAndFinish] got null access token, exception: $ex")
+                Log.e(fTag, "[setConfigParametersAndFinish] got null access token, ex: $ex")
             } else {
                 parent.restApiService
                         .setConfigParameters(parent.robotId, accessToken, config)
                         .enqueue(object: Callback<ResponseBody> {
 
-                            override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
+                            override fun onResponse(
+                                    call: Call<ResponseBody>,
+                                    response: Response<ResponseBody>) {
 
                                 progress_bar.visibility = View.GONE
                                 finish_button.isEnabled = true
@@ -79,7 +81,8 @@ class ConfigureRobotFragment : Fragment() {
                                     parent.finish()
                                 } else {
                                     val error = RestApiService.extractErrorFromResponse(response)
-                                    Log.e(fTag, "[setConfigParameters] got unsuccessful response, error: $error")
+                                    Log.e(fTag, "[setConfigParameters] got unsuccessful "
+                                            + "response, error: $error")
                                     if (error != null) {
                                         parent.snackbar_layout.snackbar(error)
                                     }

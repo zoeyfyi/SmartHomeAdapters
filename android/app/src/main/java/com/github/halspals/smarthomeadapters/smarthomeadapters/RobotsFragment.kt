@@ -67,7 +67,10 @@ class RobotsFragment : Fragment() {
                         }
                     }
 
-                    override fun onResponse(call: Call<List<Robot>>, response: Response<List<Robot>>) {
+                    override fun onResponse(
+                            call: Call<List<Robot>>,
+                            response: Response<List<Robot>>) {
+
                         val robots = response.body()
                         if (response.isSuccessful && robots != null) {
                             displayRobots(view, robots)

@@ -91,7 +91,8 @@ class RobotFragment : Fragment() {
                                     onReceiveRobot(robot)
                                 } else {
                                     val error = RestApiService.extractErrorFromResponse(response)
-                                    Log.e(fTag, "Getting the robot was unsuccessful, error: $error")
+                                    Log.e(fTag, "Getting the robot was unsuccessful, "
+                                            + "error: $error")
                                     if (error != null) {
                                         snackbar_layout.snackbar(error)
                                     }
@@ -178,13 +179,17 @@ class RobotFragment : Fragment() {
                         .robotToggle(robotId, isOn, accessToken, mapOf())
                         .enqueue(object: Callback<ResponseBody> {
 
-                            override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
+                            override fun onResponse(
+                                    call: Call<ResponseBody>,
+                                    response: Response<ResponseBody>) {
+
                                 if (response.isSuccessful) {
                                     parent.toast("Success")
                                     Log.d(fTag, "Server accepted setting switch to $isOn")
                                 } else {
                                     val error = RestApiService.extractErrorFromResponse(response)
-                                    Log.e(fTag, "Setting the switch was unsuccessful, error: $error")
+                                    Log.e(fTag, "Setting the switch was unsuccessful, "
+                                            + "error: $error")
                                     if (error != null) {
                                         snackbar_layout.snackbar(error)
                                     }
@@ -222,13 +227,17 @@ class RobotFragment : Fragment() {
                         .robotRange(robotId, value-273, accessToken, mapOf())
                         .enqueue(object : Callback<ResponseBody> {
 
-                            override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
+                            override fun onResponse(
+                                    call: Call<ResponseBody>,
+                                    response: Response<ResponseBody>) {
+
                                 if (response.isSuccessful) {
                                     parent.toast("Success")
                                     Log.d(fTag, "Server accepted setting range to $value")
                                 } else {
                                     val error = RestApiService.extractErrorFromResponse(response)
-                                    Log.e(fTag, "Setting the range was unsuccessful, error: $error")
+                                    Log.e(fTag, "Setting the range was unsuccessful, "
+                                            + "error: $error")
                                     if (error != null) {
                                         snackbar_layout.snackbar(error)
                                     }

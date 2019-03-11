@@ -6,6 +6,9 @@ import net.openid.appauth.AuthState
 
 private const val TAG = "AuthStateManager"
 
+/**
+ * Fetches a saved [AuthState] if there is one, otherwise makes a new one.
+ */
 internal fun readAuthState(context: Context): AuthState {
     val prefs = context.getSharedPreferences("auth", Context.MODE_PRIVATE)
     val stateJson = prefs.getString("stateJson", null)
@@ -17,6 +20,9 @@ internal fun readAuthState(context: Context): AuthState {
     }
 }
 
+/**
+ * Writes the given [AuthState] to the shared preferences.
+ */
 internal fun writeAuthState(context: Context, state: AuthState) {
     val prefs = context.getSharedPreferences("auth", Context.MODE_PRIVATE)
     Log.d(TAG, "[writeAuthState] Writing auth state ${state.jsonSerializeString()}")

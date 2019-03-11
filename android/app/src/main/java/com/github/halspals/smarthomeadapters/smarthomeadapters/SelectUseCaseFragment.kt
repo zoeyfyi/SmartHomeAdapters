@@ -34,7 +34,11 @@ class SelectUseCaseFragment : Fragment() {
 
     private var selectedUseCase: UseCase? = null
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(
+            inflater: LayoutInflater,
+            container: ViewGroup?,
+            savedInstanceState: Bundle?
+    ) : View? {
         Log.d(fTag, "[onCreateView] Invoked")
         return inflater.inflate(R.layout.fragment_select_use_case, container, false)
     }
@@ -70,7 +74,8 @@ class SelectUseCaseFragment : Fragment() {
                     Log.v(fTag, "[onItemSelected] User selected use case $useCase")
                     useCase
                 } else {
-                    Log.e(fTag, "[onItemSelected] User indicated position $pos but adapter or item was null")
+                    Log.e(fTag, "[onItemSelected] User indicated position $pos but adapter or"
+                            + " item was null")
                     parent.snackbar_layout.snackbar("Could not fetch your chosen use case")
                     null
                 }
@@ -93,7 +98,8 @@ class SelectUseCaseFragment : Fragment() {
                 // Extract the use cases from the response, if it was successful
                 val useCases: List<UseCase>? = response.body()
                 if (response.isSuccessful && useCases != null) {
-                    Log.v(fTag, "[getAllUseCases] Successfully got list of ${useCases.size} use cases")
+                    Log.v(fTag, "[getAllUseCases] Successfully got list of ${useCases.size} "
+                            + "use cases")
                     spinner_text_view.text = getString(R.string.select_from_spinner_text)
 
                     spinner.adapter = object : BaseAdapter() {
@@ -123,7 +129,8 @@ class SelectUseCaseFragment : Fragment() {
                 } else {
                     spinner_text_view.text = getString(R.string.failed_spinner_text)
                     val error = RestApiService.extractErrorFromResponse(response)
-                    Log.e(fTag, "[getAllUseCases] response was unsuccessful or body was null; error: $error")
+                    Log.e(fTag, "[getAllUseCases] response was unsuccessful or body was null;"
+                            + " error: $error")
                     if (error != null) {
                         parent.snackbar_layout.snackbar(error)
                     }
@@ -172,7 +179,9 @@ class SelectUseCaseFragment : Fragment() {
                                 RobotRegistrationBody(parent.robotNickname, useCase.name.toLowerCase()))
                         .enqueue(object : Callback<ResponseBody> {
 
-                            override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
+                            override fun onResponse(
+                                    call: Call<ResponseBody>,
+                                    response: Response<ResponseBody>) {
 
                                 use_case_registration_progress_bar.visibility = View.GONE
                                 set_usecase_button.isEnabled = true
@@ -182,8 +191,8 @@ class SelectUseCaseFragment : Fragment() {
                                     parent.startFragment(ConfigureRobotFragment())
                                 } else {
                                     val error = RestApiService.extractErrorFromResponse(response)
-                                    Log.d(fTag, "[registerRobotAndUseCase] Got unsuccessful response when registering robot and "
-                                            + "use case: $error")
+                                    Log.d(fTag, "[registerRobotAndUseCase] Got unsuccessful "
+                                            + "response when registering robot and use case: $error")
                                     if (error != null) {
                                         parent.snackbar_layout.snackbar(error)
                                     }
