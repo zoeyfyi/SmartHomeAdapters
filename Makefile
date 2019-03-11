@@ -86,7 +86,7 @@ docker-thermostatserver:
 	@docker build -f go.Dockerfile -t smarthomeadapters/thermostatserver . --build-arg SERVICE=thermostatserver
 
 docker-account-app:
-	@docker build -f go.Dockerfile -t smarthomeadapters/account-app . --build-arg SERVICE=account-app
+	@(cd account-app && docker build -t smarthomeadapters/account-app .)
 
 docker-thermodb:
 	@(cd thermodb && docker build -t smarthomeadapters/thermodb .)
