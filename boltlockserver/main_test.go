@@ -16,7 +16,7 @@ import (
 	"google.golang.org/grpc/test/bufconn"
 
 	_ "github.com/lib/pq"
-	"github.com/mrbenshef/SmartHomeAdapters/switchserver/switchserver"
+	"github.com/mrbenshef/SmartHomeAdapters/boltlockserver/boltlockserver"
 	"google.golang.org/grpc"
 )
 
@@ -30,7 +30,7 @@ func TestMain(m *testing.M) {
 	}
 
 	// start infodb
-	resource, err := pool.Run("smarthomeadapters/switchdb", "latest", []string{"POSTGRES_PASSWORD=password"})
+	resource, err := pool.Run("smarthomeadapters/boltlockdb", "latest", []string{"POSTGRES_PASSWORD=password"})
 	if err != nil {
 		log.Fatalf("Could not start resource: %s", err)
 	}
@@ -52,7 +52,7 @@ func TestMain(m *testing.M) {
 	// start test gRPC server
 	lis = bufconn.Listen(1024 * 1024)
 	s := grpc.NewServer()
-	switchserver.RegisterSwitchServerServer(s, &server{
+	boltlockserver.RegisterBoltlockServerServer(s, &server{
 		DB: getDb(),
 	})
 	go func() {
@@ -72,7 +72,7 @@ func bufDialer(string, time.Duration) (net.Conn, error) {
 	return lis.Dial()
 }
 
-func TestSuccessfullyAddingSwitch(t *testing.T) {
+func TestSuccessfullyAddingBoltlock(t *testing.T) {
 	ctx := context.Background()
 	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithDialer(bufDialer), grpc.WithInsecure())
 	if err != nil {
@@ -80,8 +80,8 @@ func TestSuccessfullyAddingSwitch(t *testing.T) {
 	}
 	defer conn.Close()
 
-	client := switchserver.NewSwitchServerClient(conn)
-	switchRobot, err := client.AddSwitch(ctx, &switchserver.AddSwitchRequest{
+	client := boltlockserver.NewBoltlockServerClient(conn)
+	boltlockRobot, err := client.AddBoltlock(ctx, &boltlockserver.AddBoltlockRequest{
 		Id:   "123",
 		IsOn: false,
 	})
@@ -90,17 +90,17 @@ func TestSuccessfullyAddingSwitch(t *testing.T) {
 		t.Errorf("Expected nil error, got: %v", err)
 	}
 
-	expectedSwitch := &switchserver.Switch{
+	expectedBoltlock := &boltlockserver.Boltlock{
 		Id:   "123",
 		IsOn: false,
 	}
 
-	if !reflect.DeepEqual(switchRobot, expectedSwitch) {
-		t.Errorf("Robots differ. Expected: %+v, Got: %+v", expectedSwitch, switchRobot)
+	if !reflect.DeepEqual(boltlockRobot, expectedBoltlock) {
+		t.Errorf("Robots differ. Expected: %+v, Got: %+v", expectedBoltlock, boltlockRobot)
 	}
 }
 
-func TestAddSwitchAlreadyAdded(t *testing.T) {
+func TestAddBoltlockAlreadyAdded(t *testing.T) {
 	ctx := context.Background()
 	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithDialer(bufDialer), grpc.WithInsecure())
 	if err != nil {
@@ -108,9 +108,9 @@ func TestAddSwitchAlreadyAdded(t *testing.T) {
 	}
 	defer conn.Close()
 
-	client := switchserver.NewSwitchServerClient(conn)
+	client := boltlockserver.NewBoltlockServerClient(conn)
 
-	switchRobot, err := client.AddSwitch(ctx, &switchserver.AddSwitchRequest{
+	boltlockRobot, err := client.AddBoltlock(ctx, &boltlockserver.AddBoltlockRequest{
 		Id:   "321",
 		IsOn: false,
 	})
@@ -118,22 +118,22 @@ func TestAddSwitchAlreadyAdded(t *testing.T) {
 		t.Errorf("Expected nil error, got: %v", err)
 	}
 
-	switchRobot, err = client.AddSwitch(ctx, &switchserver.AddSwitchRequest{
+	boltlockRobot, err = client.AddBoltlock(ctx, &boltlockserver.AddBoltlockRequest{
 		Id:   "321",
 		IsOn: false,
 	})
 
-	if switchRobot != nil {
-		t.Errorf("Expected nil switch to be returned, got: %+v", switchRobot)
+	if boltlockRobot != nil {
+		t.Errorf("Expected nil boltlock to be returned, got: %+v", boltlockRobot)
 	}
 
-	expectedError := "rpc error: code = AlreadyExists desc = Robot \"321\" is already a registered switch"
+	expectedError := "rpc error: code = AlreadyExists desc = Robot \"321\" is already a registered boltlock"
 	if err.Error() != expectedError {
 		t.Errorf("Expected error: %s, got error: %s", expectedError, err.Error())
 	}
 }
 
-func TestSuccessfullyRemovingSwitch(t *testing.T) {
+func TestSuccessfullyRemovingBoltlock(t *testing.T) {
 	ctx := context.Background()
 	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithDialer(bufDialer), grpc.WithInsecure())
 	if err != nil {
@@ -141,8 +141,8 @@ func TestSuccessfullyRemovingSwitch(t *testing.T) {
 	}
 	defer conn.Close()
 
-	client := switchserver.NewSwitchServerClient(conn)
-	_, err = client.RemoveSwitch(ctx, &switchserver.RemoveSwitchRequest{
+	client := boltlockserver.NewBoltlockServerClient(conn)
+	_, err = client.RemoveBoltlock(ctx, &boltlockserver.RemoveBoltlockRequest{
 		Id: "123",
 	})
 
@@ -151,7 +151,7 @@ func TestSuccessfullyRemovingSwitch(t *testing.T) {
 	}
 }
 
-func TestRemoveSwitchDoesntExist(t *testing.T) {
+func TestRemoveBoltlockDoesntExist(t *testing.T) {
 	ctx := context.Background()
 	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithDialer(bufDialer), grpc.WithInsecure())
 	if err != nil {
@@ -159,13 +159,13 @@ func TestRemoveSwitchDoesntExist(t *testing.T) {
 	}
 	defer conn.Close()
 
-	client := switchserver.NewSwitchServerClient(conn)
+	client := boltlockserver.NewBoltlockServerClient(conn)
 
-	_, err = client.RemoveSwitch(ctx, &switchserver.RemoveSwitchRequest{
+	_, err = client.RemoveBoltlock(ctx, &boltlockserver.RemoveBoltlockRequest{
 		Id: "doesntexist",
 	})
 
-	expectedError := "rpc error: code = InvalidArgument desc = Robot \"doesntexist\" is not a switch"
+	expectedError := "rpc error: code = InvalidArgument desc = Robot \"doesntexist\" is not a boltlock"
 	if err.Error() != expectedError {
 		t.Errorf("Expected error: %s, got error: %s", expectedError, err.Error())
 	}
