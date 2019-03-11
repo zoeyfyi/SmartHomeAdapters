@@ -21,10 +21,17 @@ data class RobotStatus(
  * @property iconDrawable icon that represents the robot
  */
 data class Robot(
-        val id: String,
-        val nickname: String,
-        val robotType: String,
-        @SerializedName("interfaceType") val robotInterfaceType: String,
-        @SerializedName("status") val robotStatus: RobotStatus,
-        val iconDrawable: Int = R.drawable.basic_home // default icon
-        )
+    val id: String,
+    val nickname: String,
+    val robotType: String,
+    @SerializedName("interfaceType") val robotInterfaceType: String,
+    @SerializedName("status") val robotStatus: RobotStatus,
+    val iconDrawable: Int = R.drawable.basic_home // default icon
+) {
+    companion object {
+        const val TYPE_TOGGLE = "toggle"
+        const val TYPE_RANGE = "range"
+    }
+}
+
+data class RobotRegistrationBody(val nickname: String, val robotType: String)

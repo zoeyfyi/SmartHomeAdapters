@@ -50,4 +50,7 @@ dependencies {
 
     // AppAuth dependency
     implementation "net.openid:appauth:0.7.1"
+    
+    // ZXING dependency
+    implementation 'com.journeyapps:zxing-android-embedded:3.6.0'
 }

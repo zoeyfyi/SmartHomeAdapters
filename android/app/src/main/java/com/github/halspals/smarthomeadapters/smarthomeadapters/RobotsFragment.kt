@@ -10,8 +10,7 @@ import android.widget.GridView
 import com.github.halspals.smarthomeadapters.smarthomeadapters.model.Robot
 import kotlinx.android.synthetic.main.fragment_robots.*
 import org.jetbrains.anko.design.snackbar
-import org.json.JSONException
-import org.json.JSONObject
+import org.jetbrains.anko.startActivity
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -21,6 +20,8 @@ class RobotsFragment : Fragment() {
     private val fTag = "RobotFragment"
 
     private lateinit var robotGrid: GridView
+
+    private lateinit var parent: MainActivity
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -33,10 +34,19 @@ class RobotsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        (activity as MainActivity).restApiService.getRobots().enqueue(object : Callback<List<Robot>> {
+        parent = activity as MainActivity
+
+        add_robot_button.setOnClickListener { _ ->
+            parent.startActivity<RegisterRobotActivity>("token" to parent.authToken)
+        }
+
+        parent.restApiService
+                .getRobots(parent.authToken)
+                .enqueue(object : Callback<List<Robot>> {
+
             override fun onFailure(call: Call<List<Robot>>, t: Throwable) {
                 val errorMsg = t.message
-                Log.e(tag, "getRobots FAILED, got error: $errorMsg")
+                Log.e(fTag, "getRobots FAILED, got error: $errorMsg")
                 if (errorMsg != null) {
                     snackbar_layout.snackbar(errorMsg)
                 }
@@ -49,7 +59,7 @@ class RobotsFragment : Fragment() {
                 } else {
                     val error = RestApiService.extractErrorFromResponse(response)
 
-                    Log.e(tag, "getRobots got unsuccessful response, error: $error")
+                    Log.e(fTag, "getRobots got unsuccessful response, error: $error")
                     if (error != null) {
                         snackbar_layout.snackbar(error)
                     }
@@ -70,7 +80,7 @@ class RobotsFragment : Fragment() {
             bundle.putString("robotType", robot.robotType)
             robotFragment.arguments = bundle
 
-            (activity as MainActivity).startFragment(robotFragment, true)
+            parent.startFragment(robotFragment, true)
         }
     }
 }
