@@ -1,0 +1,58 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/wrappers.proto";
+
+service SwitchServer {
+    rpc AddSwitch(AddSwitchRequest) returns (Switch) {}
+    rpc RemoveSwitch(RemoveSwitchRequest) returns (google.protobuf.Empty) {}
+    rpc GetSwitch(SwitchQuery) returns (Switch) {}
+    rpc SetSwitch(SetSwitchRequest) returns (stream SetSwitchStatus) {}
+    rpc CalibrateSwitch(SwitchCalibrationParameters) returns (google.protobuf.Empty) {}
+}
+
+message Switch {
+    string id = 1;
+    bool isOn = 2;
+    int64 onAngle = 3;
+    int64 offAngle = 4;
+    int64 restAngle = 5;
+    bool isCalibrated = 6;
+}
+
+message AddSwitchRequest {
+    string id = 1;
+    bool isOn = 2;
+}
+
+message RemoveSwitchRequest {
+    string id = 1;
+}
+
+message SwitchQuery {
+    string id = 1;
+}
+
+message SetSwitchRequest {
+    string id = 1;
+    bool on = 2;
+    bool force = 3;
+}
+
+message SetSwitchStatus {
+    enum Status {
+        SETTING = 0;
+        WAITING = 1;
+        RETURNING = 2;
+        DONE = 3;
+    }
+    Status status = 1;
+}
+
+message SwitchCalibrationParameters {
+    string id = 1;
+    google.protobuf.Int64Value onAngle = 2;
+    google.protobuf.Int64Value offAngle = 3;
+    google.protobuf.Int64Value restAngle = 4;
+    google.protobuf.BoolValue isCalibrated = 5;
+}
