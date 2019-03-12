@@ -3,11 +3,13 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"log"
 	"net"
 	"net/http"
 	"sync"
+	"time"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -114,6 +116,41 @@ func sendMessage(id string, msg string) error {
 	}
 
 	return nil
+}
+
+type command struct {
+	angle        int
+	isCompleted  bool
+	submitTime   time.Time
+	completeTime time.Time
+	delayTime    int
+}
+
+func (c *command) insert(db *sql.DB) error {
+	_, err := db.Exec("INSERT INTO commands(angle, isCompleted, submitTime, completeTime, delayTime) VALUES($1, $2, $3, $4, $5)",
+		c.angle,
+		c.isCompleted,
+		c.submitTime,
+		c.completeTime,
+		c.delayTime,
+	)
+
+	return err
+}
+
+func getCommands(db *sql.DB) ([]command, error) {
+	rows, err := db.Query("SELECT angle, isCompleted, submitTime, completeTime, delayTime FROM commands WHERE isCompleted = FALSE ORDER BY submitTime ASC")
+	if err != nil {
+		return nil, err
+	}
+
+	var cmd command
+	for rows.Next() {
+		err := rows.Scan(&cmd.angle, &cmd.isCompleted, &cmd.submitTime, &cmd.completeTime, &cmd.delayTime)
+		if err != nil {
+
+		}
+	}
 }
 
 func createRouter() *httprouter.Router {
