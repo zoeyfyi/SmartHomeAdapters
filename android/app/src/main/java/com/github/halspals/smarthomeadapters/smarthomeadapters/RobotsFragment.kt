@@ -19,7 +19,7 @@ import retrofit2.Response
 
 class RobotsFragment : Fragment() {
 
-    private val fTag = "RobotFragment"
+    private val fTag = "RobotsFragment"
 
     private lateinit var robotGrid: GridView
 
@@ -39,7 +39,7 @@ class RobotsFragment : Fragment() {
         parent = activity as MainActivity
 
         add_robot_button.setOnClickListener { _ ->
-            parent.startActivity<RegisterRobotActivity>("token" to parent.authToken)
+            parent.startActivity<RegisterRobotActivity>()
         }
 
         parent.authState.performActionWithFreshTokens(parent.authService)
@@ -49,6 +49,7 @@ class RobotsFragment : Fragment() {
                 Log.e(fTag, "[performActionWithFreshTokens] got null access token, "
                         + "exception: $ex")
             } else {
+                Log.d(fTag, "[performActionWithFreshTokens] got access token $accessToken")
                 fetchRobots(accessToken, view)
             }
         }

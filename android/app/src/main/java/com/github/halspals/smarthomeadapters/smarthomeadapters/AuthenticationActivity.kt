@@ -13,6 +13,8 @@ class AuthenticationActivity : AppCompatActivity() {
 
     private val tag = "AuthenticationActivity"
 
+    private val authRequestCode = 42
+
     private val authRequest: AuthorizationRequest by lazy {
         val authServiceConfig = AuthorizationServiceConfiguration(
                 Uri.parse("https://oauth.halspals.co.uk/oauth2/auth"),
@@ -20,7 +22,7 @@ class AuthenticationActivity : AppCompatActivity() {
         )
         AuthorizationRequest.Builder(
                 authServiceConfig,
-                "c43ce28c-f4e3-412b-8dc5-854a32a0c8db",
+                "65a0a8b8-9175-4f12-a270-461cb2e8fd85",
                 ResponseTypeValues.CODE,
                 Uri.parse("https://callback.halspals.co.uk")
         ).setScope("openid").build()
@@ -52,12 +54,12 @@ class AuthenticationActivity : AppCompatActivity() {
         // Start the authorization webview
         Log.d(tag, "Starting Oauth2 call")
         val authIntent = authService.getAuthorizationRequestIntent(authRequest)
-        startActivityForResult(authIntent, 42)
+        startActivityForResult(authIntent, authRequestCode)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
 
-        if (requestCode == 42) {
+        if (requestCode == authRequestCode) {
             Log.d(tag, "Received result from Oauth2 call")
             if (data == null) {
                 Log.e(tag, "onActivityResult got null data; aborting")
@@ -69,14 +71,30 @@ class AuthenticationActivity : AppCompatActivity() {
             val ex: AuthorizationException? = AuthorizationException.fromIntent(data)
             authState.update(resp, ex)
             if (resp != null) {
-                Log.d(tag, "OAuth authorization was successful")
+                Log.d(tag, "OAuth authorization was successful: code ${resp.authorizationCode}")
                 writeAuthState(this, authState)
-                startActivity<MainActivity>()
+                exchangeCodeForTokens(resp)
             } else {
                 Log.e(tag, "OAuth failed: got AuthorizationException: $ex")
             }
         } else {
-            Log.w(tag, "Received UNEXPECTED activity result")
+            Log.w(tag, "Received UNEXPECTED activity result with requestCode $requestCode")
+        }
+    }
+
+    private fun exchangeCodeForTokens(response: AuthorizationResponse) {
+        Log.d(tag, "[exchangeCodeForTokens] Starting code-for-tokens exchange")
+        authService.performTokenRequest(response.createTokenExchangeRequest())
+        { tokenResponse: TokenResponse?, ex: AuthorizationException? ->
+            authState.update(tokenResponse, ex)
+            writeAuthState(this, authState)
+            if (tokenResponse != null) {
+                Log.d(tag, "[exchangeCodeForTokens] Exchange successful, moving to main")
+                startActivity<MainActivity>()
+            } else {
+                Log.e(tag, "[exchangeCodeForTokens] Failed, exception $ex")
+                // TODO make the user try again etc
+            }
         }
     }
 }

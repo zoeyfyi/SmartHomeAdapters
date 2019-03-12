@@ -22,8 +22,6 @@ class RegisterRobotActivity : AppCompatActivity() {
     internal lateinit var robotId: String
     internal lateinit var robotNickname: String
 
-    internal lateinit var authToken: String
-
     // Record the chosen use case so that its parameters can be set up
     internal lateinit var chosenUseCase: UseCase
 
@@ -42,10 +40,6 @@ class RegisterRobotActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_register_robot)
-
-        // Get the token for the current session
-        authToken = intent.getStringExtra("token")
-        Log.d(tag, "token: $authToken")
 
         startFragment(QRFragment())
     }
