@@ -13,7 +13,6 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
-        manifestPlaceholders = ['appAuthRedirectScheme': 'http://callback.halspals.co.uk']
     }
     buildTypes {
         release {
