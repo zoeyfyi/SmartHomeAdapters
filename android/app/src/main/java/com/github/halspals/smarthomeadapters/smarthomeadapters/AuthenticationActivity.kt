@@ -18,13 +18,12 @@ class AuthenticationActivity : AppCompatActivity() {
                 Uri.parse("https://oauth.halspals.co.uk/oauth2/auth"),
                 Uri.parse("https://oauth.halspals.co.uk/oauth2/token")
         )
-
         AuthorizationRequest.Builder(
                 authServiceConfig,
-                "b43ce28c-f4e3-412b-8dc5-854a32a0c8db",
+                "c43ce28c-f4e3-412b-8dc5-854a32a0c8db",
                 ResponseTypeValues.CODE,
-                Uri.parse("http://callback.halspals.co.uk")
-        ).build()
+                Uri.parse("https://callback.halspals.co.uk")
+        ).setScope("openid").build()
     }
 
     private val authService: AuthorizationService by lazy {
