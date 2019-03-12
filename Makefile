@@ -97,7 +97,7 @@ docker-boltlockdb:
 
 docker: docker-clientserver docker-infoserver docker-robotserver docker-switchserver docker-userserver docker-thermostatserver docker-infodb docker-switchdb docker-userdb docker-thermodb docker-boltlockserver docker-boltlockdb
 
-docker-dbs: docker-infodb docker-switchdb docker-userdb docker-thermodb
+docker-dbs: docker-infodb docker-switchdb docker-userdb docker-thermodb docker-boltlockdb
 
 docker-push:
 	@docker tag smarthomeadapters/clientserver smarthomeadapters/clientserver:latest
