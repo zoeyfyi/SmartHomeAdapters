@@ -5,8 +5,11 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
+	"strings"
 	"text/template"
 
 	"github.com/julienschmidt/httprouter"
@@ -43,15 +46,35 @@ type consentTemplateData struct {
 	Error error
 }
 
+type LoginRequest struct {
+	Remember bool `json:"remember"`
+	Subject string `json:"subject"`
+}
+
 func acceptLogin(w http.ResponseWriter, r *http.Request, challenge string) {
-	url := fmt.Sprintf("https://hydra.halspals.co.uk/oauth2/auth/requests/login/%s/accept", challenge)
+	urlPut := fmt.Sprintf("https://hydra.halspals.co.uk/oauth2/auth/requests/login/%s/accept", challenge)
 
 	// need to put headers/data in here
 	//
-	jsonData := []byte(`{ "remember":false, "subject":"subject123"}`)
+	jsonData := &LoginRequest{Remember:false, Subject:"subject123"}
+
+	buf := new (bytes.Buffer)
+	json.NewEncoder(buf).Encode(jsonData)
+
+	// jsonData := []byte(`{ "remember":false, "subject":"subject123"}`)
+	log.Printf("---URL---")
+	log.Printf("%s", urlPut)
+	log.Printf("---END_URL---")
+
+	data := url.Values{}
+	data.Set("\"remember\"","false")
+	data.Set("\"subject\"","\"subject123\"")
+
 
 	// redirect is wrong tho
-	req, err := http.NewRequest("PUT", url, bytes.NewBuffer(jsonData))
+	log.Printf("%s", buf)
+	req, err := http.NewRequest("PUT", urlPut, buf)
+	// req.Header.Add("Content-Length", strconv.Itoa(len(jsonData)))
 	if err != nil {
 		loginTemplate.Execute(w, loginTemplateData{
 			Error: fmt.Errorf("Internal error"),
@@ -59,6 +82,7 @@ func acceptLogin(w http.ResponseWriter, r *http.Request, challenge string) {
 		return
 	}
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Length", "41")
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		loginTemplate.Execute(w, loginTemplateData{
@@ -73,21 +97,45 @@ func acceptLogin(w http.ResponseWriter, r *http.Request, challenge string) {
 		})
 		return
 	}
-
 	var loginAccept hydraLoginAccept
-	json.NewDecoder(resp.Body).Decode(loginAccept)
+	//ivar loginAccept2 interface{}
+
+	log.Printf("%s", resp.StatusCode)
+	log.Printf("%s", resp.ContentLength)
+	log.Printf("%s", resp.Cookies())
+	log.Printf("%s", resp.Request)
+	body, err := ioutil.ReadAll(resp.Body)
+
+	// w.Write(body)
+	reader := bytes.NewReader(body)
+	err = json.NewDecoder(reader).Decode(&loginAccept)
+	if err != nil {
+		log.Printf("ERROR: %v", err)
+	}
+
+	strings.Replace(loginAccept.RedirectTo, "\\u0026", "&", -1)
+
+	log.Printf("---BODY---")
+	log.Printf("%s", loginAccept)
+	log.Printf("---ENDBODY---")
+	log.Printf("---REDIRECT---")
+	log.Printf("%s", loginAccept.RedirectTo)
+	log.Printf("---END_REDIRECT---")
 	// is loginAccept.RedirectTo not null here?
 
 	// redirect back to hydra
 	http.Redirect(w, r, loginAccept.RedirectTo, http.StatusMovedPermanently)
-}
+
+	}
 
 func postLoginHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	// get hydra challenge
 	// should be login_challenge but need to fix template
 	r.ParseForm()
+	log.Printf("---CHALLENGE---")
 	challenge := r.Form.Get("challenge")
-
+	log.Printf("%s", challenge)
+	log.Printf("---CHALLENGE OVER---")
 	// parse post form
 	r.ParseForm()
 	email := r.PostForm.Get("email")
@@ -145,7 +193,7 @@ func getLoginHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params
 }
 
 func acceptConsent(w http.ResponseWriter, r *http.Request, challenge string) {
-	url := fmt.Sprintf("https://hydra.halspals.co.uk/oauth2/auth/requests/consent/%s/accept", challenge)
+	urlThing := fmt.Sprintf("https://hydra.halspals.co.uk/oauth2/auth/requests/consent/%s/accept", challenge)
 
 	// need to put json data here
 
@@ -154,7 +202,7 @@ func acceptConsent(w http.ResponseWriter, r *http.Request, challenge string) {
 
 	jsonData := []byte(`{ "remember":false, "grant_scope":["openid"]}`)
 
-	req, err := http.NewRequest("PUT", url, bytes.NewBuffer(jsonData))
+	req, err := http.NewRequest("PUT", urlThing, bytes.NewBuffer(jsonData))
 	if err != nil {
 		consentTemplate.Execute(w, consentTemplateData{
 			Error: fmt.Errorf("Internal error"),
@@ -180,7 +228,7 @@ func acceptConsent(w http.ResponseWriter, r *http.Request, challenge string) {
 	}
 
 	var consentAccept hydraConsentAccept
-	json.NewDecoder(resp.Body).Decode(consentAccept)
+	json.NewDecoder(resp.Body).Decode(&consentAccept)
 	// the .RedirectTo url is null?
 	// redirect back to hydra
 	http.Redirect(w, r, consentAccept.RedirectTo, http.StatusMovedPermanently)
