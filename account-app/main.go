@@ -2,9 +2,11 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"google.golang.org/grpc"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -12,9 +14,13 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/mrbenshef/SmartHomeAdapters/userserver/userserver"
 	"github.com/julienschmidt/httprouter"
 )
 
+var (
+	userserverClient userserver.UserServerClient
+)
 var (
 	// CHANGE THESE PATHS
 	loginTemplate   = template.Must(template.ParseFiles("/app/static/login.html"))
@@ -51,27 +57,49 @@ type LoginRequest struct {
 	Subject string `json:"subject"`
 }
 
+type loginBody struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
 func acceptLogin(w http.ResponseWriter, r *http.Request, challenge string) {
 	urlPut := fmt.Sprintf("https://hydra.halspals.co.uk/oauth2/auth/requests/login/%s/accept", challenge)
 
 	// need to put headers/data in here
 	//
-	jsonData := &LoginRequest{Remember:false, Subject:"subject123"}
+
+	// WARNING - this is probably not the best way to do it
+	// but i am very sleepy
+	r.ParseForm()
+	email := r.PostForm.Get("email")
+	password := r.PostForm.Get("password")
+
+	log.Printf("Logging in user with email: %s", email)
+	token, err := userserverClient.Login(context.Background(), &userserver.LoginRequest{
+		Email:    email,
+		Password: password,
+	})
+
+	if err != nil {
+		log.Fatalf("Bad login: %v", err)
+	}
+
+	id, err := userserverClient.Authorize(context.Background(), token)
+
+	if err != nil {
+		log.Fatalf("Bad authorize: %v", err)
+	}
+
+	jsonData := &LoginRequest{Remember:false, Subject:id.Id}
 
 	buf := new (bytes.Buffer)
 	json.NewEncoder(buf).Encode(jsonData)
 
 	// jsonData := []byte(`{ "remember":false, "subject":"subject123"}`)
-	log.Printf("---URL---")
-	log.Printf("%s", urlPut)
-	log.Printf("---END_URL---")
 
 	data := url.Values{}
 	data.Set("\"remember\"","false")
 	data.Set("\"subject\"","\"subject123\"")
 
-
-	// redirect is wrong tho
 	log.Printf("%s", buf)
 	req, err := http.NewRequest("PUT", urlPut, buf)
 	// req.Header.Add("Content-Length", strconv.Itoa(len(jsonData)))
@@ -131,15 +159,11 @@ func acceptLogin(w http.ResponseWriter, r *http.Request, challenge string) {
 func postLoginHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	// get hydra challenge
 	// should be login_challenge but need to fix template
-	r.ParseForm()
-	log.Printf("---CHALLENGE---")
-	challenge := r.Form.Get("challenge")
-	log.Printf("%s", challenge)
-	log.Printf("---CHALLENGE OVER---")
 	// parse post form
 	r.ParseForm()
 	email := r.PostForm.Get("email")
 	password := r.PostForm.Get("password")
+	challenge := r.Form.Get("challenge")
 
 	// check email/password
 	if email == "" {
@@ -261,6 +285,12 @@ func main() {
 	router.GET("/consent", getConsentHandler)
 	router.POST("/consent", postConsentHandler)
 
+	userserverConn, err := grpc.Dial("userserver:80", grpc.WithInsecure())
+	if err != nil {
+		panic(err)
+	}
+	defer userserverConn.Close()
+	userserverClient = userserver.NewUserServerClient(userserverConn)
 	// start server
 	if err := http.ListenAndServe(":4001", router); err != nil {
 		panic(err)

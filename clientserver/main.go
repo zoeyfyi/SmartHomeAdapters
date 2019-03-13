@@ -2,20 +2,21 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
-	"log"
-	"net/http"
-	"strconv"
-
 	"github.com/julienschmidt/httprouter"
 	"github.com/mrbenshef/SmartHomeAdapters/infoserver/infoserver"
 	"github.com/mrbenshef/SmartHomeAdapters/userserver/userserver"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"io"
+	"log"
+	"net/http"
+	"net/url"
+	"strconv"
 )
 
 var (
@@ -555,20 +556,65 @@ func rangeHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 		return
 	}
 }
-
+type hydraIntrospect struct {
+	Subject string `json:"sub"`
+	Active bool `json:"active"`
+	Scope string `json:"scope"`
+	Client_id string `json:"client_id"`
+	Exp int `json:"exp"`
+	Iat int `json:"iat"`
+	Iss string `json:"iss"`
+	Token_type string `json:"token_type"`
+}
 func auth(h httprouter.Handle) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		token := r.Header.Get("token")
-		user, err := userserverClient.Authorize(context.Background(), &userserver.Token{Token: token})
+		// no
+		// user, err := userserverClient.Authorize(context.Background(), &userserver.Token{Token: token})
 
-		if err != nil || user.Id == "" {
+		// send this to introspect
+
+		urlThing := "https://hydra.halspals.co.uk/oauth2/introspect"
+
+		// need to put json data here
+
+		// need to fix redirect as well
+		formdata := url.Values{
+			"token": {token},
+		}
+		log.Printf("Sending token: %s to url %s", formdata, urlThing)
+
+
+		resp, err := http.PostForm(urlThing, formdata)
+		// parse the subject from the request and pass it on
+
+		if err != nil {
+			log.Printf("HTTP do error: %v", err)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+
+		var introspect hydraIntrospect
+
+		err = json.NewDecoder(resp.Body).Decode(&introspect)
+
+		if err != nil{
+
+			log.Printf("JSON decode error %v", err)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+
+
+		}
+
+		if err != nil || introspect.Subject == "" {
 			log.Printf("Authentication error: %v", err)
 			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 			return
 		}
 
-		log.Printf("User ID is: %s", user.Id)
-		h(w, r.WithContext(context.WithValue(nil, "userId", user.Id)), ps)
+		log.Printf("User ID is: %s", introspect.Subject)
+		h(w, r.WithContext(context.WithValue(nil, "userId", introspect.Subject)), ps)
 	}
 }
 
@@ -593,7 +639,9 @@ func createRouter() *httprouter.Router {
 }
 
 func main() {
-	log.Println("Server starting")
+	log.Println("Server starting ")
+	// FIX THIS
+	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 
 	// connect to infoserver
 	infoserverConn, err := grpc.Dial("infoserver:80", grpc.WithInsecure())

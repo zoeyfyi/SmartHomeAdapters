@@ -38,10 +38,9 @@ RUN cd $SERVICE && go build -o server
 RUN cd $SERVICE && mkdir /app && mv server /app/server
 
 RUN if [ "$SERVICE" = "account-app" ] ; then cp -r account-app/static /app ; fi
-RUN ls /app/static/login.html
-RUN cat /app/static/login.html
 # final stage
 FROM alpine
 WORKDIR /app
 COPY --from=build-env /app/server /app/
+# COPY --from=build-env /app/static /app/static
 ENTRYPOINT ./server
