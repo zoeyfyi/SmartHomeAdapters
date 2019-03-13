@@ -31,26 +31,21 @@
 			\item Create Alexa skills schema
 			\item Add Alexa endpoints for receiving Alexa requests
 			\item Endpoint for unlocking/locking bolt lock
+			\item Become an OAuth provider
 		\end{itemize}
 		\item Android
 		\begin{itemize}
 			\item UI for unlocking/locking bolt lock
 			\item Send request to lock/unlock bolt lock
+			\item Use OAuth for authentication
+			\item Develop and test a mock-up for a better app UI
 		\end{itemize}
 		\item Robot
 		\begin{itemize}
-			\item 3D print case for controller
 			\item 3D print light switch grip
 			\item Build grip to manipulate bolt lock
+			\item Add buttons which allow for manual control of the adapters
 		\end{itemize}
-	\end{itemize}
-
-	We have for this demo also tackled the following issues, which were not explicit goals for this demo:
-	\begin{itemize}
-		\item OAuth for authentication (to allow for Alexa integration)
-		\item Restucturing the robot code to allow for \textit{deep sleep} (to improve battery life)
-		\item Develop a mock-up for better app UI and testing this on potential users
-		\item Add buttons for manually causing the robots to move
 	\end{itemize}
 	\\ \hline
 \end{tabular}
@@ -71,25 +66,24 @@
 					\item Alexa endpoint: {\color{red} ???}
 					\item Endpoint for unlocking/locking bolt lock: Gwion
 					\item OAuth: Gwion, Ben
-					\item Changes to the robotserver to accomodate deep sleep: Ben
 				\end{itemize}
 			\item Android:
 				\begin{itemize}
-					\item UI \& server integration for unlocking/locking a bolt lock: thanks to good software architecture previously in the project, this did not involve making any changes to the app code.
+					\item UI \& server integration for unlocking/locking a bolt lock: thanks to good software architecture, this did not involve making any changes to the app code.
 					\item Using OAuth for authentication: Theo
 					\item UI mock-up and user testing of this: Ben, Theo
 				\end{itemize}
 			\item Robot:
 			\begin{itemize}
 				\item 3D-printing: Luke
-				\item Changes to the robot code: Ben, Theo
 				\item Buttons for manual robot control: Spencer
 				\item Bolt lock mechanism: {\color{red} ???}
 			\end{itemize}
 		\end{itemize}
 
 		As before we are still using GitHub's \textit{Projects} feature to track our progress on the software side, along with communicating on Slack and in our weekly meetings.
-		This is the current state of our progress according to the \textit{Projects} tracking feature, as of 12/3/2019.
+		This is the current state of our progress according to the \textit{Projects} tracking feature, in which
+		we can easily define \textit{cards} describing tasks to be done, as of 12/3/2019.
 		
 		\vspace{3mm}
 		
@@ -164,14 +158,18 @@
 	\textbf{Say briefly what changes you will make to your plan for the next demo.}
 	\\ \hline
 	\vtop to 45mm{
-		After internal discussion we have realised that we may have to give up on the \textit{Triggers} feature,
+		After internal discussion we have realised that we may have to cut the \textit{Triggers} feature,
 		i.e. the user being able to set up rules such as "raise the thermostat by 2 degrees if the temperature ever drops below 20",
 		or "turn the lights on when the sun sets".
-
-		This is because there is a lot of work remaining in order to hit our demo 4 goals, particularly on the hardware side. As our project
-		has progressed we have wanted to move further and further towards a finished product to promote the fact that our product has a real place in the market.
-		However, this has meant that we have had to undertake very laborious tasks such as 3D-printing and PCB design, and therefore we may
-		have to cut functionality elsewhere.
+		This is because we want to put a large focus on the marketability of our product for the final demo, which we believe sets
+		our project apart from many others, and in order to do this we have chosen to polish our designs as much as possible.
+		When we first set out we did not intend to have moved away from LEGO for all use cases nor did we originally plan on designing our own PCB, however these are things we believe will be more valuable to our project than the \textit{Triggers} function.
+		Similarly, the time saved implementing this feature on the app and server sides can instead be redirected towards implementing the new UI to make for a better, more professional user experience.
+		
+		\vspace{3mm}
+		
+		{\color{red} Deep sleep? What to say?}
+		
   	}
   \\
   \hline
