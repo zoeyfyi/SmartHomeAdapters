@@ -9,8 +9,6 @@ import android.view.ViewGroup
 import android.widget.GridView
 import com.github.halspals.smarthomeadapters.smarthomeadapters.model.Robot
 import kotlinx.android.synthetic.main.fragment_robots.*
-import net.openid.appauth.AuthState
-import net.openid.appauth.AuthorizationException
 import org.jetbrains.anko.design.snackbar
 import org.jetbrains.anko.startActivity
 import retrofit2.Call
@@ -44,7 +42,6 @@ class RobotsFragment : Fragment() {
 
         parent.authState.performActionWithFreshTokens(parent.authService)
         { accessToken, _, ex ->
-            // TODO am I supposed to use the accessToken or idToken (aka _)
             if (accessToken == null) {
                 Log.e(fTag, "[performActionWithFreshTokens] got null access token, "
                         + "exception: $ex")

@@ -171,7 +171,6 @@ class RobotFragment : Fragment() {
         // Send the update to the server
         parent.authState.performActionWithFreshTokens(parent.authService)
         { accessToken: String?, _: String?, ex: AuthorizationException? ->
-            // TODO am I supposed to use the accessToken or idToken (aka _)
             if (accessToken == null) {
                 Log.e(fTag, "[onSwitch] got null access token, exception: $ex")
             } else {
@@ -218,7 +217,6 @@ class RobotFragment : Fragment() {
 
         parent.authState.performActionWithFreshTokens(parent.authService)
         { accessToken: String?, _: String?, ex: AuthorizationException? ->
-            // TODO am I supposed to use the accessToken or idToken (aka _)
             if (accessToken == null) {
                 Log.e(fTag, "[onSeek] got null access token, exception: $ex")
             } else {
