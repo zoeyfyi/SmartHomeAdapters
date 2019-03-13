@@ -66,6 +66,17 @@ docker-infoserver:
 docker-robotserver:
 	@docker build -f go.Dockerfile -t smarthomeadapters/robotserver . --build-arg SERVICE=robotserver
 
+docker-push-test-robotserver: docker-robotserver
+	@docker tag smarthomeadapters/robotserver smarthomeadapters/robotserver:test
+	@docker push smarthomeadapters/robotserver:test
+	
+docker-robotdb:
+	@(cd robotdb && docker build -t smarthomeadapters/robotdb .)
+
+docker-push-test-robotdb: docker-robotdb
+	@docker tag smarthomeadapters/robotdb smarthomeadapters/robotdb:test
+	@docker push smarthomeadapters/robotdb:test
+	
 docker-switchdb:
 	@(cd switchdb && docker build -t smarthomeadapters/switchdb .)
 

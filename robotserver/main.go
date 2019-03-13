@@ -4,60 +4,31 @@ package main
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"net"
 	"net/http"
-	"sync"
+	"os"
 	"time"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"github.com/golang/protobuf/ptypes/empty"
-	"github.com/gorilla/websocket"
 	"github.com/julienschmidt/httprouter"
 	"github.com/mrbenshef/SmartHomeAdapters/robotserver/robotserver"
 	"google.golang.org/grpc"
+
+	_ "github.com/lib/pq"
 )
 
-// upgrader upgrades http connections to WebSocket
-var upgrader = websocket.Upgrader{
-	CheckOrigin: func(r *http.Request) bool {
-		return true // ignore origin
-	},
-}
+type robotserverKey string
 
-// sockets to send messages to
-var sockets = make(map[string]*websocket.Conn)
-var socketMutex = &sync.Mutex{}
+const dbKey robotserverKey = "db"
 
-type server struct{}
-
-// connectHandler establishes the WebSocket with the client
-func connectHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	log.Println("Attempting to establish WebSocket connection")
-
-	id := ps.ByName("id")
-
-	// upgrade request
-	socketMutex.Lock()
-	if sockets[id] != nil {
-		log.Println("Closing existing socket")
-		sockets[id].Close()
-	}
-	socketMutex.Unlock()
-
-	newSocket, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Println("Failed to upgrade: ", err)
-		return
-	}
-
-	log.Println("Socket opened")
-	socketMutex.Lock()
-	sockets[id] = newSocket
-	socketMutex.Unlock()
+type server struct {
+	DB *sql.DB
 }
 
 func (s *server) SetServo(ctx context.Context, request *robotserver.ServoRequest) (*empty.Empty, error) {
@@ -69,100 +40,177 @@ func (s *server) SetServo(ctx context.Context, request *robotserver.ServoRequest
 		return nil, status.Newf(codes.InvalidArgument, "%d is to small, must be >= 0", request.Angle).Err()
 	}
 
-	msg := fmt.Sprintf("servo %d", request.Angle)
-	if err := sendMessage(request.RobotId, msg); err != nil {
-		return nil, err
+	err := submitCommand(s.DB, int(request.Angle), int(request.Delay))
+	if err != nil {
+		return nil, status.New(codes.Internal, "Internal error").Err()
 	}
 
 	return &empty.Empty{}, nil
-}
-
-func (s *server) SetLED(ctx context.Context, request *robotserver.LEDRequest) (*empty.Empty, error) {
-	var message string
-	if request.On {
-		message = "led on"
-	} else {
-		message = "led off"
-	}
-
-	if err := sendMessage(request.RobotId, message); err != nil {
-		return nil, err
-	}
-	return &empty.Empty{}, nil
-}
-
-func sendMessage(id string, msg string) error {
-	socketMutex.Lock()
-	socket, ok := sockets[id]
-	socketMutex.Unlock()
-
-	if !ok || socket == nil {
-		// socket was never opened
-		log.Println("Socket never opened")
-		return status.Newf(codes.Unavailable, "Robot \"%s\" is not connected", id).Err()
-	}
-
-	// send LED on message to robot
-	if err := socket.WriteMessage(websocket.TextMessage, []byte(msg)); err != nil {
-		if _, ok := err.(*websocket.CloseError); ok {
-			// socket was closed
-			log.Println("Socket closed")
-			return status.New(codes.Unavailable, "Robot not connected").Err()
-		} else {
-			// unknown error
-			log.Printf("Failed to send message: %v", err)
-			return status.New(codes.Internal, "Failed to communicate with robot").Err()
-		}
-	}
-
-	return nil
 }
 
 type command struct {
+	id           string
 	angle        int
 	isCompleted  bool
 	submitTime   time.Time
-	completeTime time.Time
+	completeTime *time.Time
 	delayTime    int
 }
 
-func (c *command) insert(db *sql.DB) error {
-	_, err := db.Exec("INSERT INTO commands(angle, isCompleted, submitTime, completeTime, delayTime) VALUES($1, $2, $3, $4, $5)",
-		c.angle,
-		c.isCompleted,
-		c.submitTime,
-		c.completeTime,
-		c.delayTime,
+func submitCommand(db *sql.DB, angle int, delay int) error {
+	_, err := db.Exec("INSERT INTO command(angle, isCompleted, submitTime, completeTime, delayTime) VALUES($1, $2, $3, $4, $5)",
+		angle,
+		false,
+		time.Now(),
+		nil,
+		delay,
 	)
 
 	return err
 }
 
 func getCommands(db *sql.DB) ([]command, error) {
-	rows, err := db.Query("SELECT angle, isCompleted, submitTime, completeTime, delayTime FROM commands WHERE isCompleted = FALSE ORDER BY submitTime ASC")
+	rows, err := db.Query("SELECT id, angle, isCompleted, submitTime, completeTime, delayTime FROM command WHERE isCompleted = FALSE ORDER BY submitTime ASC")
 	if err != nil {
+		log.Printf("Failed to query commands: %v", err)
 		return nil, err
 	}
 
-	var cmd command
-	for rows.Next() {
-		err := rows.Scan(&cmd.angle, &cmd.isCompleted, &cmd.submitTime, &cmd.completeTime, &cmd.delayTime)
-		if err != nil {
+	commands := []command{}
 
+	for rows.Next() {
+		var cmd command
+
+		err := rows.Scan(&cmd.id, &cmd.angle, &cmd.isCompleted, &cmd.submitTime, &cmd.completeTime, &cmd.delayTime)
+		if err != nil {
+			log.Printf("Failed to scan command: %v", err)
+			return nil, err
 		}
+
+		commands = append(commands, cmd)
+	}
+
+	return commands, nil
+}
+
+func acknowledgeCommand(db *sql.DB, cmdID string) error {
+	res, err := db.Exec("UPDATE command SET isCompleted = TRUE WHERE id = $1", cmdID)
+	if err != nil {
+		log.Printf("Failed to update database: %v", err)
+		return errors.New("Failed to acknowledge command")
+	}
+
+	// check 1 row was updated
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		log.Printf("Failed to get the amount of rows affected: %v", err)
+		return status.Newf(codes.Internal, "Internal error").Err()
+	}
+	if rowsAffected != 1 {
+		log.Printf("Expected to update exactly 1 row, rows updated: %d\n", rowsAffected)
+		return status.Newf(codes.Internal, "Internal error").Err()
+	}
+
+	return nil
+}
+
+func getCommandsHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	log.Printf("Getting commands\n")
+
+	db := r.Context().Value(dbKey).(*sql.DB)
+
+	commands, err := getCommands(db)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(http.StatusText(http.StatusInternalServerError)))
+		return
+	}
+
+	// build sequence of commands string
+	var cmdString string
+	for _, cmd := range commands {
+		cmdString += fmt.Sprintf("(%s) servo %d;", cmd.id, cmd.angle)
+		if cmd.delayTime > 0 {
+			cmdString += fmt.Sprintf("(%s) delay %d", cmd.id, cmd.delayTime)
+		}
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(cmdString))
+}
+
+func acknowledgeCommandHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	db := r.Context().Value(dbKey).(*sql.DB)
+	cmdID := ps.ByName("cmdID")
+
+	err := acknowledgeCommand(db, cmdID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func connectionStr() string {
+	var (
+		username = os.Getenv("DB_USERNAME")
+		password = os.Getenv("DB_PASSWORD")
+		database = os.Getenv("DB_DATABASE")
+		url      = os.Getenv("DB_URL")
+	)
+
+	if username == "" {
+		username = "postgres"
+	}
+	if password == "" {
+		password = "password"
+	}
+	if url == "" {
+		url = "localhost:5432"
+	}
+	if database == "" {
+		database = "postgres"
+	}
+
+	return fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable", username, password, url, database)
+}
+
+func getDb() *sql.DB {
+	log.Printf("Connecting to database with \"%s\"\n", connectionStr())
+	db, err := sql.Open("postgres", connectionStr())
+	if err != nil {
+		log.Fatalf("Failed to connect to postgres: %v", err)
+	}
+	return db
+}
+
+func dbProvider(h httprouter.Handle, db *sql.DB) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+		h(w, r.WithContext(context.WithValue(nil, dbKey, db)), ps)
 	}
 }
 
-func createRouter() *httprouter.Router {
+func createRouter(db *sql.DB) *httprouter.Router {
 	router := httprouter.New()
-	router.GET("/connect/:id", connectHandler)
+	router.GET("/:id/commands", dbProvider(getCommandsHandler, db))
+	router.POST("/:id/acknowledge/:cmdID", dbProvider(acknowledgeCommandHandler, db))
 	return router
 }
 
 func main() {
+	db := getDb()
+	defer db.Close()
+
+	// test database
+	err := db.Ping()
+	if err != nil {
+		log.Fatalf("Failed to ping postgres: %v", err)
+	}
+
 	// start grpc server
 	grpcServer := grpc.NewServer()
-	robotServer := &server{}
+	robotServer := &server{DB: db}
 	robotserver.RegisterRobotServerServer(grpcServer, robotServer)
 
 	lis, err := net.Listen("tcp", ":8080")
@@ -179,7 +227,7 @@ func main() {
 	log.Println("Started grpc server, starting http server")
 
 	// start REST server
-	if err := http.ListenAndServe(":80", createRouter()); err != nil {
+	if err := http.ListenAndServe(":80", createRouter(db)); err != nil {
 		panic(err)
 	}
 }

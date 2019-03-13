@@ -106,6 +106,14 @@ services:
       - POSTGRES_PASSWORD=password
     volumes:
       - thermodb_data:/var/lib/postgresql/data
+  robotdb:
+    build: 
+      context: ./robotdb
+    restart: always
+    environment:
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - robotdb_data:/var/lib/postgresql/data
   thermostatserver:
     build: 
       context: .
@@ -131,9 +139,15 @@ services:
     restart: always
     ports:
       - 8083:80
+    environment:
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=password
+      - DB_DATABASE=postgres
+      - DB_URL=robotdb
 volumes:
   portainer_data:
   userdb_data:
   infodb_data:
   switchdb_data:
   thermodb_data:
+  robotdb_data:

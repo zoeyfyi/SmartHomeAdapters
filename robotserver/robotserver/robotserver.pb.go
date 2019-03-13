@@ -27,6 +27,7 @@ const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 type ServoRequest struct {
 	RobotId              string   `protobuf:"bytes,2,opt,name=robotId,proto3" json:"robotId,omitempty"`
 	Angle                int64    `protobuf:"varint,1,opt,name=angle,proto3" json:"angle,omitempty"`
+	Delay                int64    `protobuf:"varint,3,opt,name=delay,proto3" json:"delay,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -36,7 +37,7 @@ func (m *ServoRequest) Reset()         { *m = ServoRequest{} }
 func (m *ServoRequest) String() string { return proto.CompactTextString(m) }
 func (*ServoRequest) ProtoMessage()    {}
 func (*ServoRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_robotserver_f9763c5700f781b5, []int{0}
+	return fileDescriptor_robotserver_2a70260ae6063f47, []int{0}
 }
 func (m *ServoRequest) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ServoRequest.Unmarshal(m, b)
@@ -70,55 +71,15 @@ func (m *ServoRequest) GetAngle() int64 {
 	return 0
 }
 
-type LEDRequest struct {
-	RobotId              string   `protobuf:"bytes,2,opt,name=robotId,proto3" json:"robotId,omitempty"`
-	On                   bool     `protobuf:"varint,1,opt,name=on,proto3" json:"on,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *LEDRequest) Reset()         { *m = LEDRequest{} }
-func (m *LEDRequest) String() string { return proto.CompactTextString(m) }
-func (*LEDRequest) ProtoMessage()    {}
-func (*LEDRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_robotserver_f9763c5700f781b5, []int{1}
-}
-func (m *LEDRequest) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_LEDRequest.Unmarshal(m, b)
-}
-func (m *LEDRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_LEDRequest.Marshal(b, m, deterministic)
-}
-func (dst *LEDRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LEDRequest.Merge(dst, src)
-}
-func (m *LEDRequest) XXX_Size() int {
-	return xxx_messageInfo_LEDRequest.Size(m)
-}
-func (m *LEDRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_LEDRequest.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_LEDRequest proto.InternalMessageInfo
-
-func (m *LEDRequest) GetRobotId() string {
+func (m *ServoRequest) GetDelay() int64 {
 	if m != nil {
-		return m.RobotId
+		return m.Delay
 	}
-	return ""
-}
-
-func (m *LEDRequest) GetOn() bool {
-	if m != nil {
-		return m.On
-	}
-	return false
+	return 0
 }
 
 func init() {
 	proto.RegisterType((*ServoRequest)(nil), "ServoRequest")
-	proto.RegisterType((*LEDRequest)(nil), "LEDRequest")
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -134,7 +95,6 @@ const _ = grpc.SupportPackageIsVersion4
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type RobotServerClient interface {
 	SetServo(ctx context.Context, in *ServoRequest, opts ...grpc.CallOption) (*empty.Empty, error)
-	SetLED(ctx context.Context, in *LEDRequest, opts ...grpc.CallOption) (*empty.Empty, error)
 }
 
 type robotServerClient struct {
@@ -154,19 +114,9 @@ func (c *robotServerClient) SetServo(ctx context.Context, in *ServoRequest, opts
 	return out, nil
 }
 
-func (c *robotServerClient) SetLED(ctx context.Context, in *LEDRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
-	out := new(empty.Empty)
-	err := c.cc.Invoke(ctx, "/RobotServer/SetLED", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // RobotServerServer is the server API for RobotServer service.
 type RobotServerServer interface {
 	SetServo(context.Context, *ServoRequest) (*empty.Empty, error)
-	SetLED(context.Context, *LEDRequest) (*empty.Empty, error)
 }
 
 func RegisterRobotServerServer(s *grpc.Server, srv RobotServerServer) {
@@ -191,24 +141,6 @@ func _RobotServer_SetServo_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
-func _RobotServer_SetLED_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(LEDRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(RobotServerServer).SetLED(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/RobotServer/SetLED",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RobotServerServer).SetLED(ctx, req.(*LEDRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 var _RobotServer_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "RobotServer",
 	HandlerType: (*RobotServerServer)(nil),
@@ -217,32 +149,26 @@ var _RobotServer_serviceDesc = grpc.ServiceDesc{
 			MethodName: "SetServo",
 			Handler:    _RobotServer_SetServo_Handler,
 		},
-		{
-			MethodName: "SetLED",
-			Handler:    _RobotServer_SetLED_Handler,
-		},
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "robotserver/robotserver.proto",
 }
 
 func init() {
-	proto.RegisterFile("robotserver/robotserver.proto", fileDescriptor_robotserver_f9763c5700f781b5)
+	proto.RegisterFile("robotserver/robotserver.proto", fileDescriptor_robotserver_2a70260ae6063f47)
 }
 
-var fileDescriptor_robotserver_f9763c5700f781b5 = []byte{
-	// 201 bytes of a gzipped FileDescriptorProto
+var fileDescriptor_robotserver_2a70260ae6063f47 = []byte{
+	// 175 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x92, 0x2d, 0xca, 0x4f, 0xca,
 	0x2f, 0x29, 0x4e, 0x2d, 0x2a, 0x4b, 0x2d, 0xd2, 0x47, 0x62, 0xeb, 0x15, 0x14, 0xe5, 0x97, 0xe4,
 	0x4b, 0x49, 0xa7, 0xe7, 0xe7, 0xa7, 0xe7, 0xa4, 0xea, 0x83, 0x79, 0x49, 0xa5, 0x69, 0xfa, 0xa9,
-	0xb9, 0x05, 0x25, 0x95, 0x10, 0x49, 0x25, 0x3b, 0x2e, 0x9e, 0xe0, 0xd4, 0xa2, 0xb2, 0xfc, 0xa0,
+	0xb9, 0x05, 0x25, 0x95, 0x10, 0x49, 0xa5, 0x10, 0x2e, 0x9e, 0xe0, 0xd4, 0xa2, 0xb2, 0xfc, 0xa0,
 	0xd4, 0xc2, 0xd2, 0xd4, 0xe2, 0x12, 0x21, 0x09, 0x2e, 0x76, 0xb0, 0x09, 0x9e, 0x29, 0x12, 0x4c,
 	0x0a, 0x8c, 0x1a, 0x9c, 0x41, 0x30, 0xae, 0x90, 0x08, 0x17, 0x6b, 0x62, 0x5e, 0x7a, 0x4e, 0xaa,
-	0x04, 0xa3, 0x02, 0xa3, 0x06, 0x73, 0x10, 0x84, 0xa3, 0x64, 0xc6, 0xc5, 0xe5, 0xe3, 0xea, 0x42,
-	0x58, 0x37, 0x1f, 0x17, 0x53, 0x7e, 0x1e, 0x58, 0x2b, 0x47, 0x10, 0x53, 0x7e, 0x9e, 0x51, 0x31,
-	0x17, 0x77, 0x10, 0x48, 0x2a, 0x18, 0xec, 0x52, 0x21, 0x63, 0x2e, 0x8e, 0xe0, 0x54, 0x30, 0x27,
-	0x5f, 0x88, 0x57, 0x0f, 0xd9, 0x45, 0x52, 0x62, 0x7a, 0x10, 0xf7, 0xeb, 0xc1, 0xdc, 0xaf, 0xe7,
-	0x0a, 0x72, 0xbf, 0x12, 0x83, 0x90, 0x3e, 0x17, 0x5b, 0x70, 0x6a, 0x89, 0x8f, 0xab, 0x8b, 0x10,
-	0xb7, 0x1e, 0xc2, 0x11, 0xb8, 0x35, 0x24, 0xb1, 0x81, 0x45, 0x8c, 0x01, 0x01, 0x00, 0x00, 0xff,
-	0xff, 0xfe, 0x68, 0x51, 0x93, 0x31, 0x01, 0x00, 0x00,
+	0x04, 0xa3, 0x02, 0xa3, 0x06, 0x73, 0x10, 0x84, 0x03, 0x12, 0x4d, 0x49, 0xcd, 0x49, 0xac, 0x94,
+	0x60, 0x86, 0x88, 0x82, 0x39, 0x46, 0x4e, 0x5c, 0xdc, 0x41, 0x20, 0x6d, 0xc1, 0x60, 0x77, 0x08,
+	0x19, 0x73, 0x71, 0x04, 0xa7, 0x82, 0x39, 0xf9, 0x42, 0xbc, 0x7a, 0xc8, 0xf6, 0x49, 0x89, 0xe9,
+	0x41, 0x5c, 0xa7, 0x07, 0x73, 0x9d, 0x9e, 0x2b, 0xc8, 0x75, 0x4a, 0x0c, 0x49, 0x6c, 0x60, 0x11,
+	0x63, 0x40, 0x00, 0x00, 0x00, 0xff, 0xff, 0xde, 0x86, 0x13, 0x91, 0xde, 0x00, 0x00, 0x00,
 }
