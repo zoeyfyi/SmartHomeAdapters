@@ -78,7 +78,8 @@
 			\begin{itemize}
 				\item 3D-printing: Luke
 				\item Buttons for manual robot control: Spencer
-				\item Bolt lock mechanism: {\color{red} ???}
+				\item Bolt lock mechanism: Luke
+				\item Non-LEGO thermostat design: Han
 			\end{itemize}
 		\end{itemize}
 
@@ -118,6 +119,10 @@
 		needed to be an OAuth \textit{provider} rather than just an OAuth \textit{client}.
 		It is largely thanks to the hard work put in by Gwion and Ben over the last couple of weeks that
 		we have finally gotten it to work.
+		
+		\vspace{3mm}
+		
+		We also managed to finish all the software for interacting with the bolt lock, the UI mock-up along with its user testing, and the buttons for manual control. We are also happy to have managed to conduct a full vulnerability scan of the server.
 	}
   \\
   \hline
@@ -132,7 +137,25 @@
 	\textbf{What did you not achieve? Briefly explain why.}
 	\\ \hline
 	\vtop to 95mm{
-		\color{red} ???
+		We have not managed to reach our "3D printed light switch grip" goal.
+		3D printing has once again proven far more time consuming than we expected; we had a
+		reasonably good mechanism in place as far back as a week ago, but fine-tuning the
+		design is challenging due to the time complexity of iterating designs. In general,
+		we were perhaps overtly confident with our new mechanism.
+		
+		\vspace{3mm}
+		
+		We have also failed to meet our "bolt lock mechanism" goal. Once again this was due to the
+		laborious process of 3D-printing. We have a mechanism printed out that we are confident will work
+		-- the fact that the bolt lock does not cause any forces directed back at the robot makes it a lot
+		easier than the light switch -- but we did not manage to bring it all together in time.
+		
+		\vspace{3mm}
+		
+		In general, we struggled to meet our goals for this demo despite the group's best efforts.
+		Largely this was due to the shorter time allocated to prepare for this demo (2 weeks rather than the 3 weeks we normally have), and the fact that almost all members of the group spent last week working on rather exhausting
+		courseworks in Computer Security and Operating Systems.
+		
   }
   \\
   \hline
@@ -173,7 +196,12 @@
 		
 		\vspace{3mm}
 		
-		{\color{red} Deep sleep? What to say?}
+		We have also realised that we may struggle to meet our power consumption goals. The ESP8266's do not
+		support waking up from deep sleep on packet received, as the deep sleep cuts the WiFi connection.
+		This means we cannot make the robot go to deep sleep when not used without manually waking up and
+		probing the server every so often, which will lead to high latency. We will investigate other solutions
+		for next demo, but it is rather likely that we will have to accept that our prototypes will not
+		be able to run on battery power for very long.
 		
   	}
   \\
