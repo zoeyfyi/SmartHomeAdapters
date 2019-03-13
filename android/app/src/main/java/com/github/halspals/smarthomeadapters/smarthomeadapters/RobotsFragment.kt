@@ -49,7 +49,6 @@ class RobotsFragment : Fragment() {
                 Log.e(fTag, "[performActionWithFreshTokens] got null access token, "
                         + "exception: $ex")
             } else {
-                Log.d(fTag, "[performActionWithFreshTokens] got access token $accessToken")
                 fetchRobots(accessToken, view)
             }
         }
