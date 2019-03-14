@@ -5,6 +5,7 @@
 \geometry{margin=1.25in}
 \usepackage{hhline}
 \usepackage{environ}
+\usepackage{graphicx}
  %\geometry{
  %a4paper,z
  %total={170mm,257mm},
@@ -28,8 +29,7 @@
 	\begin{itemize}
 		\item Web server 
 		\begin{itemize}
-			\item Create Alexa skills schema
-			\item Add Alexa endpoints for receiving Alexa requests
+			\item Alexa support
 			\item Endpoint for unlocking/locking bolt lock
 			\item Become an OAuth provider
 		\end{itemize}
@@ -63,8 +63,7 @@
 		\begin{itemize}
 			\item Web Server:
 				\begin{itemize}
-					\item Create Alexa skills schema: Xiaobin
-					\item Alexa endpoint: {\color{red} ???}
+					\item Alexa support: Xiaobin, Ben
 					\item Endpoint for unlocking/locking bolt lock: Gwion
 					\item Become an OAuth provider: Gwion, Ben
 				\end{itemize}
@@ -149,11 +148,19 @@
 		laborious process of 3D-printing. We have a mechanism printed out that we are confident will work
 		-- the fact that the bolt lock does not cause any forces directed back at the robot makes it a lot
 		easier than the light switch -- but we did not manage to bring it all together in time.
+
+		\vspace{3mm}
+
+		Finally, we failed to meet our goal of supporting Alexa integration. This was because of how challenging
+		it has been to get OAuth up and running, which meant we couldn't test the Alexa skills schema until very,
+		very late in the sprint. It is worth saying that we have made really good progress on this and 
+		we will have it working very soon, which is quite exciting as it was the feature we thought was most at
+		risk of needing to be cut.
 		
 		\vspace{3mm}
 		
 		In general, we struggled to meet our goals for this demo despite the group's best efforts.
-		Largely this was due to the shorter time allocated to prepare for this demo (2 weeks rather than the 3 weeks we normally have), and the fact that almost all members of the group spent last week working on rather exhausting
+		Largely this can be attributed to the shorter time allocated to prepare for this demo (2 weeks rather than the 3 weeks we normally have), and the fact that almost all members of the group spent last week working on rather exhausting
 		courseworks in Computer Security and Operating Systems.
 		
   }
@@ -170,8 +177,22 @@
 	\textbf{Include any quantitative data you have collected (this can be a graph/table with a few words)}
 	\\ \hline
 	\vtop to 135mm{
-		\color{red} Power draw? UI testing and vulnerability analysis isn't \textit{quantitative}
+		\begin{tabular}{| c || c | c} \hline
+			\textbf{Task} & \textbf{Success rate}\\ \hline
+			Change thermostat setting & 5/5 \\
+			Turn on/off light & 5/5\\
+			Rearrange devices & 5/5\\
+			Register a new device & 5/5 \\
+			Calibrate a new device & 1/5 \\ \hline
+		\end{tabular}
 
+		In general the participants struggled to make the connection between the app and the real world. 
+
+		\vspace{3mm}
+
+		Security analysis:
+		
+		\includegraphics[width=\linewidth]{image.png}
   }
   \\
   \hline
@@ -186,22 +207,15 @@
 	\textbf{Say briefly what changes you will make to your plan for the next demo.}
 	\\ \hline
 	\vtop to 45mm{
-		After internal discussion we have realised that we may have to cut the \textit{Triggers} feature,
-		i.e. the user being able to set up rules such as "raise the thermostat by 2 degrees if the temperature ever drops below 20",
-		or "turn the lights on when the sun sets".
-		This is because we want to put a large focus on the marketability of our product for the final demo, which we believe sets
-		our project apart from many others, and in order to do this we have chosen to polish our designs as much as possible.
-		When we first set out we did not intend to have moved away from LEGO for all use cases nor did we originally plan on designing our own PCB, however these are things we believe will be more valuable to our project than the \textit{Triggers} function.
-		Similarly, the time saved implementing this feature on the app and server sides can instead be redirected towards implementing the new UI to make for a better, more professional user experience.
-		
-		\vspace{3mm}
-		
-		We have also realised that we may struggle to meet our power consumption goals. The ESP8266's do not
+		\begin{itemize}
+		\item We may have to cut the \textit{Triggers} feature, to instead allow for more time to polish our existing features (better 3D-printed designs, working PCB, new app design).
+	
+		\item We will need to spend more time on investigating an alternative solution to the power consumption issue. The ESP8266's do not
 		support waking up from deep sleep on packet received, as the deep sleep cuts the WiFi connection.
 		This means we cannot make the robot go to deep sleep when not used without manually waking up and
-		probing the server every so often, which will lead to high latency. We will investigate other solutions
-		for next demo, but it is rather likely that we will have to accept that our prototypes will not
-		be able to run on battery power for very long.
+		probing the server every so often, which will lead to high latency.
+
+		\end{itemize}
 		
   	}
   \\
