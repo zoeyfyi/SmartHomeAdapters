@@ -23,7 +23,7 @@ class ConfigureRobotFragment : Fragment() {
 
     private val fTag = "ConfigureRobotFragment"
 
-    private lateinit var parent: RegisterRobotActivity
+    private val parent by lazy { activity as RegisterRobotActivity }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -37,8 +37,6 @@ class ConfigureRobotFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         finish_button.setOnClickListener { _ -> setConfigParametersAndFinish() }
-
-        parent = activity as RegisterRobotActivity
 
         // Set up the grid's adapter to display the configuration parameters requested
         parameter_grid.adapter = ParameterAdapter(

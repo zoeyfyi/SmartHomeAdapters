@@ -30,7 +30,7 @@ class SelectUseCaseFragment : Fragment() {
 
     private val fTag = "SelectUseCaseFragment"
 
-    private lateinit var parent: RegisterRobotActivity
+    private val parent by lazy { activity as RegisterRobotActivity }
 
     private var selectedUseCase: UseCase? = null
 
@@ -45,8 +45,6 @@ class SelectUseCaseFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        parent = activity as RegisterRobotActivity
 
         // Get the use cases from the server
         parent.authState.performActionWithFreshTokens(parent.authService)

@@ -21,7 +21,7 @@ class RobotsFragment : Fragment() {
 
     private lateinit var robotGrid: GridView
 
-    private lateinit var parent: MainActivity
+    private val parent by lazy { activity as MainActivity }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -33,8 +33,6 @@ class RobotsFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        parent = activity as MainActivity
 
         add_robot_button.setOnClickListener { _ ->
             parent.startActivity<RegisterRobotActivity>()

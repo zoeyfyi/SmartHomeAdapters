@@ -21,7 +21,7 @@ class RobotFragment : Fragment() {
 
     private val fTag = "RobotFragment"
 
-    private lateinit var parent: MainActivity
+    private val parent by lazy { activity as MainActivity }
 
     private lateinit var robotId: String
     private var robot: Robot? = null
@@ -53,8 +53,6 @@ class RobotFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        parent = activity as MainActivity
 
         progressBar = view.findViewById(R.id.progress_bar)
         switch = view.findViewById(R.id.robot_switch)
