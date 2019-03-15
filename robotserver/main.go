@@ -15,6 +15,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/mrbenshef/SmartHomeAdapters/robotserver/infoserver"
+
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/julienschmidt/httprouter"
 	"github.com/mrbenshef/SmartHomeAdapters/robotserver/robotserver"
@@ -26,6 +28,7 @@ import (
 type robotserverKey string
 
 const dbKey robotserverKey = "db"
+const infoserverKey robotserverKey = "infoserver"
 
 type server struct {
 	DB *sql.DB
@@ -152,6 +155,23 @@ func acknowledgeCommandHandler(w http.ResponseWriter, r *http.Request, ps httpro
 	w.WriteHeader(http.StatusOK)
 }
 
+func buttonHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	info := r.Context().Value(infoserverKey).(infoserver.InfoServerClient)
+	id := ps.ByName("id")
+	button := ps.ByName("button")
+
+	_, err := info.OnButtonEvent(context.Background(), &infoserver.ButtonEvent{
+		Id:     id,
+		Button: button,
+	})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
 func connectionStr() string {
 	var (
 		username = os.Getenv("DB_USERNAME")
@@ -191,19 +211,34 @@ func dbProvider(h httprouter.Handle, db *sql.DB) httprouter.Handle {
 	}
 }
 
-func createRouter(db *sql.DB) *httprouter.Router {
+func infoserverProvider(h httprouter.Handle, infoserver infoserver.InfoServerClient) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+		h(w, r.WithContext(context.WithValue(nil, infoserverKey, infoserver)), ps)
+	}
+}
+
+func createRouter(db *sql.DB, infoserver infoserver.InfoServerClient) *httprouter.Router {
 	router := httprouter.New()
 	router.GET("/:id/commands", dbProvider(getCommandsHandler, db))
 	router.POST("/:id/acknowledge/:cmdID", dbProvider(acknowledgeCommandHandler, db))
+	router.POST("/:id/button/:button", infoserverProvider(buttonHandler, infoserver))
 	return router
 }
 
 func main() {
+	// connect to infoserver
+	infoserverConn, err := grpc.Dial("infoserver:80", grpc.WithInsecure())
+	if err != nil {
+		panic(err)
+	}
+	defer infoserverConn.Close()
+	infoserverClient := infoserver.NewInfoServerClient(infoserverConn)
+
 	db := getDb()
 	defer db.Close()
 
 	// test database
-	err := db.Ping()
+	err = db.Ping()
 	if err != nil {
 		log.Fatalf("Failed to ping postgres: %v", err)
 	}
@@ -227,7 +262,7 @@ func main() {
 	log.Println("Started grpc server, starting http server")
 
 	// start REST server
-	if err := http.ListenAndServe(":80", createRouter(db)); err != nil {
+	if err := http.ListenAndServe(":80", createRouter(db, infoserverClient)); err != nil {
 		panic(err)
 	}
 }

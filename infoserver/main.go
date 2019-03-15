@@ -34,30 +34,47 @@ type server struct {
 	ThermostatClient thermostatserver.ThermostatServerClient
 }
 
-func (s *server) GetRobot(ctx context.Context, query *infoserver.RobotQuery) (*infoserver.Robot, error) {
-	var (
-		serial    string
-		nickname  string
-		robotType string
-	)
+type robot struct {
+	serial           string
+	nickname         string
+	robotType        string
+	registeredUserId string
+}
 
-	log.Printf("getting robot with id: %s (user id: %s)", query.Id, query.UserId)
+func getRobot(db *sql.DB, robotID string) (*robot, error) {
+	var robot robot
+
+	log.Printf("getting robot with id", robotID)
 
 	// query toggleRobots table for matching robots
-	row := s.DB.QueryRow("SELECT serial, nickname, robotType FROM robots WHERE serial = $1 AND registeredUserId = $2", query.Id, query.UserId)
-	err := row.Scan(&serial, &nickname, &robotType)
+	row := db.QueryRow("SELECT serial, nickname, robotType, registeredUserId FROM robots WHERE serial = $1", robotID)
+	err := row.Scan(&robot.serial, &robot.nickname, &robot.robotType, &robot.registeredUserId)
 	if err == sql.ErrNoRows {
-		return nil, status.Newf(codes.NotFound, "Robot \"%s\" does not exist", query.Id).Err()
+		return nil, status.Newf(codes.NotFound, "Robot \"%s\" does not exist", robotID).Err()
 	} else if err != nil {
-		log.Printf("Failed to retrive robot %s: %v", query.Id, err)
+		log.Printf("Failed to retrive robot %s: %v", robotID, err)
+		return nil, status.Newf(codes.Internal, "Internal error").Err()
+	}
+
+	return &robot, nil
+}
+
+func (s *server) GetRobot(ctx context.Context, query *infoserver.RobotQuery) (*infoserver.Robot, error) {
+	robot, err := getRobot(s.DB, query.Id)
+	if err != nil {
 		return nil, err
 	}
 
+	// check robot is registered to this user
+	if robot.registeredUserId != query.UserId {
+		return nil, status.Newf(codes.PermissionDenied, "Robot \"%s\" is registered to another user", query.Id).Err()
+	}
+
 	// get the status of the robot
-	switch robotType {
+	switch robot.robotType {
 	case "switch":
 		switchRobot, err := s.SwitchClient.GetSwitch(context.Background(), &switchserver.SwitchQuery{
-			Id: serial,
+			Id: robot.serial,
 		})
 		if err != nil {
 			return nil, err
@@ -65,9 +82,9 @@ func (s *server) GetRobot(ctx context.Context, query *infoserver.RobotQuery) (*i
 
 		// return robot with status infomation
 		return &infoserver.Robot{
-			Id:            serial,
-			Nickname:      nickname,
-			RobotType:     robotType,
+			Id:            robot.serial,
+			Nickname:      robot.nickname,
+			RobotType:     robot.robotType,
 			InterfaceType: "toggle",
 			RobotStatus: &infoserver.Robot_ToggleStatus{
 				ToggleStatus: &infoserver.ToggleStatus{
@@ -77,7 +94,7 @@ func (s *server) GetRobot(ctx context.Context, query *infoserver.RobotQuery) (*i
 		}, nil
 	case "thermostat":
 		thermostat, err := s.ThermostatClient.GetThermostat(context.Background(), &thermostatserver.ThermostatQuery{
-			Id: serial,
+			Id: robot.serial,
 		})
 		if err != nil {
 			return nil, err
@@ -85,9 +102,9 @@ func (s *server) GetRobot(ctx context.Context, query *infoserver.RobotQuery) (*i
 
 		// return robot with status infomation
 		return &infoserver.Robot{
-			Id:            serial,
-			Nickname:      nickname,
-			RobotType:     robotType,
+			Id:            robot.serial,
+			Nickname:      robot.nickname,
+			RobotType:     robot.robotType,
 			InterfaceType: "range",
 			RobotStatus: &infoserver.Robot_RangeStatus{
 				RangeStatus: &infoserver.RangeStatus{
@@ -98,7 +115,7 @@ func (s *server) GetRobot(ctx context.Context, query *infoserver.RobotQuery) (*i
 			},
 		}, nil
 	default:
-		return nil, status.Newf(codes.InvalidArgument, "Invalid robot type \"%s\"", robotType).Err()
+		return nil, status.Newf(codes.InvalidArgument, "Invalid robot type \"%s\"", robot.robotType).Err()
 	}
 }
 
@@ -380,6 +397,45 @@ func (s *server) SetUsecase(ctx context.Context, request *infoserver.SetUsecaseR
 		Id:     request.Id,
 		UserId: request.UserId,
 	})
+}
+
+func (s *server) OnButtonEvent(ctx context.Context, request *infoserver.ButtonEvent) (*empty.Empty, error) {
+	robot, err := getRobot(s.DB, request.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	switch robot.robotType {
+	case "thermostat":
+		return nil, status.Newf(codes.Unimplemented, "Unimplemented").Err()
+	case "switch":
+		value := true
+		if request.Button == "left" {
+			value = false
+		}
+
+		stream, err := s.SwitchClient.SetSwitch(context.Background(), &switchserver.SetSwitchRequest{
+			Id:    request.Id,
+			On:    value,
+			Force: true,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		for {
+			status, err := stream.Recv()
+			if err != nil {
+				return nil, err
+			}
+
+			if status.Status == switchserver.SetSwitchStatus_DONE {
+				break
+			}
+		}
+	}
+
+	return &empty.Empty{}, nil
 }
 
 func connectionStr() string {

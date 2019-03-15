@@ -11,6 +11,9 @@
 #define SERVO_PIN D6
 #define STATUS_PIN D7
 #define CONTROL_LED 3
+
+#define LEFT_BUTTON D4
+#define RIGHT_BUTTON 10
   
 WebSocketsClient socket;
 WiFiClient client;
@@ -91,19 +94,8 @@ void executeCommandSequence(String command) {
   
           Serial.printf("Setting servo to %d degrees\n", angle);
 
-          // write to the servo so it moves to this angle when it is attached
-          Serial.println("s w 1");
           servo.write(angle);
-          
-          // attach the servo
-          Serial.println("s a 1");
-          servo.attach(SERVO_PIN);
           delay(1000); // wait for movement
-
-          // detach the servo
-          Serial.println("s d 1");
-          servo.detach();
-          delay(500);
         } else if (cmd.startsWith("delay")) {
           int microseconds = cmd.substring(6).toInt();
           Serial.printf("Delaying for %d ms\n", microseconds);
@@ -125,10 +117,38 @@ void executeCommandSequence(String command) {
 
 }
 
+void leftButton() {
+  Serial.println("Left button!");
+  http.begin("http://robot.test.halspals.co.uk/123abc/button/left");
+  int httpCode = http.POST("");
+  if (httpCode != 200) { 
+    Serial.printf("http error left button, code: %d\n", httpCode);
+  }
+  http.end();
+}
+
+void rightButton() {
+  Serial.println("Right button!");
+  http.begin("http://robot.test.halspals.co.uk/123abc/button/right");
+  int httpCode = http.POST("");
+  if (httpCode != 200) { 
+    Serial.printf("http error left button, code: %d\n", httpCode);
+  }
+  http.end();
+}
+
 void setup() {
   pinMode(STATUS_PIN, OUTPUT);
   pinMode(CONTROL_LED, OUTPUT);
   pinMode(SERVO_PIN, OUTPUT);
+  pinMode(LEFT_BUTTON, INPUT);
+  pinMode(RIGHT_BUTTON, INPUT_PULLUP);
+
+  servo.attach(SERVO_PIN);
+
+  // setup interupts
+  attachInterrupt(digitalPinToInterrupt(LEFT_BUTTON), leftButton, FALLING);
+  attachInterrupt(digitalPinToInterrupt(RIGHT_BUTTON), rightButton, FALLING);
 
   // begin serial communications
   Serial.begin(9600);

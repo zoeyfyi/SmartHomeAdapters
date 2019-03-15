@@ -63,6 +63,10 @@ docker-infodb:
 docker-infoserver:
 	@docker build -f go.Dockerfile -t smarthomeadapters/infoserver . --build-arg SERVICE=infoserver
 
+docker-push-test-infoserver: docker-infoserver
+	@docker tag smarthomeadapters/infoserver smarthomeadapters/infoserver:test
+	@docker push smarthomeadapters/infoserver:test
+
 docker-robotserver:
 	@docker build -f go.Dockerfile -t smarthomeadapters/robotserver . --build-arg SERVICE=robotserver
 
