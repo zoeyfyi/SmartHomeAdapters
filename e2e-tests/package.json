@@ -4,12 +4,14 @@
   "description": "End-to-end tests for the Smart Home Adapter services",
   "main": "index.js",
   "scripts": {
-    "test": "mocha index.js"
+    "test": "mocha index.js --timeout 10s"
   },
   "author": "",
   "license": "MIT",
   "devDependencies": {
+    "@terascope/docker-compose-js": "^1.1.2",
     "chakram": "^1.5.0",
+    "docker-compose": "^0.12.0",
     "mocha": "^6.0.2"
   }
 }
