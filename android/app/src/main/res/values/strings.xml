@@ -26,6 +26,7 @@
     <string name="select_from_spinner_text">Choose a use case for your robot!</string>
     <string name="loading_spinner_text">Loading use cases&#8230;</string>
     <string name="failed_spinner_text">Could not fetch use cases.</string>
+    <string name="register_button">Register</string>
 
     <!-- Strings related to ConfigureRobotFragment -->
     <string name="finish_button_text">Save Configuration</string>
