@@ -48,14 +48,6 @@ class AuthenticationActivity : AppCompatActivity() {
         login_button.setOnClickListener { _ ->
             startOAuthLogin()
         }
-
-        register_button.setOnClickListener { _ ->
-            startActivity<RegisterUserActivity>()
-        }
-
-        if (intent.getBooleanExtra(RegisterUserActivity.FORCE_SIGN_IN, false)) {
-            startOAuthLogin()
-        }
     }
 
     private fun startOAuthLogin() {
