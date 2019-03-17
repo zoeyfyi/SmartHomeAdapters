@@ -40,7 +40,11 @@ func TestMain(m *testing.M) {
 	// wait till db is up
 	if err = pool.Retry(func() error {
 		var err error
-		db, err := sql.Open("postgres", fmt.Sprintf("postgres://postgres:password@localhost:%s/%s?sslmode=disable", resource.GetPort("5432/tcp"), database))
+		dbURL := fmt.Sprintf("postgres://postgres:password@localhost:%s/%s?sslmode=disable",
+			resource.GetPort("5432/tcp"),
+			database,
+		)
+		db, err := sql.Open("postgres", dbURL)
 		if err != nil {
 			return err
 		}
@@ -63,7 +67,10 @@ func TestMain(m *testing.M) {
 
 	exitCode := m.Run()
 
-	pool.Purge(resource)
+	err = pool.Purge(resource)
+	if err != nil {
+		log.Fatalf("Failed to purge: %v", err)
+	}
 
 	os.Exit(exitCode)
 }
@@ -110,7 +117,7 @@ func TestAddSwitchAlreadyAdded(t *testing.T) {
 
 	client := switchserver.NewSwitchServerClient(conn)
 
-	switchRobot, err := client.AddSwitch(ctx, &switchserver.AddSwitchRequest{
+	_, err = client.AddSwitch(ctx, &switchserver.AddSwitchRequest{
 		Id:   "321",
 		IsOn: false,
 	})
@@ -118,7 +125,7 @@ func TestAddSwitchAlreadyAdded(t *testing.T) {
 		t.Errorf("Expected nil error, got: %v", err)
 	}
 
-	switchRobot, err = client.AddSwitch(ctx, &switchserver.AddSwitchRequest{
+	switchRobot, err := client.AddSwitch(ctx, &switchserver.AddSwitchRequest{
 		Id:   "321",
 		IsOn: false,
 	})
