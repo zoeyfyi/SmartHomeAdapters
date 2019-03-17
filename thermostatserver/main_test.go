@@ -44,7 +44,11 @@ func TestMain(m *testing.M) {
 	// wait till db is up
 	if err = pool.Retry(func() error {
 		var err error
-		db, err := sql.Open("postgres", fmt.Sprintf("postgres://postgres:password@localhost:%s/%s?sslmode=disable", resource.GetPort("5432/tcp"), database))
+		dbURL := fmt.Sprintf("postgres://postgres:password@localhost:%s/%s?sslmode=disable",
+			resource.GetPort("5432/tcp"),
+			database,
+		)
+		db, err := sql.Open("postgres", dbURL)
 		if err != nil {
 			return err
 		}
@@ -69,21 +73,30 @@ func TestMain(m *testing.M) {
 
 	exitCode := m.Run()
 
-	pool.Purge(resource)
+	err = pool.Purge(resource)
+	if err != nil {
+		log.Fatalf("Failed to purge: %v", err)
+	}
 
 	os.Exit(exitCode)
 }
 
-type mockRobotServerClient struct {
-	thisIsAMock bool
-}
+type mockRobotServerClient struct{}
 
-func (c mockRobotServerClient) SetServo(ctx context.Context, in *robotserver.ServoRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
+func (c mockRobotServerClient) SetServo(
+	ctx context.Context,
+	in *robotserver.ServoRequest,
+	opts ...grpc.CallOption,
+) (*empty.Empty, error) {
 	servoRequests = append(servoRequests, in)
 	return &empty.Empty{}, nil
 }
 
-func (c mockRobotServerClient) SetLED(ctx context.Context, in *robotserver.LEDRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
+func (c mockRobotServerClient) SetLED(
+	ctx context.Context,
+	in *robotserver.LEDRequest,
+	opts ...grpc.CallOption,
+) (*empty.Empty, error) {
 	panic("Call to SetLED!")
 }
 
@@ -137,7 +150,7 @@ func TestSetThermostat(t *testing.T) {
 			},
 			expectedServoRequest: &robotserver.ServoRequest{
 				RobotId: "qwerty",
-				Angle: 30,
+				Angle:   30,
 			},
 		},
 		{
@@ -148,7 +161,7 @@ func TestSetThermostat(t *testing.T) {
 			},
 			expectedServoRequest: &robotserver.ServoRequest{
 				RobotId: "qwerty",
-				Angle: 100,
+				Angle:   100,
 			},
 		},
 		{
@@ -159,7 +172,7 @@ func TestSetThermostat(t *testing.T) {
 			},
 			expectedServoRequest: &robotserver.ServoRequest{
 				RobotId: "qwerty",
-				Angle: 170,
+				Angle:   170,
 			},
 		},
 	}
