@@ -127,8 +127,10 @@ func (s *server) Login(ctx context.Context, request *userserver.LoginRequest) (*
 }
 
 func (s *server) Authorize(ctx context.Context, token *userserver.Token) (*userserver.User, error) {
+
+
 	// parse token
-	jwtToken, err := jwt.Parse(token.Token, func(token *jwt.Token) (interface{}, error) {
+	 jwtToken, err := jwt.Parse(token.Token, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 		}
