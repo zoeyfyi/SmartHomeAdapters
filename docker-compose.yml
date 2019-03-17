@@ -115,6 +115,15 @@ services:
     restart: always
     ports:
       - 8083:80
+  account-app:
+    build: 
+      context: .
+      dockerfile: go.Dockerfile
+      args:
+        SERVICE: account-app
+    restart: always
+    ports:
+      - 4001:80
 volumes:
   userdb_data:
   infodb_data:
