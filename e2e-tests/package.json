@@ -4,7 +4,7 @@
   "description": "End-to-end tests for the Smart Home Adapter services",
   "main": "index.js",
   "scripts": {
-    "test": "mocha index.js --timeout 10s"
+    "test": "mocha index.js --timeout 30s"
   },
   "author": "",
   "license": "MIT",
