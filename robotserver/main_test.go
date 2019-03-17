@@ -29,7 +29,7 @@ type testServer struct {
 	URL     string
 }
 
-func newServer(t *testing.T) *testServer {
+func newServer() *testServer {
 	var server testServer
 	server.Handler = createRouter()
 	server.Server = httptest.NewServer(server.Handler)
@@ -58,7 +58,7 @@ func bufDialer(string, time.Duration) (net.Conn, error) {
 }
 
 func TestConnectToWebSocket(t *testing.T) {
-	s := newServer(t)
+	s := newServer()
 	defer s.Server.Close()
 
 	_, _, err := websocket.DefaultDialer.Dial(s.URL+"/connect/testrobot", nil)
@@ -76,7 +76,7 @@ func TestSendLEDCommand(t *testing.T) {
 		{&robotserver.LEDRequest{RobotId: "testrobot", On: false}, "led off"},
 	}
 
-	s := newServer(t)
+	s := newServer()
 	defer s.Server.Close()
 
 	ws, _, _ := websocket.DefaultDialer.Dial(s.URL+"/connect/testrobot", nil)
@@ -145,7 +145,7 @@ func TestSendServoCommand(t *testing.T) {
 		{&robotserver.ServoRequest{RobotId: "testrobot", Angle: 180}, "servo 180"},
 	}
 
-	s := newServer(t)
+	s := newServer()
 	defer s.Server.Close()
 
 	ws, _, _ := websocket.DefaultDialer.Dial(s.URL+"/connect/testrobot", nil)
@@ -192,7 +192,7 @@ func TestSendInvalidServoCommand(t *testing.T) {
 		},
 	}
 
-	s := newServer(t)
+	s := newServer()
 	defer s.Server.Close()
 
 	for _, r := range requests {
