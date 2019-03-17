@@ -2,10 +2,7 @@
     <string name="app_name">Smart Home Adapters</string>
 
     <!-- Strings related to the Authentication Activity -->
-    <string name="email_input_hint">Email</string>
-    <string name="password_input_hint">Password</string>
-    <string name="sign_in_button">Sign in</string>
-    <string name="register_button">Register</string>
+    <string name="authorize_button">Sign in or register</string>
 
     <!-- Strings related to MainActivity -->
     <string name="nav_bar_robots">Robots</string>
