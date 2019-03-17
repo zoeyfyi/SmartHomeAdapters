@@ -30,30 +30,50 @@ var lis *bufconn.Listener
 
 type mockSwitchClient struct{}
 
-func (c mockSwitchClient) GetSwitch(ctx context.Context, query *switchserver.SwitchQuery, _ ...grpc.CallOption) (*switchserver.Switch, error) {
+func (c mockSwitchClient) GetSwitch(
+	ctx context.Context,
+	query *switchserver.SwitchQuery,
+	_ ...grpc.CallOption,
+) (*switchserver.Switch, error) {
 	if query.Id == "123abc" {
 		return &switchserver.Switch{
 			Id:   "123abc",
 			IsOn: true,
 		}, nil
-	} else {
-		return nil, status.New(codes.NotFound, "Switch does not exist").Err()
 	}
+
+	return nil, status.New(codes.NotFound, "Switch does not exist").Err()
 }
 
-func (c mockSwitchClient) AddSwitch(_ context.Context, _ *switchserver.AddSwitchRequest, _ ...grpc.CallOption) (*switchserver.Switch, error) {
+func (c mockSwitchClient) AddSwitch(
+	_ context.Context,
+	_ *switchserver.AddSwitchRequest,
+	_ ...grpc.CallOption,
+) (*switchserver.Switch, error) {
 	return nil, nil
 }
 
-func (c mockSwitchClient) RemoveSwitch(_ context.Context, _ *switchserver.RemoveSwitchRequest, _ ...grpc.CallOption) (*empty.Empty, error) {
+func (c mockSwitchClient) RemoveSwitch(
+	_ context.Context,
+	_ *switchserver.RemoveSwitchRequest,
+	_ ...grpc.CallOption,
+) (*empty.Empty, error) {
 	return nil, nil
 }
 
-func (c mockSwitchClient) SetSwitch(_ context.Context, _ *switchserver.SetSwitchRequest, _ ...grpc.CallOption) (switchserver.SwitchServer_SetSwitchClient, error) {
+func (c mockSwitchClient) SetSwitch(
+	_ context.Context,
+	_ *switchserver.SetSwitchRequest,
+	_ ...grpc.CallOption,
+) (switchserver.SwitchServer_SetSwitchClient, error) {
 	return nil, nil
 }
 
-func (c mockSwitchClient) CalibrateSwitch(_ context.Context, _ *switchserver.SwitchCalibrationParameters, _ ...grpc.CallOption) (*empty.Empty, error) {
+func (c mockSwitchClient) CalibrateSwitch(
+	_ context.Context,
+	_ *switchserver.SwitchCalibrationParameters,
+	_ ...grpc.CallOption,
+) (*empty.Empty, error) {
 	return nil, nil
 }
 
@@ -75,7 +95,12 @@ func TestMain(m *testing.M) {
 	// wait till db is up
 	if err = pool.Retry(func() error {
 		var err error
-		db, err := sql.Open("postgres", fmt.Sprintf("postgres://postgres:password@localhost:%s/%s?sslmode=disable", resource.GetPort("5432/tcp"), database))
+		dbURL := fmt.Sprintf(
+			"postgres://postgres:password@localhost:%s/%s?sslmode=disable",
+			resource.GetPort("5432/tcp"),
+			database,
+		)
+		db, err := sql.Open("postgres", dbURL)
 		if err != nil {
 			return err
 		}
@@ -100,7 +125,10 @@ func TestMain(m *testing.M) {
 
 	exitCode := m.Run()
 
-	pool.Purge(resource)
+	err = pool.Purge(resource)
+	if err != nil {
+		log.Fatalf("perging resource failed: %v", err)
+	}
 
 	os.Exit(exitCode)
 }
@@ -111,13 +139,13 @@ func bufDialer(string, time.Duration) (net.Conn, error) {
 
 func TestGetRobots(t *testing.T) {
 	expectedRobots := []*infoserver.Robot{
-		&infoserver.Robot{
+		{
 			Id:            "123abc",
 			Nickname:      "testLightbot",
 			RobotType:     "switch",
 			InterfaceType: "toggle",
 		},
-		&infoserver.Robot{
+		{
 			Id:            "qwerty",
 			Nickname:      "testThermoBot",
 			RobotType:     "thermostat",
