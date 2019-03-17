@@ -18,9 +18,18 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+type clientServerKey string
+
+var userIDKey clientServerKey = "userID"
+
 var (
 	infoserverClient infoserver.InfoServerClient
 	userserverClient userserver.UserServerClient
+)
+
+var (
+	errInvalidJSON  = status.New(codes.InvalidArgument, "invalid JSON").Err()
+	errFailedEncode = status.New(codes.Internal, "failed to encode responce").Err()
 )
 
 // HTTPStatusFromCode converts a gRPC error code into the corresponding HTTP response status.
@@ -66,7 +75,7 @@ func HTTPStatusFromCode(code codes.Code) int {
 	return http.StatusInternalServerError
 }
 
-type ErrorResponce struct {
+type errorResponce struct {
 	Error  string `json:"error"`
 	Code   int    `json:"code"`
 	Status int    `json:"status"`
@@ -85,18 +94,22 @@ func HTTPError(w http.ResponseWriter, err error) {
 	status := HTTPStatusFromCode(s.Code())
 
 	w.WriteHeader(status)
-	err = json.NewEncoder(w).Encode(ErrorResponce{
+	err = json.NewEncoder(w).Encode(errorResponce{
 		Error:  s.Message(),
 		Code:   code,
 		Status: status,
 	})
 	if err != nil {
 		log.Printf("Failed to encode error responce: %v", err)
+		HTTPError(w, errFailedEncode)
 	}
 }
 
 func pingHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	w.Write([]byte("pong"))
+	_, err := w.Write([]byte("pong"))
+	if err != nil {
+		log.Printf("Error writing responce: %v", err)
+	}
 }
 
 type registerBody struct {
@@ -105,19 +118,19 @@ type registerBody struct {
 }
 
 func registerHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	var registerBody registerBody
-	err := json.NewDecoder(r.Body).Decode(&registerBody)
+	var body registerBody
+	err := json.NewDecoder(r.Body).Decode(&body)
 	if err != nil {
 		log.Printf("Invalid register JSON: %v", err)
-		HTTPError(w, errors.New("Invalid JSON"))
+		HTTPError(w, errInvalidJSON)
 		return
 	}
 
-	log.Printf("Registering user with email: %s", registerBody.Email)
+	log.Printf("Registering user with email: %s", body.Email)
 
 	_, err = userserverClient.Register(context.Background(), &userserver.RegisterRequest{
-		Email:    registerBody.Email,
-		Password: registerBody.Password,
+		Email:    body.Email,
+		Password: body.Password,
 	})
 	if err != nil {
 		HTTPError(w, err)
@@ -134,18 +147,18 @@ type tokenResponce struct {
 }
 
 func loginHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	var loginBody loginBody
-	err := json.NewDecoder(r.Body).Decode(&loginBody)
+	var body loginBody
+	err := json.NewDecoder(r.Body).Decode(&body)
 	if err != nil {
 		log.Printf("Invalid register JSON: %v", err)
-		HTTPError(w, errors.New("Invalid JSON"))
+		HTTPError(w, errInvalidJSON)
 		return
 	}
 
-	log.Printf("Logging in user with email: %s", loginBody.Email)
+	log.Printf("Logging in user with email: %s", body.Email)
 	token, err := userserverClient.Login(context.Background(), &userserver.LoginRequest{
-		Email:    loginBody.Email,
-		Password: loginBody.Password,
+		Email:    body.Email,
+		Password: body.Password,
 	})
 	if err != nil {
 		HTTPError(w, err)
@@ -153,76 +166,86 @@ func loginHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(&tokenResponce{
+	err = json.NewEncoder(w).Encode(&tokenResponce{
 		Token: token.Token,
 	})
+	if err != nil {
+		log.Printf("failed to encode error responce: %v", err)
+		HTTPError(w, errFailedEncode)
+	}
 }
 
-type Robot struct {
-	ID            string `json:"id"`
-	Nickname      string `json:"nickname"`
-	RobotType     string `json:"robotType"`
-	InterfaceType string `json:"interfaceType"`
-	Status        Status `json:"status,omitempty"`
+type robot struct {
+	ID            string      `json:"id"`
+	Nickname      string      `json:"nickname"`
+	RobotType     string      `json:"robotType"`
+	InterfaceType string      `json:"interfaceType"`
+	Status        robotStatus `json:"status,omitempty"`
 }
 
-type Status interface {
+type robotStatus interface {
 	status()
 }
 
-type ToggleStatus struct {
+type toggleStatus struct {
 	Value bool `json:"value"`
 }
 
-func (s ToggleStatus) status() {}
+func (s toggleStatus) status() {}
 
-type RangeStatus struct {
+type rangeStatus struct {
 	Min     int `json:"min"`
 	Max     int `json:"max"`
 	Current int `json:"current"`
 }
 
-func (s RangeStatus) status() {}
+func (s rangeStatus) status() {}
 
 func robotsHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	userID := r.Context().Value(userIDKey).(string)
 
-	userId := r.Context().Value("userId").(string)
-
-	stream, err := infoserverClient.GetRobots(context.Background(), &infoserver.RobotsQuery{UserId: userId})
+	stream, err := infoserverClient.GetRobots(context.Background(), &infoserver.RobotsQuery{
+		UserId: userID,
+	})
 	if err != nil {
 		HTTPError(w, err)
 		return
 	}
 
-	var robots []Robot
+	var robots []robot
 	for {
-		robot, err := stream.Recv()
-		if err == io.EOF {
+		rbt, recvErr := stream.Recv()
+		if recvErr == io.EOF {
 			break
 		}
-		if err != nil {
-			HTTPError(w, err)
+		if recvErr != nil {
+			HTTPError(w, recvErr)
 			return
 		}
-		robots = append(robots, Robot{
-			ID:            robot.Id,
-			Nickname:      robot.Nickname,
-			RobotType:     robot.RobotType,
-			InterfaceType: robot.InterfaceType,
+
+		robots = append(robots, robot{
+			ID:            rbt.Id,
+			Nickname:      rbt.Nickname,
+			RobotType:     rbt.RobotType,
+			InterfaceType: rbt.InterfaceType,
 		})
 	}
 
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(robots)
+	err = json.NewEncoder(w).Encode(robots)
+	if err != nil {
+		log.Printf("Failed to encode error responce: %v", err)
+		HTTPError(w, errFailedEncode)
+	}
 }
 
 func robotHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	id := ps.ByName("id")
 	log.Printf("Getting robot with id %s", id)
 
-	userId := r.Context().Value("userId").(string)
+	userID := r.Context().Value(userIDKey).(string)
 
-	robot, err := infoserverClient.GetRobot(context.Background(), &infoserver.RobotQuery{Id: id, UserId: userId})
+	rbt, err := infoserverClient.GetRobot(context.Background(), &infoserver.RobotQuery{Id: id, UserId: userID})
 
 	if err != nil {
 		HTTPError(w, err)
@@ -230,14 +253,14 @@ func robotHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 	}
 
 	// convert robot status
-	var status Status
-	switch robotStatus := robot.RobotStatus.(type) {
+	var status robotStatus
+	switch robotStatus := rbt.RobotStatus.(type) {
 	case *infoserver.Robot_ToggleStatus:
-		status = ToggleStatus{
+		status = toggleStatus{
 			Value: robotStatus.ToggleStatus.Value,
 		}
 	case *infoserver.Robot_RangeStatus:
-		status = RangeStatus{
+		status = rangeStatus{
 			Min:     int(robotStatus.RangeStatus.Min),
 			Max:     int(robotStatus.RangeStatus.Max),
 			Current: int(robotStatus.RangeStatus.Current),
@@ -247,16 +270,20 @@ func robotHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 	}
 
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(Robot{
-		ID:            robot.Id,
-		Nickname:      robot.Nickname,
-		RobotType:     robot.RobotType,
-		InterfaceType: robot.InterfaceType,
+	err = json.NewEncoder(w).Encode(robot{
+		ID:            rbt.Id,
+		Nickname:      rbt.Nickname,
+		RobotType:     rbt.RobotType,
+		InterfaceType: rbt.InterfaceType,
 		Status:        status,
 	})
+	if err != nil {
+		log.Printf("Failed to encode error responce: %v", err)
+		HTTPError(w, errFailedEncode)
+	}
 }
 
-type RegisterRobotBody struct {
+type registerRobotBody struct {
 	Nickname  string `json:"nickname"`
 	RobotType string `json:"robotType"`
 }
@@ -265,30 +292,33 @@ func registerRobotHandler(w http.ResponseWriter, r *http.Request, ps httprouter.
 	id := ps.ByName("id")
 	log.Printf("Registering robot with id %s", id)
 
-	var registerRobotBody RegisterRobotBody
-
-	err := json.NewDecoder(r.Body).Decode(&registerRobotBody)
+	var body registerRobotBody
+	err := json.NewDecoder(r.Body).Decode(&body)
 
 	if err != nil {
 		log.Printf("Invalid register JSON: %v", err)
-		HTTPError(w, errors.New("Invalid JSON"))
+		HTTPError(w, errInvalidJSON)
 		return
 	}
 
-	userId := r.Context().Value("userId").(string)
+	userID := r.Context().Value(userIDKey).(string)
 
-	registerQuery := infoserver.RegisterRobotQuery{Id: id, Nickname: registerRobotBody.Nickname, RobotType: registerRobotBody.RobotType, UserId: userId}
+	registerQuery := infoserver.RegisterRobotQuery{
+		Id:        id,
+		Nickname:  body.Nickname,
+		RobotType: body.RobotType,
+		UserId:    userID,
+	}
 
 	_, err = infoserverClient.RegisterRobot(context.Background(), &registerQuery)
-
 	if err != nil {
 		HTTPError(w, err)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-
 }
+
 func toggleHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	id := ps.ByName("id")
 	value := ps.ByName("value")
@@ -297,13 +327,13 @@ func toggleHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 
 	toggleValue, err := strconv.ParseBool(value)
 	if err != nil {
-		HTTPError(w, errors.New("Toggle value is not a boolean, should be either \"true\" or \"false\""))
+		HTTPError(w, errors.New("toggle value is not a boolean, should be either \"true\" or \"false\""))
 		return
 	}
 
 	_, err = infoserverClient.ToggleRobot(context.Background(), &infoserver.ToggleRequest{
 		Id:     id,
-		UserId: r.Context().Value("userId").(string),
+		UserId: r.Context().Value(userIDKey).(string),
 		Value:  toggleValue,
 	})
 	if err != nil {
@@ -330,12 +360,6 @@ type intParameter struct {
 
 func (p intParameter) parameterDetails() {}
 
-type booleanParameter struct {
-	Default bool `json:"default"`
-}
-
-func (p booleanParameter) parameterDetails() {}
-
 type calibrationParameter struct {
 	Name        string           `json:"name"`
 	Description string           `json:"description"`
@@ -346,11 +370,11 @@ type calibrationParameter struct {
 // TODO: load from some kind of resource file
 // we want this to extendable, so plugins can request a list of parameters
 var usecases = map[string]usecase{
-	"1": usecase{
+	"1": {
 		ID:   "1",
 		Name: "Switch",
 		Parameters: []calibrationParameter{
-			calibrationParameter{
+			{
 				Name:        "On Angle",
 				Description: "Angle to turn the servo to turn the switch on",
 				Type:        "int",
@@ -360,7 +384,7 @@ var usecases = map[string]usecase{
 					Default: 100,
 				},
 			},
-			calibrationParameter{
+			{
 				Name:        "Off Angle",
 				Description: "Angle to turn the servo to turn the switch off",
 				Type:        "int",
@@ -372,11 +396,11 @@ var usecases = map[string]usecase{
 			},
 		},
 	},
-	"2": usecase{
+	"2": {
 		ID:   "2",
 		Name: "Thermostat",
 		Parameters: []calibrationParameter{
-			calibrationParameter{
+			{
 				Name:        "Minimum tempreture",
 				Description: "Minimum tempreture of the thermostat",
 				Type:        "int",
@@ -386,7 +410,7 @@ var usecases = map[string]usecase{
 					Default: 293,
 				},
 			},
-			calibrationParameter{
+			{
 				Name:        "Maximum tempreture",
 				Description: "Maximum tempreture of the thermostat",
 				Type:        "int",
@@ -396,7 +420,7 @@ var usecases = map[string]usecase{
 					Default: 293,
 				},
 			},
-			calibrationParameter{
+			{
 				Name:        "Minimum tempreture angle",
 				Description: "Angle of the minimum tempreture",
 				Type:        "int",
@@ -406,7 +430,7 @@ var usecases = map[string]usecase{
 					Default: 80,
 				},
 			},
-			calibrationParameter{
+			{
 				Name:        "Maximum tempreture angle",
 				Description: "Angle of the maximum tempreture",
 				Type:        "int",
@@ -428,7 +452,11 @@ func usecasesHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 	}
 
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(usecaseList)
+	err := json.NewEncoder(w).Encode(usecaseList)
+	if err != nil {
+		log.Printf("Failed to encode error responce: %v", err)
+		HTTPError(w, errFailedEncode)
+	}
 }
 
 func usecaseHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -442,7 +470,11 @@ func usecaseHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params
 	}
 
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(usecase)
+	err := json.NewEncoder(w).Encode(usecase)
+	if err != nil {
+		log.Printf("Failed to encode error responce: %v", err)
+		HTTPError(w, errFailedEncode)
+	}
 }
 
 type parameter struct {
@@ -458,14 +490,14 @@ func setCalibrationHandler(w http.ResponseWriter, r *http.Request, ps httprouter
 	err := json.NewDecoder(r.Body).Decode(&parameters)
 	if err != nil {
 		log.Printf("Invalid calibration JSON: %v", err)
-		HTTPError(w, errors.New("Invalid JSON"))
+		HTTPError(w, errInvalidJSON)
 		return
 	}
 
 	// build infoserver calibration request
 	request := &infoserver.CalibrationRequest{
 		Id:     id,
-		UserId: r.Context().Value("userId").(string),
+		UserId: r.Context().Value(userIDKey).(string),
 	}
 	for _, param := range parameters {
 		request.Parameters = append(request.Parameters, &infoserver.CalibrationParameter{
@@ -475,21 +507,21 @@ func setCalibrationHandler(w http.ResponseWriter, r *http.Request, ps httprouter
 	}
 
 	// send request
-	robot, err := infoserverClient.CalibrateRobot(context.Background(), request)
+	rbt, err := infoserverClient.CalibrateRobot(context.Background(), request)
 	if err != nil {
 		HTTPError(w, err)
 		return
 	}
 
 	// convert robot status
-	var status Status
-	switch robotStatus := robot.RobotStatus.(type) {
+	var status robotStatus
+	switch robotStatus := rbt.RobotStatus.(type) {
 	case *infoserver.Robot_ToggleStatus:
-		status = ToggleStatus{
+		status = toggleStatus{
 			Value: robotStatus.ToggleStatus.Value,
 		}
 	case *infoserver.Robot_RangeStatus:
-		status = RangeStatus{
+		status = rangeStatus{
 			Min:     int(robotStatus.RangeStatus.Min),
 			Max:     int(robotStatus.RangeStatus.Max),
 			Current: int(robotStatus.RangeStatus.Current),
@@ -500,13 +532,17 @@ func setCalibrationHandler(w http.ResponseWriter, r *http.Request, ps httprouter
 
 	// encode robot responce
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(Robot{
-		ID:            robot.Id,
-		Nickname:      robot.Nickname,
-		RobotType:     robot.RobotType,
-		InterfaceType: robot.InterfaceType,
+	err = json.NewEncoder(w).Encode(robot{
+		ID:            rbt.Id,
+		Nickname:      rbt.Nickname,
+		RobotType:     rbt.RobotType,
+		InterfaceType: rbt.InterfaceType,
 		Status:        status,
 	})
+	if err != nil {
+		log.Printf("Failed to encode error responce: %v", err)
+		HTTPError(w, errFailedEncode)
+	}
 }
 
 func getCalibrationHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -530,7 +566,11 @@ func getCalibrationHandler(w http.ResponseWriter, r *http.Request, ps httprouter
 	}
 
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(parameters)
+	err = json.NewEncoder(w).Encode(parameters)
+	if err != nil {
+		log.Printf("Failed to encode error responce: %v", err)
+		HTTPError(w, errFailedEncode)
+	}
 }
 
 func rangeHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -541,13 +581,13 @@ func rangeHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 
 	rangeValue, err := strconv.ParseInt(value, 10, 64)
 	if err != nil {
-		HTTPError(w, errors.New("Toggle value is not a integer"))
+		HTTPError(w, errors.New("toggle value is not a integer"))
 		return
 	}
 
 	_, err = infoserverClient.RangeRobot(context.Background(), &infoserver.RangeRequest{
 		Id:     id,
-		UserId: r.Context().Value("userId").(string),
+		UserId: r.Context().Value(userIDKey).(string),
 		Value:  rangeValue,
 	})
 	if err != nil {
@@ -568,7 +608,7 @@ func auth(h httprouter.Handle) httprouter.Handle {
 		}
 
 		log.Printf("User ID is: %s", user.Id)
-		h(w, r.WithContext(context.WithValue(nil, "userId", user.Id)), ps)
+		h(w, r.WithContext(context.WithValue(context.TODO(), userIDKey, user.Id)), ps)
 	}
 }
 
@@ -600,7 +640,14 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	defer infoserverConn.Close()
+
+	defer func() {
+		closeErr := infoserverConn.Close()
+		if closeErr != nil {
+			log.Fatalf("failed to close infoserver connection: %v", closeErr)
+		}
+	}()
+
 	infoserverClient = infoserver.NewInfoServerClient(infoserverConn)
 
 	// connect to userserver
@@ -608,7 +655,14 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	defer userserverConn.Close()
+
+	defer func() {
+		closeErr := userserverConn.Close()
+		if closeErr != nil {
+			log.Fatalf("failed to close userserver connection: %v", closeErr)
+		}
+	}()
+
 	userserverClient = userserver.NewUserServerClient(userserverConn)
 
 	// start server
