@@ -200,7 +200,10 @@ test-android:
 
 test-services: test-clientserver test-infoserver test-robotserver test-switchserver test-userserver test-thermostatserver
 
-test: test-services test-android
+test-e2e:
+	@(cd e2e-tests && npm i && npm test)
+
+test: test-services test-e2e test-android
 
 #
 # Reports
@@ -220,4 +223,4 @@ compile-reports:
 ci-test-android: 
 	@docker run -it --rm -v $$PWD/android:/root/tmp budtmo/docker-android-x86-9.0 bash -c "(cd tmp && ./gradlew test)"
 
-ci: docker-dbs test-services ci-test-android compile-reports lint-services lint-docker-compose
+ci: docker-dbs test-services test-e2e ci-test-android compile-reports lint-services lint-docker-compose
