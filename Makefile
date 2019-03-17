@@ -143,23 +143,27 @@ clean:
 # LINT
 #
 
+GOLINT = golangci-lint run ./... -E=golint -E=stylecheck -E=gosec -E=unconvert -E=goconst -E=gofmt -E=goimports -E=maligned -E=lll -E=unparam -E=nakedret
+
 lint-clientserver:
-	@(cd clientserver && gometalinter --disable=gocyclo --enable=gofmt ./...)
+	@(cd clientserver && $(GOLINT))
 
 lint-infoserver:
-	@(cd infoserver && gometalinter --disable=gocyclo --enable=gofmt ./...)
+	@(cd infoserver && $(GOLINT))
 
 lint-robotserver:
-	@(cd robotserver && gometalinter --disable=gocyclo --enable=gofmt ./...)
+	@(cd robotserver && $(GOLINT))
 
 lint-switchserver:
-	@(cd switchserver && gometalinter --disable=gocyclo --enable=gofmt ./...)
+	@(cd switchserver && $(GOLINT))
 
 lint-userserver:
-	@(cd userserver && gometalinter --disable=gocyclo --enable=gofmt ./...)
+	@(cd userserver && $(GOLINT))
 
 lint-thermostatserver:
-	@(cd thermostatserver && gometalinter --disable=gocyclo --enable=gofmt ./...)
+	@(cd thermostatserver && $(GOLINT))
+
+lint-services: lint-clientserver lint-infoserver lint-robotserver lint-switchserver lint-userserver lint-thermostatserver
 
 lint-android:
 	@(cd android && ./gradlew lint)
@@ -167,7 +171,7 @@ lint-android:
 lint-docker-compose:
 	docker-compose config
 
-lint: lint-clientserver lint-infoserver lint-robotserver lint-switchserver lint-userserver lint-thermostatserver lint-android lint-docker-compose
+lint: lint-services lint-android lint-docker-compose
 
 #
 # TEST
