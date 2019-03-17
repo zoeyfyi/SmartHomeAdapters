@@ -14,21 +14,20 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/mrbenshef/SmartHomeAdapters/userserver/userserver"
 	"github.com/julienschmidt/httprouter"
+	"github.com/mrbenshef/SmartHomeAdapters/userserver/userserver"
 )
 
 var (
 	userserverClient userserver.UserServerClient
 )
 var (
-	// CHANGE THESE PATHS
 	loginTemplate   = template.Must(template.ParseFiles("/app/static/login.html"))
 	consentTemplate = template.Must(template.ParseFiles("/app/static/consent.html"))
 )
 
 type hydraLoginRequest struct {
-	Skip bool `json:"skip"` // weather to skip login or not
+	Skip bool `json:"skip"` // whether to skip login or not
 	// https://www.ory.sh/docs/hydra/sdk/api#get-an-login-request
 }
 
@@ -53,22 +52,19 @@ type consentTemplateData struct {
 }
 
 type LoginRequest struct {
-	Remember bool `json:"remember"`
-	Subject string `json:"subject"`
+	Remember bool   `json:"remember"`
+	Subject  string `json:"subject"`
 }
 
 type loginBody struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
+
 func acceptLogin(w http.ResponseWriter, r *http.Request, challenge string) {
 	urlPut := fmt.Sprintf("https://hydra.halspals.co.uk/oauth2/auth/requests/login/%s/accept", challenge)
 
-	// need to put headers/data in here
-	//
-
-	// WARNING - this is probably not the best way to do it
-	// but i am very sleepy
+	// parse the email and password from the form and attempt to log the user in
 	r.ParseForm()
 	email := r.PostForm.Get("email")
 	password := r.PostForm.Get("password")
@@ -89,20 +85,16 @@ func acceptLogin(w http.ResponseWriter, r *http.Request, challenge string) {
 		log.Fatalf("Bad authorize: %v", err)
 	}
 
-	jsonData := &LoginRequest{Remember:false, Subject:id.Id}
+	jsonData := &LoginRequest{Remember: false, Subject: id.Id}
 
-	buf := new (bytes.Buffer)
+	buf := new(bytes.Buffer)
 	json.NewEncoder(buf).Encode(jsonData)
 
-	// jsonData := []byte(`{ "remember":false, "subject":"subject123"}`)
-
 	data := url.Values{}
-	data.Set("\"remember\"","false")
-	data.Set("\"subject\"","\"subject123\"")
+	data.Set("\"remember\"", "false")
+	data.Set("\"subject\"", "\"subject123\"")
 
-	log.Printf("%s", buf)
 	req, err := http.NewRequest("PUT", urlPut, buf)
-	// req.Header.Add("Content-Length", strconv.Itoa(len(jsonData)))
 	if err != nil {
 		loginTemplate.Execute(w, loginTemplateData{
 			Error: fmt.Errorf("Internal error"),
@@ -110,7 +102,6 @@ func acceptLogin(w http.ResponseWriter, r *http.Request, challenge string) {
 		return
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Content-Length", "41")
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		loginTemplate.Execute(w, loginTemplateData{
@@ -126,15 +117,9 @@ func acceptLogin(w http.ResponseWriter, r *http.Request, challenge string) {
 		return
 	}
 	var loginAccept hydraLoginAccept
-	//ivar loginAccept2 interface{}
 
-	log.Printf("%s", resp.StatusCode)
-	log.Printf("%s", resp.ContentLength)
-	log.Printf("%s", resp.Cookies())
-	log.Printf("%s", resp.Request)
 	body, err := ioutil.ReadAll(resp.Body)
 
-	// w.Write(body)
 	reader := bytes.NewReader(body)
 	err = json.NewDecoder(reader).Decode(&loginAccept)
 	if err != nil {
@@ -143,22 +128,13 @@ func acceptLogin(w http.ResponseWriter, r *http.Request, challenge string) {
 
 	strings.Replace(loginAccept.RedirectTo, "\\u0026", "&", -1)
 
-	log.Printf("---BODY---")
-	log.Printf("%s", loginAccept)
-	log.Printf("---ENDBODY---")
-	log.Printf("---REDIRECT---")
-	log.Printf("%s", loginAccept.RedirectTo)
-	log.Printf("---END_REDIRECT---")
-	// is loginAccept.RedirectTo not null here?
-
 	// redirect back to hydra
 	http.Redirect(w, r, loginAccept.RedirectTo, http.StatusMovedPermanently)
 
-	}
+}
 
 func postLoginHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	// get hydra challenge
-	// should be login_challenge but need to fix template
+
 	// parse post form
 	r.ParseForm()
 	email := r.PostForm.Get("email")
@@ -189,8 +165,8 @@ func getLoginHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params
 	challenge := r.URL.Query().Get("login_challenge")
 
 	// get infomation about the login request from hydra
-	url := fmt.Sprintf("https://hydra.halspals.co.uk/oauth2/auth/requests/login/%s", challenge)
-	resp, err := http.DefaultClient.Get(url)
+	urlGet := fmt.Sprintf("https://hydra.halspals.co.uk/oauth2/auth/requests/login/%s", challenge)
+	resp, err := http.DefaultClient.Get(urlGet)
 	if err != nil {
 		loginTemplate.Execute(w, loginTemplateData{
 			Error: err,
@@ -217,23 +193,17 @@ func getLoginHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params
 }
 
 func acceptConsent(w http.ResponseWriter, r *http.Request, challenge string) {
-	urlThing := fmt.Sprintf("https://hydra.halspals.co.uk/oauth2/auth/requests/consent/%s/accept", challenge)
-
-	// need to put json data here
-
-	// need to fix redirect as well
-
+	urlPut := fmt.Sprintf("https://hydra.halspals.co.uk/oauth2/auth/requests/consent/%s/accept", challenge)
 
 	jsonData := []byte(`{ "remember":false, "grant_scope":["openid"]}`)
 
-	req, err := http.NewRequest("PUT", urlThing, bytes.NewBuffer(jsonData))
+	req, err := http.NewRequest("PUT", urlPut, bytes.NewBuffer(jsonData))
 	if err != nil {
 		consentTemplate.Execute(w, consentTemplateData{
 			Error: fmt.Errorf("Internal error"),
 		})
 		return
 	}
-
 
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := http.DefaultClient.Do(req)
@@ -253,14 +223,13 @@ func acceptConsent(w http.ResponseWriter, r *http.Request, challenge string) {
 
 	var consentAccept hydraConsentAccept
 	json.NewDecoder(resp.Body).Decode(&consentAccept)
-	// the .RedirectTo url is null?
+
 	// redirect back to hydra
 	http.Redirect(w, r, consentAccept.RedirectTo, http.StatusMovedPermanently)
 }
 
 func postConsentHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	// get hydra challenge
-	// is consent_challenge
 	r.ParseForm()
 	challenge := r.Form.Get("challenge")
 
