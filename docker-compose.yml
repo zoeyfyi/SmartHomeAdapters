@@ -1,22 +1,6 @@
 version: '3'
 
 services:
-  # database managment
-  adminer:
-    image: adminer
-    restart: always
-    ports:
-      - 8080:8080
-  # container management
-  portainer:
-    image: portainer/portainer
-    command: -H unix:///var/run/docker.sock
-    restart: always
-    ports:
-      - 9000:9000
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - portainer_data:/data
   userdb:
     build:
       context: ./userdb
@@ -132,7 +116,6 @@ services:
     ports:
       - 8083:80
 volumes:
-  portainer_data:
   userdb_data:
   infodb_data:
   switchdb_data:
