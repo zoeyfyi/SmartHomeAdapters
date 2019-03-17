@@ -6,9 +6,9 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.view.inputmethod.InputMethodManager
-import com.github.halspals.smarthomeadapters.smarthomeadapters.model.Token
 import com.github.halspals.smarthomeadapters.smarthomeadapters.model.User
 import kotlinx.android.synthetic.main.activity_register_user.*
+import okhttp3.ResponseBody
 import org.jetbrains.anko.*
 import org.jetbrains.anko.design.snackbar
 import retrofit2.Call
@@ -16,6 +16,10 @@ import retrofit2.Callback
 import retrofit2.Response
 
 class RegisterUserActivity : AppCompatActivity() {
+
+    companion object {
+        const val FORCE_SIGNIN = "forceSignIn"
+    }
 
     private val tag = "RegisterUserActivity"
 
@@ -96,63 +100,23 @@ class RegisterUserActivity : AppCompatActivity() {
      *
      */
     private fun registerNewUser(user: User) {
-        restApiService.registerUser(user).enqueue(object : Callback<User> {
-            override fun onResponse(call: Call<User>, response: Response<User>) {
-                val responseUser = response.body()
+        restApiService.registerUser(user).enqueue(object : Callback<ResponseBody> {
+            override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
                 if (response.isSuccessful) {
-                    assert(user == responseUser) {
-                        "Returned user doesn't equal expected user. " +
-                                "Expected {$user}, received {$responseUser}"
-                    }
-                    toast("Registered; now signing you in...")
-                    signInUser(user)
+                    toast("Registered; now sign in")
+                    startActivity(
+                            intentFor<AuthenticationActivity>(FORCE_SIGNIN to true)
+                                    .clearTask())
                 } else {
                     val error = RestApiService.extractErrorFromResponse(response)
                     handleCallbackError(error, enableFurtherRegistration = true)
                 }
             }
 
-            override fun onFailure(call: Call<User>, error: Throwable) {
+            override fun onFailure(call: Call<ResponseBody>, error: Throwable) {
                 handleCallbackError(error.message, enableFurtherRegistration = true)
             }
         })
-    }
-
-    /**
-     * Makes a REST call to sign in the given user.
-     *
-     * @param user the user to sign in
-     */
-    private fun signInUser(user: User) {
-        restApiService.loginUser(user).enqueue(object: Callback<Token> {
-            override fun onResponse(call: Call<Token>, response: Response<Token>) {
-                val token = response.body()
-                if (response.isSuccessful && token != null) {
-                    saveTokenAndMoveToMain(token.token)
-                } else {
-                    val error = RestApiService.extractErrorFromResponse(response)
-                    handleCallbackError(error)
-                }
-            }
-
-            override fun onFailure(call: Call<Token>, error: Throwable) {
-                handleCallbackError(error.message)
-            }
-        })
-    }
-
-    /**
-     * WIP: Saves the token and starts a [MainActivity].
-     * Currently only keeps token in memory, passing it as an extra to the activity;
-     * when we have time this should be changed to saving the token in Account Manager.
-     *
-     * @param token the authorization token received from the server
-     */
-    private fun saveTokenAndMoveToMain(token: String) {
-        Log.d(tag, "Succeeded in receiving token, starting MainActivity")
-        // TODO token should be saved in Account Manager for the user
-        toast("Signed in")
-        startActivity(intentFor<MainActivity>("token" to token).clearTask().newTask())
     }
 
     /**

@@ -37,7 +37,7 @@ interface RestApiService {
     }
 
     @POST("register")
-    fun registerUser(@Body user: User): Call<User>
+    fun registerUser(@Body user: User): Call<ResponseBody>
 
     @POST("login")
     fun loginUser(@Body user: User): Call<Token>
