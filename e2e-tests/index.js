@@ -15,8 +15,11 @@ after(async () => {
     await compose.down();
 })
 
-describe("Chakram", function() {
-    it("should offer simple HTTP request capabilities", function () {
-        return chakram.get("http://httpbin.org/get");
+describe("/ping", () => {
+    it("should respond with \"pong\"", async () => {
+        const res = await chakram.get("http://localhost/ping");
+        expect(res.error).to.be.null;
+        expect(res).to.have.status(200);
+        expect(res.body).to.equal("pong");
     });
 });
