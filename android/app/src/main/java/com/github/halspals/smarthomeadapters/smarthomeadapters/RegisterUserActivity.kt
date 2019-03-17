@@ -18,7 +18,7 @@ import retrofit2.Response
 class RegisterUserActivity : AppCompatActivity() {
 
     companion object {
-        const val FORCE_SIGNIN = "forceSignIn"
+        const val FORCE_SIGN_IN = "forceSignIn"
     }
 
     private val tag = "RegisterUserActivity"
@@ -105,7 +105,7 @@ class RegisterUserActivity : AppCompatActivity() {
                 if (response.isSuccessful) {
                     toast("Registered; now sign in")
                     startActivity(
-                            intentFor<AuthenticationActivity>(FORCE_SIGNIN to true)
+                            intentFor<AuthenticationActivity>(FORCE_SIGN_IN to true)
                                     .clearTask())
                 } else {
                     val error = RestApiService.extractErrorFromResponse(response)

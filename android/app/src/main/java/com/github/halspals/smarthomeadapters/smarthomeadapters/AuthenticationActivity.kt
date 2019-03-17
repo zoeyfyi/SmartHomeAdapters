@@ -53,7 +53,7 @@ class AuthenticationActivity : AppCompatActivity() {
             startActivity<RegisterUserActivity>()
         }
 
-        if (intent.getBooleanExtra(RegisterUserActivity.FORCE_SIGNIN, false)) {
+        if (intent.getBooleanExtra(RegisterUserActivity.FORCE_SIGN_IN, false)) {
             startOAuthLogin()
         }
     }
