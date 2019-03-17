@@ -7,10 +7,6 @@
     <string name="sign_in_button">Sign in</string>
     <string name="register_button">Register</string>
 
-    <!-- Strings related to the RegisterUser Activity -->
-    <string name="confirm_password_input_hint">Re-enter password</string>
-    <string name="login_button_text">Sign in instead</string>
-
     <!-- Strings related to MainActivity -->
     <string name="nav_bar_robots">Robots</string>
     <string name="nav_bar_triggers">Triggers</string>
