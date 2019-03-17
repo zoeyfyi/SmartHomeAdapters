@@ -45,7 +45,7 @@ class AuthenticationActivity : AppCompatActivity() {
             startActivity<MainActivity>()
         }
 
-        login_button.setOnClickListener { _ ->
+        auth_button.setOnClickListener { _ ->
             startOAuthLogin()
         }
     }

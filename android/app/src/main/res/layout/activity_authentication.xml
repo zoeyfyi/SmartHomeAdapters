@@ -8,7 +8,7 @@
     tools:context=".AuthenticationActivity">
 
     <Button
-        android:id="@+id/login_button"
+        android:id="@+id/auth_button"
         style="@style/Widget.AppCompat.Button.Borderless.Colored"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -16,7 +16,7 @@
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
         android:layout_marginBottom="8dp"
-        android:text="Login"
+        android:text="@string/authorize_button"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
