@@ -63,7 +63,7 @@ func (s *server) Register(ctx context.Context, request *userserver.RegisterReque
 	}
 
 	// hash password
-	hash, err := bcrypt.GenerateFromPassword([]byte(request.Password), 10)
+	hash, err := bcrypt.GenerateFromPassword([]byte(request.Password), bcryptRounds)
 	if err != nil {
 		return nil, status.New(codes.Internal, "Internal error").Err()
 	}
@@ -74,10 +74,10 @@ func (s *server) Register(ctx context.Context, request *userserver.RegisterReque
 		if err, ok := err.(*pq.Error); ok && err.Code.Name() == "unique_violation" {
 			// email already exists
 			return nil, status.Newf(codes.AlreadyExists, "A user with email \"%s\" already exists", request.Email).Err()
-		} else {
-			log.Printf("Failed to insert user into database: %v", err)
-			return nil, status.New(codes.Internal, "Internal error").Err()
 		}
+
+		log.Printf("Failed to insert user into database: %v", err)
+		return nil, status.New(codes.Internal, "Internal error").Err()
 	}
 
 	return &empty.Empty{}, nil
@@ -92,10 +92,10 @@ func (s *server) Login(ctx context.Context, request *userserver.LoginRequest) (*
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, status.Newf(codes.NotFound, "User with email \"%s\" does not exist", request.Email).Err()
-		} else {
-			log.Printf("Error scanning database: %v", err)
-			return nil, status.New(codes.Internal, "Internal error").Err()
 		}
+
+		log.Printf("Error scanning database: %v", err)
+		return nil, status.New(codes.Internal, "Internal error").Err()
 	}
 
 	// check password
@@ -103,10 +103,10 @@ func (s *server) Login(ctx context.Context, request *userserver.LoginRequest) (*
 	if err != nil {
 		if err == bcrypt.ErrMismatchedHashAndPassword {
 			return nil, status.New(codes.InvalidArgument, "Password incorrect").Err()
-		} else {
-			log.Printf("Error comparing hashes: %v", err)
-			return nil, status.New(codes.Internal, "Internal error").Err()
 		}
+
+		log.Printf("Error comparing hashes: %v", err)
+		return nil, status.New(codes.Internal, "Internal error").Err()
 	}
 
 	// create token
@@ -130,12 +130,12 @@ func (s *server) Authorize(ctx context.Context, token *userserver.Token) (*users
 	// parse token
 	jwtToken, err := jwt.Parse(token.Token, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
 		return []byte(signingKey), nil
 	})
 	if err != nil {
-		log.Printf("Couldnt parse token: %v", err)
+		log.Printf("could not parse token: %v", err)
 		return nil, status.New(codes.InvalidArgument, "Invalid token").Err()
 	}
 
@@ -204,9 +204,13 @@ func main() {
 	grpcServer := grpc.NewServer()
 	userServer := &server{DB: db}
 	userserver.RegisterUserServerServer(grpcServer, userServer)
-	lis, err := net.Listen("tcp", ":80")
+	lis, err := net.Listen("tcp", "127.0.0.1:80")
 	if err != nil {
-		log.Fatalf("Failed to listen: %v", err)
+		log.Fatalf("failed to listen: %v", err)
 	}
-	grpcServer.Serve(lis)
+
+	err = grpcServer.Serve(lis)
+	if err != nil {
+		log.Fatalf("failed to serve: %v", err)
+	}
 }

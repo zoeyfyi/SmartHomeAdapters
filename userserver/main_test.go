@@ -35,14 +35,20 @@ func TestMain(m *testing.M) {
 	}
 
 	// wait till db is up
-	if err = pool.Retry(func() error {
+	err = pool.Retry(func() error {
 		var err error
-		db, err := sql.Open("postgres", fmt.Sprintf("postgres://postgres:password@localhost:%s/%s?sslmode=disable", resource.GetPort("5432/tcp"), dbDatabase))
+		dbURL := fmt.Sprintf(
+			"postgres://postgres:password@localhost:%s/%s?sslmode=disable",
+			resource.GetPort("5432/tcp"),
+			dbDatabase,
+		)
+		db, err := sql.Open("postgres", dbURL)
 		if err != nil {
 			return err
 		}
 		return db.Ping()
-	}); err != nil {
+	})
+	if err != nil {
 		log.Fatalf("Could not connect to docker: %s", err)
 	}
 
@@ -51,7 +57,10 @@ func TestMain(m *testing.M) {
 
 	exitCode := m.Run()
 
-	pool.Purge(resource)
+	err = pool.Purge(resource)
+	if err != nil {
+		log.Fatalf("failed to perge: %v", err)
+	}
 
 	os.Exit(exitCode)
 }
@@ -126,10 +135,13 @@ func TestSuccessfullRegistration(t *testing.T) {
 func TestRegisterDuplicateEmails(t *testing.T) {
 	clearDatabase(t)
 
-	testServer.Register(context.Background(), &userserver.RegisterRequest{
+	_, err := testServer.Register(context.Background(), &userserver.RegisterRequest{
 		Email:    "foo@email.com",
 		Password: "password",
 	})
+	if err != nil {
+		t.Fatalf("failed to register test user: %v", err)
+	}
 
 	user, err := testServer.Register(context.Background(), &userserver.RegisterRequest{
 		Email:    "foo@email.com",
@@ -154,10 +166,13 @@ func TestRegisterDuplicateEmails(t *testing.T) {
 func TestSuccessfullLogin(t *testing.T) {
 	clearDatabase(t)
 
-	testServer.Register(context.Background(), &userserver.RegisterRequest{
+	_, err := testServer.Register(context.Background(), &userserver.RegisterRequest{
 		Email:    "foo@email.com",
 		Password: "password",
 	})
+	if err != nil {
+		t.Fatalf("failed to register test user: %v", err)
+	}
 
 	token, err := testServer.Login(context.Background(), &userserver.LoginRequest{
 		Email:    "foo@email.com",
@@ -180,10 +195,13 @@ func TestSuccessfullLogin(t *testing.T) {
 func TestLoginFailure(t *testing.T) {
 	clearDatabase(t)
 
-	testServer.Register(context.Background(), &userserver.RegisterRequest{
+	_, err := testServer.Register(context.Background(), &userserver.RegisterRequest{
 		Email:    "foo@email.com",
 		Password: "password",
 	})
+	if err != nil {
+		t.Fatalf("failed to register test user: %v", err)
+	}
 
 	cases := []struct {
 		request       *userserver.LoginRequest
@@ -227,10 +245,13 @@ func TestSuccessfullAuthorization(t *testing.T) {
 
 	ctx := context.Background()
 
-	testServer.Register(ctx, &userserver.RegisterRequest{
+	_, err := testServer.Register(ctx, &userserver.RegisterRequest{
 		Email:    "foo@email.com",
 		Password: "password",
 	})
+	if err != nil {
+		t.Fatalf("failed to register test user: %v", err)
+	}
 
 	token, _ := testServer.Login(ctx, &userserver.LoginRequest{
 		Email:    "foo@email.com",
