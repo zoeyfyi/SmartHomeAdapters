@@ -20,7 +20,6 @@ before_deploy:
 stages:
   - test
   - name: deploy
-    if: branch = master AND type != pull_request
     provider: releases
     file: smarthomeadapters_android.apk
     skip_cleanup: true
