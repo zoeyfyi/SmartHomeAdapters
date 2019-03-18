@@ -36,9 +36,6 @@ interface RestApiService {
         }
     }
 
-    @POST("register")
-    fun registerUser(@Body user: User): Call<ResponseBody>
-
     @GET("robots")
     fun getRobots(@Header("token") token: String): Call<List<Robot>>
 
