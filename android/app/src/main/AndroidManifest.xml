@@ -35,9 +35,6 @@
             </intent-filter>
         </activity>
         <activity
-                android:name=".RegisterUserActivity"
-                android:theme="@style/AppTheme"/>
-        <activity
                 android:name=".RegisterRobotActivity"
                 android:label="Registration Wizard"
                 android:theme="@style/AppTheme"/>
