@@ -1,103 +1,128 @@
 version: 2
 jobs:
-  # Determines which projects to build with `git diff`
-  # See: https://medium.com/@reuvenharrison/using-circleci-with-monorepos-c04b03f9f39c
-  build:
+  test-services:
     docker:
       - image: circleci/golang:1.9
-    enviroment:
-      ORG: mrbenshef
-      REPO: SmartHomeAdapters
     steps:
       - checkout
       - run:
-          name: Determine which directories have changed 
+          name: Test account-app
+          command: go test
+          working_directory: services/account-app
+      - run:
+          name: Test clientserver
+          command: go test
+          working_directory: services/clientserver
+      - run:
+          name: Test infoserver
+          command: go test
+          working_directory: services/infoserver
+      - run:
+          name: Test robotserver
+          command: go test
+          working_directory: services/robotserver
+      - run:
+          name: Test switchserver
+          command: go test
+          working_directory: services/switchserver
+      - run:
+          name: Test termostatserver
+          command: go test
+          working_directory: services/termostatserver
+      - run:
+          name: Test userserver
+          command: go test
+          working_directory: services/userserver
+
+  lint-services:
+    docker:
+      - image: circleci/golang:1.9
+    steps:
+      - checkout
+      - run: 
+          name: Install golangci-lint
+          command: curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s v1.15.0
+      - run:
+          name: Lint account-app
+          command: golangci-lint run
+          working_directory: services/account-app
+      - run:
+          name: Lint clientserver
+          command: golangci-lint run
+          working_directory: services/clientserver
+      - run:
+          name: Lint infoserver
+          command: golangci-lint run
+          working_directory: services/infoserver
+      - run:
+          name: Lint robotserver
+          command: golangci-lint run
+          working_directory: services/robotserver
+      - run:
+          name: Lint switchserver
+          command: golangci-lint run
+          working_directory: services/switchserver
+      - run:
+          name: Lint termostatserver
+          command: golangci-lint run
+          working_directory: services/termostatserver
+      - run:
+          name: Lint userserver
+          command: golangci-lint run
+          working_directory: services/userserver
+  
+          build-android:
+
+  build-reports:
+    docker:
+      - image: paperist/alpine-texlive-ja
+    steps:
+      - checkout
+      - run:
+          name: Compile demo 1 report
+          working_directory: reports/demo-1
           command: |
-            git diff --no-commit-id --name-only -r `git log -n 2 --oneline --pretty=format:"%h" | tail -n1` | cut -d/ -f1 | sort -u > projects
-            printf "Modified directories:\n"
-            cat projects
-            while read project; do
-              if grep -Fxq $project projects.txt; then
-                printf "\nTriggerring build for dir: "$dir
-                curl -s -u ${CIRCLE_TOKEN}: \
-                  -d build_parameters[CIRCLE_JOB]=${project} \                
-                  https://circleci.com/api/v1.1/project/github/$ORG/$REPO/tree/$CIRCLE_BRANCH
-              fi
-            done <projects
-            
-  android:
+            latexmk document.tex
+      - run:
+          name: Compile demo 2 report
+          working_directory: reports/demo-2
+          command: |
+            latexmk document.tex
+      - run:
+          name: Compile demo 3 report
+          working_directory: reports/demo-3
+          command: |
+            latexmk document.tex
+      - run:
+          name: Compile project-plan report
+          working_directory: reports/project-plan
+          command: |
+            latexmk document.tex
+      - run:
+          name: Compile technical-report report
+          working_directory: reports/technical-report
+          command: |
+            latexmk document.tex
+      - run:
+          name: Compile user-guide report
+          working_directory: reports/user-guide
+          command: |
+            latexmk document.tex
+
+  test-android:
     docker:
       - image: circleci/android:api-25-alpha
     steps:
       - checkout
-      - restore_cache:
-          key: jars-{{ checksum "build.gradle" }}-{{ checksum  "app/build.gradle" }}
       - run:
           name: Run Tests
-          command: ./gradlew lint test
-
-  reports/demo-1:
+          command: ./gradlew test
+  
+  lint-android:
     docker:
-      - image: paperist/alpine-texlive-ja
+      - image: circleci/android:api-25-alpha
     steps:
       - checkout
       - run:
-          name: Compile document
-          working_directory: reports/demo-1
-          command: |
-            latexmk document.tex
-
-  reports/demo-2:
-    docker:
-      - image: paperist/alpine-texlive-ja
-    steps:
-      - checkout
-      - run:
-          name: Compile document
-          working_directory: reports/demo-2
-          command: |
-            latexmk document.tex
-
-  reports/demo-3:
-    docker:
-      - image: paperist/alpine-texlive-ja
-    steps:
-      - checkout
-      - run:
-          name: Compile document
-          working_directory: reports/demo-3
-          command: |
-            latexmk document.tex
-
-  reports/project-plan:
-    docker:
-      - image: paperist/alpine-texlive-ja
-    steps:
-      - checkout
-      - run:
-          name: Compile document
-          working_directory: reports/project-plan
-          command: |
-            latexmk document.tex
-
-  reports/technical-report:
-    docker:
-      - image: paperist/alpine-texlive-ja
-    steps:
-      - checkout
-      - run:
-          name: Compile document
-          working_directory: reports/technical-report
-          command: |
-            latexmk document.tex
-
-  reports/user-guide:
-    docker:
-      - image: paperist/alpine-texlive-ja
-    steps:
-      - checkout
-      - run:
-          name: Compile document
-          working_directory: reports/user-guide
-          command: |
-            latexmk document.tex
+          name: Run Lint
+          command: ./gradlew lint
