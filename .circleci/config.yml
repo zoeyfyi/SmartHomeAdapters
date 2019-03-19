@@ -24,6 +24,7 @@ jobs:
                   https://circleci.com/api/v1.1/project/github/$ORG/$REPO/tree/$CIRCLE_BRANCH
               fi
             done <projects
+
             
   android:
     docker:
