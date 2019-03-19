@@ -1,4 +1,19 @@
 version: 2
+
+workflows:
+  version: 2
+  main:
+    jobs:
+      - test-services
+      - lint-services:
+          requires:
+            - test-services
+      - build-reports
+      - test-android
+      - lint-android:
+          requires:
+            - test-android
+
 jobs:
   test-services:
     docker:
