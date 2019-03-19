@@ -126,7 +126,7 @@ jobs:
 
   test-android:
     docker:
-      - image: circleci/android:api-25-alpha
+      - image: circleci/android:api-28-alpha
     steps:
       - checkout
       - run:
