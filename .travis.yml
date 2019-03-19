@@ -20,24 +20,22 @@ android:
     - android-28
     - extra
 
-script:
-  - cd android
-  - ./gradlew assembleRelease
-
 before_install:
-  # accept build-tools 28.0.3 license
-  - yes | sdkmanager "build-tools;28.0.3"
-  # decrypt the encrypted keystore
-  - openssl aes-256-cbc -K $encrypted_71c5c0872413_key -iv $encrypted_71c5c0872413_iv -in keystore.jks.enc -out keystore.jks -d
   # disable services enabled by default
   - sudo /etc/init.d/mysql stop
   - sudo /etc/init.d/postgresql stop
   # login so we can push to dockerhub
   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+  # accept build-tools 28.0.3 license
+  - yes | sdkmanager "build-tools;28.0.3"
+  # decrypt the encrypted keystore
+  - openssl aes-256-cbc -K $encrypted_71c5c0872413_key -iv $encrypted_71c5c0872413_iv -in keystore.jks.enc -out keystore.jks -d
 
 before_deploy:
+  # build the apk
+  - cd android
+  - ./gradlew assembleRelease
   # sign the apk
-  - find . -name '*.apk'
   - cp $TRAVIS_BUILD_DIR/keystore.jks $HOME
   - cd app/build/outputs/apk/release
   - jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore $HOME/keystore.jks -storepass $storepass -keypass $keypass app-release-unsigned.apk release-key
@@ -59,7 +57,7 @@ jobs:
       script: eval "$(gimme 1.11)" && make ci
     - stage: deploy
       script: make docker && make docker-push
-      deploy: &releases
+      deploy:
         provider: releases
         file: smarthomeadapters_android.apk
         skip_cleanup: true
