@@ -1,0 +1,103 @@
+version: 2
+jobs:
+  # Determines which projects to build with `git diff`
+  # See: https://medium.com/@reuvenharrison/using-circleci-with-monorepos-c04b03f9f39c
+  build:
+    docker:
+      - image: circleci/golang:1.9
+    enviroment:
+      ORG: mrbenshef
+      REPO: SmartHomeAdapters
+    steps:
+      - checkout
+      - run:
+          name: Determine which directories have changed 
+          command: |
+            git diff --no-commit-id --name-only -r `git log -n 2 --oneline --pretty=format:"%h" | tail -n1` | cut -d/ -f1 | sort -u > projects
+            printf "Modified directories:\n"
+            cat projects
+            while read project; do
+              if grep -Fxq $project projects.txt; then
+                printf "\nTriggerring build for dir: "$dir
+                curl -s -u ${CIRCLE_TOKEN}: \
+                  -d build_parameters[CIRCLE_JOB]=${project} \                
+                  https://circleci.com/api/v1.1/project/github/$ORG/$REPO/tree/$CIRCLE_BRANCH
+              fi
+            done <projects
+            
+  android:
+    docker:
+      - image: circleci/android:api-25-alpha
+    steps:
+      - checkout
+      - restore_cache:
+          key: jars-{{ checksum "build.gradle" }}-{{ checksum  "app/build.gradle" }}
+      - run:
+          name: Run Tests
+          command: ./gradlew lint test
+
+  reports/demo-1:
+    docker:
+      - image: paperist/alpine-texlive-ja
+    steps:
+      - checkout
+      - run:
+          name: Compile document
+          working_directory: reports/demo-1
+          command: |
+            latexmk document.tex
+
+  reports/demo-2:
+    docker:
+      - image: paperist/alpine-texlive-ja
+    steps:
+      - checkout
+      - run:
+          name: Compile document
+          working_directory: reports/demo-2
+          command: |
+            latexmk document.tex
+
+  reports/demo-3:
+    docker:
+      - image: paperist/alpine-texlive-ja
+    steps:
+      - checkout
+      - run:
+          name: Compile document
+          working_directory: reports/demo-3
+          command: |
+            latexmk document.tex
+
+  reports/project-plan:
+    docker:
+      - image: paperist/alpine-texlive-ja
+    steps:
+      - checkout
+      - run:
+          name: Compile document
+          working_directory: reports/project-plan
+          command: |
+            latexmk document.tex
+
+  reports/technical-report:
+    docker:
+      - image: paperist/alpine-texlive-ja
+    steps:
+      - checkout
+      - run:
+          name: Compile document
+          working_directory: reports/technical-report
+          command: |
+            latexmk document.tex
+
+  reports/user-guide:
+    docker:
+      - image: paperist/alpine-texlive-ja
+    steps:
+      - checkout
+      - run:
+          name: Compile document
+          working_directory: reports/user-guide
+          command: |
+            latexmk document.tex
