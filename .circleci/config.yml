@@ -131,6 +131,7 @@ jobs:
       - checkout
       - run:
           name: Run Tests
+          working_directory: android
           command: ./gradlew test
   
   lint-android:
@@ -140,4 +141,5 @@ jobs:
       - checkout
       - run:
           name: Run Lint
+          working_directory: android
           command: ./gradlew lint
