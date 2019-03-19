@@ -21,9 +21,6 @@ android:
     - extra
 
 before_install:
-  # disable services enabled by default
-  - sudo /etc/init.d/mysql stop
-  - sudo /etc/init.d/postgresql stop
   # login so we can push to dockerhub
   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
   # accept build-tools 28.0.3 license
@@ -42,7 +39,6 @@ before_deploy:
   # verify and zip-align the signed apk
   - jarsigner -verify app-release-unsigned.apk
   - "${ANDROID_HOME}build-tools/28.0.0/zipalign -v 4 app-release-unsigned.apk smarthomeadapters_android.apk"
-
 
 stages:
   - test
