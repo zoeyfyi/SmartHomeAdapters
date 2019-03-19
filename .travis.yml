@@ -21,7 +21,8 @@ android:
     - extra
 
 script:
-  - android/gradlew build
+  - cd android
+  - ./gradlew assembleRelease
 
 before_install:
   # decrypt the encrypted keystore
