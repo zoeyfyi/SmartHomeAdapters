@@ -25,9 +25,15 @@ script:
   - ./gradlew assembleRelease
 
 before_install:
-  # decrypt the encrypted keystore
+  # accept build-tools 28.0.3 license
   - yes | sdkmanager "build-tools;28.0.3"
+  # decrypt the encrypted keystore
   - openssl aes-256-cbc -K $encrypted_71c5c0872413_key -iv $encrypted_71c5c0872413_iv -in keystore.jks.enc -out keystore.jks -d
+  # disable services enabled by default
+  - sudo /etc/init.d/mysql stop
+  - sudo /etc/init.d/postgresql stop
+  # login so we can push to dockerhub
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
 
 before_deploy:
   # sign the apk
@@ -39,14 +45,30 @@ before_deploy:
   - jarsigner -verify app-release-unsigned.apk
   - "${ANDROID_HOME}build-tools/28.0.0/zipalign -v 4 app-release-unsigned.apk smarthomeadapters_android.apk"
 
-deploy:
-  provider: releases
-  file: smarthomeadapters_android.apk
-  skip_cleanup: true
-  on:
-    tags: true
-  api_key:
-    secure: "ZkA1kMFHlSseEPFww9HoiZAzpBjjl772rPInd5iGluIm401Smt8UKQbbjRowmRVkdbCIT4r6OkT65rc6u9sAR9OsQgoewdRLmKHYMDM0sIjHr0P10NFMwjFAsnVGJ05LI5ws4CTdPLphO7ex3WsuUnGAr4vevWoHxn7M8WcAWxEFZSoiES8zfaNZSG2cygeIM+R8RlUW5IlKG0AlJDgcxAlr0QcQ1HLo6NZtKQC6UjJF9HEGAAQ3X7lQd1nT1H23ipw2X85vaQtH9eNf052X4R3rR1sweN2bljybNAKpH0fRwibmjF1BJMLLPIByXqqCLW97gRy47ywj5AfPKQVfaPxmAFGEI/tiUfy0A5br+CR0Uss6sK64IJvnBh2bP+N3lovGfW10nuf08HqLPbyULE4GSx3HindBz0Fj1aQFrj8JBZg5Bzd1STHhhGENkkq4AighyJMO2aWJwwpiOtn7YLNh7u3Og9G+sk29No2h3LH9+Ji+ZtcIxWHYTy9ku2ASR0Kc7/L3MLHI82X4CidlFaNgs3lxNYWuSujH+herq7w6D1RFzHek+HBiSMW3LoZBlEXH+bBQVWpJu5JupDkTQ13rBGRCLrSg6mv2YcWOiaBLxn4LR750sIGXxmo59Jkybr5aCns5czkytU9B8GZq3Dwv9XDUKzWBTqyjHQrvxJo="
+
+stages:
+  - test
+  - name: deploy
+    if: branch = master AND type != pull_request
+  - name: deploy-test
+    if: branch = webserver
+
+jobs:
+  include:
+    - stage: test
+      script: eval "$(gimme 1.11)" && make ci
+    - stage: deploy
+      script: make docker && make docker-push
+      deploy: &releases
+        provider: releases
+        file: smarthomeadapters_android.apk
+        skip_cleanup: true
+        on:
+          tags: true
+        api_key:
+          secure: "ZkA1kMFHlSseEPFww9HoiZAzpBjjl772rPInd5iGluIm401Smt8UKQbbjRowmRVkdbCIT4r6OkT65rc6u9sAR9OsQgoewdRLmKHYMDM0sIjHr0P10NFMwjFAsnVGJ05LI5ws4CTdPLphO7ex3WsuUnGAr4vevWoHxn7M8WcAWxEFZSoiES8zfaNZSG2cygeIM+R8RlUW5IlKG0AlJDgcxAlr0QcQ1HLo6NZtKQC6UjJF9HEGAAQ3X7lQd1nT1H23ipw2X85vaQtH9eNf052X4R3rR1sweN2bljybNAKpH0fRwibmjF1BJMLLPIByXqqCLW97gRy47ywj5AfPKQVfaPxmAFGEI/tiUfy0A5br+CR0Uss6sK64IJvnBh2bP+N3lovGfW10nuf08HqLPbyULE4GSx3HindBz0Fj1aQFrj8JBZg5Bzd1STHhhGENkkq4AighyJMO2aWJwwpiOtn7YLNh7u3Og9G+sk29No2h3LH9+Ji+ZtcIxWHYTy9ku2ASR0Kc7/L3MLHI82X4CidlFaNgs3lxNYWuSujH+herq7w6D1RFzHek+HBiSMW3LoZBlEXH+bBQVWpJu5JupDkTQ13rBGRCLrSg6mv2YcWOiaBLxn4LR750sIGXxmo59Jkybr5aCns5czkytU9B8GZq3Dwv9XDUKzWBTqyjHQrvxJo="
+    - stage: deploy-test
+      script: make docker && make docker-push-test
 
 env:
   global:
