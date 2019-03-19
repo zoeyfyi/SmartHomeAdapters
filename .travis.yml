@@ -21,7 +21,7 @@ android:
     - extra
 
 script:
-  - android/gradlew clean build
+  - android/gradlew build
 
 before_install:
   # decrypt the encrypted keystore
