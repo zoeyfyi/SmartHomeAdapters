@@ -17,31 +17,18 @@ before_deploy:
   - jarsigner -verify app-release-unsigned.apk
   - "${ANDROID_HOME}/build-tools/24.0.2/zipalign -v 4 app-release-unsigned.apk smarthomeadapters_android.apk"
 
-stages:
-  - test
-  - name: deploy
-    provider: releases
-    file: smarthomeadapters_android.apk
-    skip_cleanup: true
-    on:
-      repo: mrbenshef/SmartHomeAdapters
-      tags: true
-      jdk: oraclejdk8
-    api_key: apikey
-  - name: deploy-test
-    if: head_branch = webserver
-
-jobs:
-  include:
-    - stage: test
-      script: eval "$(gimme 1.11)" && make ci
-    - stage: deploy
-      script: make docker && make docker-push
-    - stage: deploy-test
-      script: make docker && make docker-push-test
+deploy:
+  provider: releases
+  file: smarthomeadapters_android.apk
+  skip_cleanup: true
+  on:
+    repo: mrbenshef/SmartHomeAdapters
+    tags: true
+    jdk: oraclejdk8
+  api_key:
+    secure: "ZkA1kMFHlSseEPFww9HoiZAzpBjjl772rPInd5iGluIm401Smt8UKQbbjRowmRVkdbCIT4r6OkT65rc6u9sAR9OsQgoewdRLmKHYMDM0sIjHr0P10NFMwjFAsnVGJ05LI5ws4CTdPLphO7ex3WsuUnGAr4vevWoHxn7M8WcAWxEFZSoiES8zfaNZSG2cygeIM+R8RlUW5IlKG0AlJDgcxAlr0QcQ1HLo6NZtKQC6UjJF9HEGAAQ3X7lQd1nT1H23ipw2X85vaQtH9eNf052X4R3rR1sweN2bljybNAKpH0fRwibmjF1BJMLLPIByXqqCLW97gRy47ywj5AfPKQVfaPxmAFGEI/tiUfy0A5br+CR0Uss6sK64IJvnBh2bP+N3lovGfW10nuf08HqLPbyULE4GSx3HindBz0Fj1aQFrj8JBZg5Bzd1STHhhGENkkq4AighyJMO2aWJwwpiOtn7YLNh7u3Og9G+sk29No2h3LH9+Ji+ZtcIxWHYTy9ku2ASR0Kc7/L3MLHI82X4CidlFaNgs3lxNYWuSujH+herq7w6D1RFzHek+HBiSMW3LoZBlEXH+bBQVWpJu5JupDkTQ13rBGRCLrSg6mv2YcWOiaBLxn4LR750sIGXxmo59Jkybr5aCns5czkytU9B8GZq3Dwv9XDUKzWBTqyjHQrvxJo="
 
 env:
   global:
   - secure: rBzM32s6LkYGkDZIL+tC3lmRaXt7ae5nI2+S4OwDg8RvkFychkwloTagzY9ihQH/nAzOVHcr0IsNclHZL5m+Nyv531pTncqjqRmvbVr2fEkZnp5qZPHe80TV0JS/4acf1KStrNMi7xeHhBXito8x392R5KZz132YNoWQ/0++4gVZA8IiAfwoGQ/40pOd/Hp7tl+qqXAgSUyFaiAIvEtkZbwulebSFofHRIvijnG4SkmUpAept33I3RxB8WZQUXWLyW017W+yhXt1wOf1pF8fAvXkM1tk3e9Eb/VdRQwftsSVO5i6uBHfcYlX4rtX8T2ZbdqzT6IEN8eFf022GFugMKvwhD2iIGuvpeA4DLnb5CszQlejKFd57x2/naZ+nGf5tbVmelkw1001nbGpmweF2VpHOpotkNGZNpUPrhDGO0Fe7EObezlwMY32Yf2nmCApSIRMZyLqsuIhebTAsa8w2efGzShGs1EA7a3nKzHHsmet6ROFQtS3wzwqhXLBCUfrId/EDMtCqHIfOskVcf7mGTbXTAEV2VePDN9U881tP/ccNasHQX1W0o33lWBKR7tiJaeDTJ7GOeWsbJJbK0yh8JT8a37BzU4VQcHkVryjyBLKjpbmWoDyoYOhO2U+i9upYFsD2fMGLG8PuJQ7OAAlz1aNuuiUJXvCxtIL0aLeyHg=
   - secure: x/qvWPaUZLSpzVIKEyUhxuLanWWLQDqFPQzwBD4EmBFBEnYRdFyRcr8f5i3ucKi3OXxR03s+FIsH43I+YmHNZ14jq8C53Rc5UC9YKcGUD2sjywQHBIf6ZupETXx5H3sko2OUuamW5l0A3BsR8yP83zwuS+tWIbtCmhnRvIg7s/N03rbq2Qyulu35hcExzAzEazls7wlfqFKITFqQwmowj/9KVLxp5FdDOAoYZc/omJITH0eVkIMa1DGy04xfMu1Yl18bah5Bx7ce2Uj5Ws9yV4nRkakbtiAxmQ5/v9TSPGmfa1ak1V+v1dZZWjbZVlv0XCGg0I3olSzMbZ0yBiYwP3nsl7VsSN59KY0zw9wbk72TmAReuoVeCTAOHDMbOI9vRKjhSu51qaofuqWrdKhwh6eh8RanDheHZEUF5fGIz+PMfhbHRUlBQ3rksARuwcXeE8A6E56B37raZqKBUn3YpP9cLveDCKe6aKvCrvvqh4gyad5eA9w1BRM4dGVVUvCjIm9DsuOFAkyv2/JWebUIDCZxT950q6ODK+q8fbCLoXsX5RvNhxUslyldqINgJsKKz8YGeasiqrEVAKyndrbFlT2M2PwsD1uEcWk3OR7QVHP2tyJZQCCxhYw5LL3WoG0BsJfR8oBji3nHSO5oxUIOyHtMEaLfuI4Fa3STUhtnSzM=
-    secure: Dcnm+Qia+IZ/P8+x876qVK9RoXUrxbPqwCCcqGWDY7w2NOPvcw0h8F+M1w8MMhOL+vkteEKIFRKWf5luBi3zN90OsHg8YudbOyisjw2c6Xr9LxOhB+tTgZjyLaGv3RfPkX1bJ/hRrODzqhmZULorrsiQTyc4HAyNf/EtEcxv6h3DjTTiPkpVBo8iy2x0CKIBaht7GkFFv4HkPraBPmXKQTprvvB0v13hnsKdBMkgwtXi8ZS3gmGlUehibkbM2mn0yyB6eOMcuSvvc0Ov6brHOMGOiJmqC8KQJDSNh8UV+3k6TXCI/o2hcFl7NCfN8NumEQsyeghOGpTzK2dW9PyrXbakMhLyPl7xof6sflhS8Qnc64EQrSs9cREmVuE4VZ85ur8Ec89H1Dw1C9p6tiOOEVu8AVMKb7dp4rGnY4qrTOkc4yIisLpTrF6TiKkByj3AzKiNA86Chti0WlmyNy53KH7nfS/on0QvLnddLF/c6AoTDKrrgx95rZzS8VVfv6KjsqOi0Aq8o/GSuWuR+fusB1HvHmW9a5/fyxO/IJ/jViBBnPqggY1LL2cN1cGhiq2nK7Vr3erLgvjKtYBgP3x6s/BQ1dH/6NiYzRXPlGFMCXQZKRtISy3hqUmeZ/4ZpJV2rLl+xIBTDxMT3t2DXPb4yeRGfLHPKNxjqfBHoG3rGGU=
