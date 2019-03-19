@@ -18,6 +18,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - portainer_data:/data
   userdb:
+    image: smarthomeadapters/userdb
     build:
       context: ./services/userdb
     restart: always
@@ -26,6 +27,7 @@ services:
     volumes:
       - userdb_data:/var/lib/postgresql/data
   userserver:
+    image: smarthomeadapters/userserver
     build:
       context: ./services/userserver
     depends_on:
@@ -39,12 +41,14 @@ services:
       - DB_DATABASE=postgres
       - DB_URL=userdb
   clientserver:
+    image: smarthomeadapters/clientserver
     build:
       context: ./services/clientserver
     restart: always
     ports:
       - 80:80
   infodb:
+    image: smarthomeadapters/infodb
     build: 
       context: ./services/infodb
     restart: always
@@ -53,6 +57,7 @@ services:
     volumes:
       - infodb_data:/var/lib/postgresql/data
   infoserver:
+    image: smarthomeadapters/infoserver
     build:
       context: ./services/infoserver
     depends_on:
@@ -66,6 +71,7 @@ services:
       - DB_DATABASE=postgres
       - DB_URL=infodb
   switchdb:
+    image: smarthomeadapters/switchdb
     build: 
       context: ./services/switchdb
     restart: always
@@ -74,6 +80,7 @@ services:
     volumes:
       - switchdb_data:/var/lib/postgresql/data
   switchserver:
+    image: smarthomeadapters/switchserver
     build:
       context: ./services/switchserver
     depends_on:
@@ -87,6 +94,7 @@ services:
       - DB_DATABASE=postgres
       - DB_URL=switchdb
   thermodb:
+    image: smarthomeadapters/thermodb
     build:
       context: ./services/thermodb
     restart: always
@@ -95,6 +103,7 @@ services:
     volumes:
       - thermodb_data:/var/lib/postgresql/data
   thermostatserver:
+    image: smarthomeadapters/thermostatserver
     build:
       context: ./services/infoserver
     depends_on:
@@ -108,12 +117,14 @@ services:
       - DB_DATABASE=postgres
       - DB_URL=thermodb
   robotserver:
+    image: smarthomeadapters/robotserver
     build:
       context: ./services/robotserver
     restart: always
     ports:
       - 8083:80
   account-app:
+    image: smarthomeadapters/account-app
     build:
       context: ./services/account-app
     restart: always

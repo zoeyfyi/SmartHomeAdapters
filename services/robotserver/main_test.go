@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mrbenshef/SmartHomeAdapters/robotserver/robotserver"
+	"github.com/mrbenshef/SmartHomeAdapters/microservice/robotserver"
 
 	"github.com/gorilla/websocket"
 	"google.golang.org/grpc"

@@ -8,7 +8,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/mrbenshef/SmartHomeAdapters/userserver/userserver"
+	"github.com/mrbenshef/SmartHomeAdapters/microservice/userserver"
 	"github.com/ory/dockertest"
 )
 

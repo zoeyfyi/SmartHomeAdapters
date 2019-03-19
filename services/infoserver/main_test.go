@@ -21,8 +21,8 @@ import (
 
 	"github.com/golang/protobuf/ptypes/empty"
 	_ "github.com/lib/pq"
-	"github.com/mrbenshef/SmartHomeAdapters/infoserver/infoserver"
-	"github.com/mrbenshef/SmartHomeAdapters/switchserver/switchserver"
+	"github.com/mrbenshef/SmartHomeAdapters/microservice/infoserver"
+	"github.com/mrbenshef/SmartHomeAdapters/microservice/switchserver"
 	"google.golang.org/grpc"
 )
 

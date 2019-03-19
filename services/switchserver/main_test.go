@@ -16,7 +16,7 @@ import (
 	"google.golang.org/grpc/test/bufconn"
 
 	_ "github.com/lib/pq"
-	"github.com/mrbenshef/SmartHomeAdapters/switchserver/switchserver"
+	"github.com/mrbenshef/SmartHomeAdapters/microservice/switchserver"
 	"google.golang.org/grpc"
 )
 

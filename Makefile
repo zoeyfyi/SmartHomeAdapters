@@ -20,80 +20,15 @@ check: check-docker-deps check-go-deps check-arduino-deps
 # BUILD
 #
 
-build-clientserver: check-go-deps
-	@(cd clientserver && go generate)
-	@(cd clientserver && go build -o ../build/clientserver)
-
-build-infoserver: check-go-deps
-	@(cd infoserver && go generate)
-	@(cd infoserver && go build -o ../build/infoserver)
-
-build-robotserver: check-go-deps
-	@(cd robotserver && go generate)
-	@(cd robotserver && go build -o ../build/robotserver)
-
-build-switchserver: check-go-deps
-	@(cd switchserver && go generate)
-	@(cd switchserver && go build -o ../build/switchserver)
-
-build-userserver: check-go-deps
-	@(cd userserver && go generate)
-	@(cd userserver && go build -o ../build/userserver)
-
-build-thermostatserver: check-go-deps
-	@(cd thermostatserver && go generate)
-	@(cd thermostatserver && go build -o ../build/thermostatserver)
-
-build-account-app: check-go-deps
-	@(cd account-app && go generate)
-	@(cd account-app && go build -o ../build/account-app)
-
 build-android:
 	@(cd android && ./gradlew assembleDebug)
-	@cp android/app/build/outputs/apk/debug/app-debug.apk build/app-debug.apk
-
-build: build-clientserver build-infoserver build-robotserver build-switchserver build-userserver build-thermostatserver build-android build-account-app
 
 #
 # DOCKER
 #
 
-docker-clientserver:
-	@docker build -f go.Dockerfile -t smarthomeadapters/clientserver . --build-arg SERVICE=clientserver
 
-docker-infodb:
-	@(cd infodb && docker build -t smarthomeadapters/infodb .)
-
-docker-infoserver:
-	@docker build -f go.Dockerfile -t smarthomeadapters/infoserver . --build-arg SERVICE=infoserver
-
-docker-robotserver:
-	@docker build -f go.Dockerfile -t smarthomeadapters/robotserver . --build-arg SERVICE=robotserver
-
-docker-switchdb:
-	@(cd switchdb && docker build -t smarthomeadapters/switchdb .)
-
-docker-switchserver:
-	@docker build -f go.Dockerfile -t smarthomeadapters/switchserver . --build-arg SERVICE=switchserver
-
-docker-userdb:
-	@(cd userdb && docker build -t smarthomeadapters/userdb .)
-
-docker-userserver:
-	@docker build -f go.Dockerfile -t smarthomeadapters/userserver . --build-arg SERVICE=userserver
-
-docker-thermostatserver:
-	@docker build -f go.Dockerfile -t smarthomeadapters/thermostatserver . --build-arg SERVICE=thermostatserver
-
-docker-account-app:
-	@(docker build -f go.Dockerfile -t smarthomeadapters/account-app . --build-arg SERVICE=account-app)
-
-docker-thermodb:
-	@(cd thermodb && docker build -t smarthomeadapters/thermodb .)
-
-docker: docker-clientserver docker-infoserver docker-robotserver docker-switchserver docker-userserver docker-thermostatserver docker-infodb docker-switchdb docker-userdb docker-thermodb docker-account-app
-
-docker-dbs: docker-infodb docker-switchdb docker-userdb docker-thermodb
+docker: docker-compose build
 
 docker-push:
 	@docker tag smarthomeadapters/clientserver smarthomeadapters/clientserver:latest
@@ -142,33 +77,11 @@ docker-push-test:
 	@docker push smarthomeadapters/account-app:test
 
 #
-# CLEAN
-#
-
-clean:
-	@rm -rf build/*
-
-#
 # LINT
 #
 
-lint-clientserver:
-	@(cd clientserver && gometalinter --disable=gocyclo --enable=gofmt ./...)
-
-lint-infoserver:
-	@(cd infoserver && gometalinter --disable=gocyclo --enable=gofmt ./...)
-
-lint-robotserver:
-	@(cd robotserver && gometalinter --disable=gocyclo --enable=gofmt ./...)
-
-lint-switchserver:
-	@(cd switchserver && gometalinter --disable=gocyclo --enable=gofmt ./...)
-
-lint-userserver:
-	@(cd userserver && gometalinter --disable=gocyclo --enable=gofmt ./...)
-
-lint-thermostatserver:
-	@(cd thermostatserver && gometalinter --disable=gocyclo --enable=gofmt ./...)
+lint-services:
+	@for d in services/*/ ; do (cd "$d" && test -f go.mod && golangci-lint run); done
 
 lint-android:
 	@(cd android && ./gradlew lint)
@@ -176,34 +89,17 @@ lint-android:
 lint-docker-compose:
 	docker-compose config
 
-lint: lint-clientserver lint-infoserver lint-robotserver lint-switchserver lint-userserver lint-thermostatserver lint-android lint-docker-compose
+lint: lint-services lint-android lint-docker-compose
 
 #
 # TEST
 #
 
-test-clientserver:
-	@(cd clientserver && go test)
-
-test-infoserver:
-	@(cd infoserver && go test)
-
-test-robotserver:
-	@(cd robotserver && go test)
-
-test-switchserver:
-	@(cd switchserver && go test)
-
-test-userserver:
-	@(cd userserver && go test)
-
-test-thermostatserver:
-	@(cd thermostatserver && go test)
-
 test-android:
 	@(cd android && ./gradlew test)
 
-test-services: test-clientserver test-infoserver test-robotserver test-switchserver test-userserver test-thermostatserver
+test-services:
+	@for d in services/*/ ; do (cd "$d" && test -f go.mod && go test); done
 
 test: test-services test-android
 
