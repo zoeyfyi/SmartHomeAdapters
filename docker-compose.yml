@@ -19,18 +19,15 @@ services:
       - portainer_data:/data
   userdb:
     build:
-      context: ./userdb
+      context: ./services/userdb
     restart: always
     environment:
       - POSTGRES_PASSWORD=password
     volumes:
       - userdb_data:/var/lib/postgresql/data
   userserver:
-    build: 
-      context: .
-      dockerfile: go.Dockerfile
-      args:
-        SERVICE: userserver
+    build:
+      context: ./services/userserver
     depends_on:
       - userdb
     restart: always
@@ -42,28 +39,22 @@ services:
       - DB_DATABASE=postgres
       - DB_URL=userdb
   clientserver:
-    build: 
-      context: .
-      dockerfile: go.Dockerfile
-      args:
-        SERVICE: clientserver
+    build:
+      context: ./services/clientserver
     restart: always
     ports:
       - 80:80
   infodb:
     build: 
-      context: ./infodb
+      context: ./services/infodb
     restart: always
     environment:
       - POSTGRES_PASSWORD=password
     volumes:
       - infodb_data:/var/lib/postgresql/data
   infoserver:
-    build: 
-      context: .
-      dockerfile: go.Dockerfile
-      args:
-        SERVICE: infoserver
+    build:
+      context: ./services/infoserver
     depends_on:
       - infodb
     restart: always
@@ -76,18 +67,15 @@ services:
       - DB_URL=infodb
   switchdb:
     build: 
-      context: ./switchdb
+      context: ./services/switchdb
     restart: always
     environment:
       - POSTGRES_PASSWORD=password
     volumes:
       - switchdb_data:/var/lib/postgresql/data
   switchserver:
-    build: 
-      context: .
-      dockerfile: go.Dockerfile
-      args:
-        SERVICE: switchserver
+    build:
+      context: ./services/switchserver
     depends_on:
       - switchdb
     restart: always
@@ -99,19 +87,16 @@ services:
       - DB_DATABASE=postgres
       - DB_URL=switchdb
   thermodb:
-    build: 
-      context: ./thermodb
+    build:
+      context: ./services/thermodb
     restart: always
     environment:
       - POSTGRES_PASSWORD=password
     volumes:
       - thermodb_data:/var/lib/postgresql/data
   thermostatserver:
-    build: 
-      context: .
-      dockerfile: go.Dockerfile
-      args:
-        SERVICE: infoserver
+    build:
+      context: ./services/infoserver
     depends_on:
       - thermodb
     restart: always
@@ -123,20 +108,14 @@ services:
       - DB_DATABASE=postgres
       - DB_URL=thermodb
   robotserver:
-    build: 
-      context: .
-      dockerfile: go.Dockerfile
-      args:
-        SERVICE: robotserver
+    build:
+      context: ./services/robotserver
     restart: always
     ports:
       - 8083:80
   account-app:
-    build: 
-      context: .
-      dockerfile: go.Dockerfile
-      args:
-        SERVICE: account-app
+    build:
+      context: ./services/account-app
     restart: always
     ports:
       - 4001:80
