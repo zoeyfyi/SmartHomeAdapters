@@ -10,7 +10,7 @@ before_install:
 
 before_deploy:
   # sign the apk
-  - cp $TRAVIS_BUILD_DIR/.keystore $HOME
+  - cp $TRAVIS_BUILD_DIR/keystore.jks $HOME
   - cd app/build/outputs/apk
   - jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore $HOME/keystore.jks -storepass $storepass -keypass $keypass app-release-unsigned.apk release-key
   # verify and zip-align the signed apk
