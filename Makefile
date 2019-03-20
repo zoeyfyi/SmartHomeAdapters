@@ -28,7 +28,8 @@ build-android:
 #
 
 
-docker: 
+docker:
+	@(cd services/microservice && docker build -t smarthomeadapters/microservice .)
 	@docker-compose build
 
 docker-push:
