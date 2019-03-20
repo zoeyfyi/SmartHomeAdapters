@@ -27,7 +27,7 @@ jobs:
       - checkout
       - run:
           name: Setup test database
-          command: sudo apt-get update && sudo apt-get install postgresql && psql < services/db/init.sql
+          command: sudo apt-get update && sudo apt-get install postgresql && psql -h localhost -p 5432 < services/db/init.sql
       - run:
           name: Test account-app
           command: go test
