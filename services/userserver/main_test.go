@@ -2,14 +2,12 @@ package main
 
 import (
 	"context"
-	"database/sql"
-	"fmt"
 	"log"
 	"os"
 	"testing"
 
+	"github.com/mrbenshef/SmartHomeAdapters/microservice"
 	"github.com/mrbenshef/SmartHomeAdapters/microservice/userserver"
-	"github.com/ory/dockertest"
 )
 
 var testServer *server
@@ -17,7 +15,7 @@ var testServer *server
 func clearDatabase(t *testing.T) {
 	_, err := testServer.DB.Exec("DELETE FROM users")
 	if err != nil {
-		t.Errorf("Error clearing database: %v", err)
+		t.Fatalf("Error clearing database: %v", err)
 	}
 }
 
