@@ -28,7 +28,8 @@ build-android:
 #
 
 
-docker: docker-compose build
+docker: 
+	@docker-compose build
 
 docker-push:
 	@docker tag smarthomeadapters/clientserver smarthomeadapters/clientserver:latest
