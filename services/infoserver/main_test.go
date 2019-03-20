@@ -55,7 +55,7 @@ func (c mockSwitchClient) CalibrateSwitch(_ context.Context, _ *switchserver.Swi
 }
 
 func TestMain(m *testing.M) {
-	usernaem := os.Getenv("DB_USERNAME")
+	username := os.Getenv("DB_USERNAME")
 	if username != "temp" {
 		log.Fatalf("Database username must be \"temp\", data will be wiped!")
 	}

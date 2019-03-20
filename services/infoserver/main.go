@@ -382,7 +382,7 @@ func main() {
 	defer db.Close()
 
 	// test database
-	err := db.Ping()
+	err = db.Ping()
 	if err != nil {
 		log.Fatalf("Failed to ping postgres: %v", err)
 	}
