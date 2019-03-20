@@ -2,6 +2,9 @@
 -- robots
 -- 
 
+CREATE DATABASE robotdb;
+USE robotdb;
+
 CREATE TABLE robots (
     serial text not null unique,
     nickname text,
@@ -15,6 +18,9 @@ INSERT INTO robots (serial, nickname, robotType, registeredUserId) VALUES ('qwer
 -- 
 -- switches
 -- 
+
+CREATE DATABASE switchdb;
+USE switchdb;
 
 CREATE TABLE switches (
     -- ID of the robot
@@ -34,6 +40,9 @@ INSERT INTO switches (serial, isOn, onAngle, offAngle, restAngle, isCalibrated) 
 -- 
 -- thermostats
 -- 
+
+CREATE DATABASE thermodb;
+USE thermodb;
 
 CREATE TABLE thermostats (
     -- ID of the robot
@@ -55,6 +64,9 @@ INSERT INTO thermostats (serial, tempreture, minAngle, maxAngle, minTempreture, 
 -- 
 -- users
 -- 
+
+CREATE DATABASE userdb;
+USE userdb;
 
 CREATE TABLE users (
     id serial,
