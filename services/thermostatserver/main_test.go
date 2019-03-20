@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/mrbenshef/SmartHomeAdapters/microservice"
 	"github.com/mrbenshef/SmartHomeAdapters/microservice/robotserver"
 	"github.com/mrbenshef/SmartHomeAdapters/microservice/thermostatserver"
 
@@ -16,8 +17,9 @@ import (
 
 	_ "github.com/lib/pq"
 	"google.golang.org/grpc"
+
+	empty "github.com/golang/protobuf/ptypes/empty"
 )
-import empty "github.com/golang/protobuf/ptypes/empty"
 
 var lis *bufconn.Listener
 var servoRequests = []*robotserver.ServoRequest{}
@@ -38,7 +40,7 @@ func TestMain(m *testing.M) {
 	s := grpc.NewServer()
 
 	thermostatserver.RegisterThermostatServerServer(s, &server{
-		DB:          getDb(),
+		DB:          db,
 		RobotClient: mockRobotServerClient{},
 	})
 	go func() {
