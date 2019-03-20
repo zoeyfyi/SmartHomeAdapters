@@ -51,6 +51,15 @@ jobs:
           name: Initialize infodb
           command: PGPASSWORD=password psql -h infodb -p 5432 -U temp -d infodb < services/infodb/init.sql
       - run:
+          name: Initialize switchdb
+          command: PGPASSWORD=password psql -h switchdb -p 5432 -U temp -d switchdb < services/switchdb/init.sql
+      - run:
+          name: Initialize thermodb
+          command: PGPASSWORD=password psql -h thermodb -p 5432 -U temp -d thermodb < services/thermodb/init.sql
+      - run:
+          name: Initialize userdb
+          command: PGPASSWORD=password psql -h userdb -p 5432 -U temp -d userdb < services/userdb/init.sql
+      - run:
           name: Test account-app
           command: go test
           working_directory: services/account-app
