@@ -4,10 +4,10 @@ workflows:
   version: 2
   main:
     jobs:
-      - test-services
-      - lint-services:
-          requires:
-            - test-services
+      # - test-services
+      - lint-services
+          # requires:
+          #   - test-services
       # - build-reports
       # - test-android
       # - lint-android:
@@ -118,31 +118,31 @@ jobs:
           command: curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s v1.15.0
       - run:
           name: Lint account-app
-          command: golangci-lint run
+          command: ./bin/golangci-lint run
           working_directory: services/account-app
       - run:
           name: Lint clientserver
-          command: golangci-lint run
+          command: ./bin/golangci-lint run
           working_directory: services/clientserver
       - run:
           name: Lint infoserver
-          command: golangci-lint run
+          command: ./bin/golangci-lint run
           working_directory: services/infoserver
       - run:
           name: Lint robotserver
-          command: golangci-lint run
+          command: ./bin/golangci-lint run
           working_directory: services/robotserver
       - run:
           name: Lint switchserver
-          command: golangci-lint run
+          command: ./bin/golangci-lint run
           working_directory: services/switchserver
       - run:
           name: Lint termostatserver
-          command: golangci-lint run
+          command: ./bin/golangci-lint run
           working_directory: services/termostatserver
       - run:
           name: Lint userserver
-          command: golangci-lint run
+          command: ./bin/golangci-lint run
           working_directory: services/userserver
   
           build-android:
