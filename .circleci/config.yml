@@ -19,15 +19,37 @@ jobs:
     docker:
       - image: circleci/golang:1.12
       - image: postgres:11.2
+        name: infodb
         environment:
           POSTGRES_USER: temp
           POSTGRES_PASSWORD: password
-          POSTGRES_DB: test
+          POSTGRES_DB: infodb
+      - image: postgres:11.2
+        name: switchdb
+        environment:
+          POSTGRES_USER: temp
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: switchdb
+      - image: postgres:11.2
+        name: thermodb
+        environment:
+          POSTGRES_USER: temp
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: thermodb
+      - image: postgres:11.2
+        name: userdb
+        environment:
+          POSTGRES_USER: temp
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: userdb
     steps:
       - checkout
       - run:
-          name: Setup test database
-          command: sudo apt-get update && sudo apt-get install postgresql && PGPASSWORD=password psql -h localhost -p 5432 -U temp -d test < services/db/init.sql
+          name: Install dependencys
+          command: sudo apt-get update && sudo apt-get install postgresql
+      - run:
+          name: Initialize infodb
+          command: PGPASSWORD=password psql -h infodb -p 5432 -U temp -d infodb < services/infodb/init.sql
       - run:
           name: Test account-app
           command: go test
@@ -42,7 +64,7 @@ jobs:
             DB_USERNAME: temp 
             DB_DATABASE: infodb
             DB_PASSWORD: password 
-            DB_URL: 127.0.0.1
+            DB_URL: infodb
           command:  go test
           working_directory: services/infoserver
       - run:
@@ -52,14 +74,29 @@ jobs:
       - run:
           name: Test switchserver
           command: go test
+          environment:
+            DB_USERNAME: temp 
+            DB_DATABASE: switchdb
+            DB_PASSWORD: password 
+            DB_URL: switchdb
           working_directory: services/switchserver
       - run:
           name: Test termostatserver
           command: go test
+          environment:
+            DB_USERNAME: temp 
+            DB_DATABASE: thermodb
+            DB_PASSWORD: password 
+            DB_URL: thermodb
           working_directory: services/termostatserver
       - run:
           name: Test userserver
           command: go test
+          environment:
+            DB_USERNAME: temp 
+            DB_DATABASE: userdb
+            DB_PASSWORD: password 
+            DB_URL: userdb
           working_directory: services/userserver
 
   lint-services:
