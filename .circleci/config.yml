@@ -4,16 +4,21 @@ workflows:
   version: 2
   main:
     jobs:
-      - deploy-containers
-      # - test-services
-      # - lint-services:
-          # requires:
-          #   - test-services
-      # - build-reports
-      # - test-android
-      # - lint-android:
-      #     requires:
-      #       - test-android
+      - test-services
+      - build-reports
+      - test-android
+      - deploy-test-containers:
+          requires:
+            - test-services
+          filters:
+            branches:
+              only: webserver
+      - deploy-containers:
+          requires:
+            - test-services
+          filters:
+            branches:
+              only: master
 
 jobs:
   test-services:
@@ -108,12 +113,6 @@ jobs:
             DB_PASSWORD: password 
             DB_URL: userdb
           working_directory: services/userserver
-
-  lint-services:
-    docker:
-      - image: circleci/golang:1.12
-    steps:
-      - checkout
       - run: 
           name: Install golangci-lint
           command: go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
@@ -145,8 +144,6 @@ jobs:
           name: Lint userserver
           command: golangci-lint run
           working_directory: services/userserver
-  
-          build-android:
 
   build-reports:
     docker:
@@ -193,16 +190,23 @@ jobs:
           name: Run Tests
           working_directory: android
           command: ./gradlew test
-  
-  lint-android:
-    docker:
-      - image: circleci/android:api-25-alpha
-    steps:
-      - checkout
       - run:
           name: Run Lint
           working_directory: android
           command: ./gradlew lint
+      - run:
+          name: Initial build
+          command: ./gradlew clean assembleRelease --no-daemon --stacktrace
+      - store_artifacts:
+          path: app/build/outputs/apk/
+          destination: apks/
+
+  deploy-containers:
+    machine: true
+    steps:
+      - checkout
+      - run: echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin 
+      - run: make docker && make docker-push-test
 
   deploy-containers:
     machine: true
