@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"log"
 	"net"
 	"os"
@@ -18,14 +19,22 @@ import (
 )
 
 var lis *bufconn.Listener
+var db *sql.DB
 
+func clearDatabase(t *testing.T) {
+	_, err := db.Exec("DELETE FROM switches WHERE serial != '123abc'")
+	if err != nil {
+		t.Fatalf("Error clearing database: %v", err)
+	}
+}
 func TestMain(m *testing.M) {
 	username := os.Getenv("DB_USERNAME")
 	if username != "temp" {
 		log.Fatalf("Database username must be \"temp\", data will be wiped!")
 	}
 
-	db, err := microservice.ConnectToDB()
+	var err error
+	db, err = microservice.ConnectToDB()
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
@@ -52,6 +61,8 @@ func bufDialer(string, time.Duration) (net.Conn, error) {
 }
 
 func TestSuccessfullyAddingSwitch(t *testing.T) {
+	clearDatabase(t)
+
 	ctx := context.Background()
 	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithDialer(bufDialer), grpc.WithInsecure())
 	if err != nil {
@@ -80,6 +91,8 @@ func TestSuccessfullyAddingSwitch(t *testing.T) {
 }
 
 func TestAddSwitchAlreadyAdded(t *testing.T) {
+	clearDatabase(t)
+
 	ctx := context.Background()
 	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithDialer(bufDialer), grpc.WithInsecure())
 	if err != nil {
@@ -113,6 +126,8 @@ func TestAddSwitchAlreadyAdded(t *testing.T) {
 }
 
 func TestSuccessfullyRemovingSwitch(t *testing.T) {
+	clearDatabase(t)
+
 	ctx := context.Background()
 	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithDialer(bufDialer), grpc.WithInsecure())
 	if err != nil {
@@ -121,6 +136,15 @@ func TestSuccessfullyRemovingSwitch(t *testing.T) {
 	defer conn.Close()
 
 	client := switchserver.NewSwitchServerClient(conn)
+
+	_, err = client.AddSwitch(ctx, &switchserver.AddSwitchRequest{
+		Id:   "123",
+		IsOn: false,
+	})
+	if err != nil {
+		t.Errorf("Expected nil error, got: %v", err)
+	}
+
 	_, err = client.RemoveSwitch(ctx, &switchserver.RemoveSwitchRequest{
 		Id: "123",
 	})
@@ -131,6 +155,8 @@ func TestSuccessfullyRemovingSwitch(t *testing.T) {
 }
 
 func TestRemoveSwitchDoesntExist(t *testing.T) {
+	clearDatabase(t)
+
 	ctx := context.Background()
 	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithDialer(bufDialer), grpc.WithInsecure())
 	if err != nil {
