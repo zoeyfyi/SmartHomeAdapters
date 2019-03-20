@@ -22,36 +22,19 @@ func clearDatabase(t *testing.T) {
 }
 
 func TestMain(m *testing.M) {
-	// connect to docker
-	pool, err := dockertest.NewPool("")
+	username := os.Getenv("DB_USERNAME")
+	if username != "temp" {
+		log.Fatalf("Database username must be \"temp\", data will be wiped!")
+	}
+
+	db, err := microservice.ConnectToDB()
 	if err != nil {
-		log.Fatalf("Could not connect to docker: %s", err)
+		log.Fatalf("Failed to connect to database: %v", err)
 	}
 
-	// start infodb
-	resource, err := pool.Run("smarthomeadapters/userdb", "latest", []string{"POSTGRES_PASSWORD=password"})
-	if err != nil {
-		log.Fatalf("Could not start resource: %s", err)
-	}
-
-	// wait till db is up
-	if err = pool.Retry(func() error {
-		var err error
-		db, err := sql.Open("postgres", fmt.Sprintf("postgres://postgres:password@localhost:%s/%s?sslmode=disable", resource.GetPort("5432/tcp"), dbDatabase))
-		if err != nil {
-			return err
-		}
-		return db.Ping()
-	}); err != nil {
-		log.Fatalf("Could not connect to docker: %s", err)
-	}
-
-	dbURL = fmt.Sprintf("localhost:%s", resource.GetPort("5432/tcp"))
-	testServer = &server{DB: getDb()}
+	testServer = &server{DB: db}
 
 	exitCode := m.Run()
-
-	pool.Purge(resource)
 
 	os.Exit(exitCode)
 }

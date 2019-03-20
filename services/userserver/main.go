@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/ptypes/empty"
+	"github.com/mrbenshef/SmartHomeAdapters/microservice"
 	"github.com/mrbenshef/SmartHomeAdapters/microservice/userserver"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -22,14 +23,6 @@ import (
 	"github.com/lib/pq"
 	_ "github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
-)
-
-// database connection infomation
-var (
-	dbUsername = os.Getenv("DB_USERNAME")
-	dbPassword = os.Getenv("DB_PASSWORD")
-	dbDatabase = os.Getenv("DB_DATABASE")
-	dbURL      = os.Getenv("DB_URL")
 )
 
 // signingKey key for signing json web tokens
@@ -159,42 +152,19 @@ func (s *server) Authorize(ctx context.Context, token *userserver.Token) (*users
 	}, nil
 }
 
-func connectionStr() string {
-	if dbUsername == "" {
-		dbUsername = "postgres"
-	}
-	if dbPassword == "" {
-		dbPassword = "password"
-	}
-	if dbURL == "" {
-		dbURL = "localhost:5432"
-	}
-	if dbDatabase == "" {
-		dbDatabase = "postgres"
-	}
-
-	return fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable", dbUsername, dbPassword, dbURL, dbDatabase)
-}
-
-func getDb() *sql.DB {
-	log.Printf("Connecting to database with \"%s\"\n", connectionStr())
-	db, err := sql.Open("postgres", connectionStr())
-	if err != nil {
-		log.Fatalf("Failed to connect to postgres: %v", err)
-	}
-
-	return db
-}
-
 func main() {
 	log.Println("Server starting")
 
 	// connect to database
-	db := getDb()
+	db, err := microservice.ConnectToDB()
+	if err != nil {
+		log.Fatalf("Failed to connect to postgres: %v", err)
+	}
+
 	defer db.Close()
 
 	// test connection
-	err := db.Ping()
+	err = db.Ping()
 	if err != nil {
 		log.Fatalf("Failed to ping postgres: %v", err)
 	}
