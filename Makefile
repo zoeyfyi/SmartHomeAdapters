@@ -92,6 +92,22 @@ lint-docker-compose:
 lint: lint-services lint-android lint-docker-compose
 
 #
+# DB
+#
+
+db-up:
+	@docker run --rm -d --name test_infodb -p 5001:5432 -e POSTGRES_USER=temp -e POSTGRES_PASSWORD=password smarthomeadapters/infodb
+	@docker run --rm -d --name test_switchdb -p 5002:5432 -e POSTGRES_USER=temp -e POSTGRES_PASSWORD=password smarthomeadapters/switchdb
+	@docker run --rm -d --name test_thermodb -p 5003:5432 -e POSTGRES_USER=temp -e POSTGRES_PASSWORD=password smarthomeadapters/thermodb
+	@docker run --rm -d --name test_userdb -p 5004:5432 -e POSTGRES_USER=temp -e POSTGRES_PASSWORD=password smarthomeadapters/userdb
+
+db-down:
+	@docker stop test_infodb
+	@docker stop test_switchdb
+	@docker stop test_thermodb
+	@docker stop test_userdb
+
+#
 # TEST
 #
 
