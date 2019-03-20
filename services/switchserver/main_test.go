@@ -2,8 +2,6 @@ package main
 
 import (
 	"context"
-	"database/sql"
-	"fmt"
 	"log"
 	"net"
 	"os"
@@ -11,11 +9,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ory/dockertest"
-
 	"google.golang.org/grpc/test/bufconn"
 
 	_ "github.com/lib/pq"
+	"github.com/mrbenshef/SmartHomeAdapters/microservice"
 	"github.com/mrbenshef/SmartHomeAdapters/microservice/switchserver"
 	"google.golang.org/grpc"
 )
@@ -37,7 +34,7 @@ func TestMain(m *testing.M) {
 	lis = bufconn.Listen(1024 * 1024)
 	s := grpc.NewServer()
 	switchserver.RegisterSwitchServerServer(s, &server{
-		DB: getDb(),
+		DB: db,
 	})
 	go func() {
 		if err := s.Serve(lis); err != nil {
@@ -46,8 +43,6 @@ func TestMain(m *testing.M) {
 	}()
 
 	exitCode := m.Run()
-
-	pool.Purge(resource)
 
 	os.Exit(exitCode)
 }
