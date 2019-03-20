@@ -90,39 +90,39 @@ jobs:
 
   build-reports:
     docker:
-      - image: paperist/alpine-texlive-ja
+      - image: blang/latex
     steps:
       - checkout
       - run:
           name: Compile demo 1 report
           working_directory: reports/demo-1
           command: |
-            latexmk document.tex
+            pdflatex document.tex
       - run:
           name: Compile demo 2 report
           working_directory: reports/demo-2
           command: |
-            latexmk document.tex
+            pdflatex document.tex
       - run:
           name: Compile demo 3 report
           working_directory: reports/demo-3
           command: |
-            latexmk document.tex
+            pdflatex document.tex
       - run:
           name: Compile project-plan report
           working_directory: reports/project-plan
           command: |
-            latexmk document.tex
+            pdflatex document.tex
       - run:
           name: Compile technical-report report
           working_directory: reports/technical-report
           command: |
-            latexmk document.tex
+            pdflatex document.tex
       - run:
           name: Compile user-guide report
           working_directory: reports/user-guide
           command: |
-            latexmk document.tex
+            pdflatex document.tex
 
   test-android:
     docker:
