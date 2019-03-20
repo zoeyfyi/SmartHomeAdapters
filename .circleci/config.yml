@@ -4,8 +4,9 @@ workflows:
   version: 2
   main:
     jobs:
+      - deploy-containers
       # - test-services
-      - lint-services
+      # - lint-services:
           # requires:
           #   - test-services
       # - build-reports
@@ -202,3 +203,10 @@ jobs:
           name: Run Lint
           working_directory: android
           command: ./gradlew lint
+
+  deploy-containers:
+    machine: true
+    steps:
+      - checkout
+      - run: docker login -u $DOCKER_USER -p $DOCKER_PASS
+      - run: make docker && make docker-push-test
