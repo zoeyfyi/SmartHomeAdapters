@@ -118,31 +118,31 @@ jobs:
           command: go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
       - run:
           name: Lint account-app
-          command: ./bin/golangci-lint run
+          command: golangci-lint run
           working_directory: services/account-app
       - run:
           name: Lint clientserver
-          command: ./bin/golangci-lint run
+          command: golangci-lint run
           working_directory: services/clientserver
       - run:
           name: Lint infoserver
-          command: ./bin/golangci-lint run
+          command: golangci-lint run
           working_directory: services/infoserver
       - run:
           name: Lint robotserver
-          command: ./bin/golangci-lint run
+          command: golangci-lint run
           working_directory: services/robotserver
       - run:
           name: Lint switchserver
-          command: ./bin/golangci-lint run
+          command: golangci-lint run
           working_directory: services/switchserver
       - run:
           name: Lint termostatserver
-          command: ./bin/golangci-lint run
+          command: golangci-lint run
           working_directory: services/termostatserver
       - run:
           name: Lint userserver
-          command: ./bin/golangci-lint run
+          command: golangci-lint run
           working_directory: services/userserver
   
           build-android:
