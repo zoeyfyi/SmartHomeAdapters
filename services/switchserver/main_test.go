@@ -23,30 +23,14 @@ import (
 var lis *bufconn.Listener
 
 func TestMain(m *testing.M) {
-	// connect to docker
-	pool, err := dockertest.NewPool("")
-	if err != nil {
-		log.Fatalf("Could not connect to docker: %s", err)
+	username := os.Getenv("DB_USERNAME")
+	if username != "temp" {
+		log.Fatalf("Database username must be \"temp\", data will be wiped!")
 	}
 
-	// start infodb
-	resource, err := pool.Run("smarthomeadapters/switchdb", "latest", []string{"POSTGRES_PASSWORD=password"})
+	db, err := microservice.ConnectToDB()
 	if err != nil {
-		log.Fatalf("Could not start resource: %s", err)
-	}
-
-	url = fmt.Sprintf("localhost:%s", resource.GetPort("5432/tcp"))
-
-	// wait till db is up
-	if err = pool.Retry(func() error {
-		var err error
-		db, err := sql.Open("postgres", fmt.Sprintf("postgres://postgres:password@localhost:%s/%s?sslmode=disable", resource.GetPort("5432/tcp"), database))
-		if err != nil {
-			return err
-		}
-		return db.Ping()
-	}); err != nil {
-		log.Fatalf("Could not connect to docker: %s", err)
+		log.Fatalf("Failed to connect to database: %v", err)
 	}
 
 	// start test gRPC server

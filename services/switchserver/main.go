@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"os"
 	"time"
 
 	"google.golang.org/grpc/codes"
@@ -16,20 +15,13 @@ import (
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/lib/pq"
 	_ "github.com/lib/pq"
+	"github.com/mrbenshef/SmartHomeAdapters/microservice"
 	"github.com/mrbenshef/SmartHomeAdapters/microservice/robotserver"
 	"github.com/mrbenshef/SmartHomeAdapters/microservice/switchserver"
 	"google.golang.org/grpc"
 )
 
 var robotserverClient robotserver.RobotServerClient
-
-// database connection infomation
-var (
-	username = os.Getenv("DB_USERNAME")
-	password = os.Getenv("DB_PASSWORD")
-	database = os.Getenv("DB_DATABASE")
-	url      = os.Getenv("DB_URL")
-)
 
 type server struct {
 	DB *sql.DB
@@ -247,40 +239,15 @@ func (s *server) CalibrateSwitch(ctx context.Context, parameters *switchserver.S
 	return &empty.Empty{}, nil
 }
 
-func connectionStr() string {
-	if username == "" {
-		username = "postgres"
-	}
-	if password == "" {
-		password = "password"
-	}
-	if url == "" {
-		url = "localhost:5432"
-	}
-	if database == "" {
-		database = "postgres"
-	}
-
-	return fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable", username, password, url, database)
-}
-
-func getDb() *sql.DB {
-	log.Printf("Connecting to database with \"%s\"\n", connectionStr())
-	db, err := sql.Open("postgres", connectionStr())
+func main() {
+	// connect to database
+	db, err := microservice.ConnectToDB()
 	if err != nil {
 		log.Fatalf("Failed to connect to postgres: %v", err)
 	}
-
-	return db
-}
-
-func main() {
-	// connect to database
-	db := getDb()
 	defer db.Close()
 
 	// test connection
-	err := db.Ping()
 	if err != nil {
 		log.Fatalf("Failed to ping postgres: %v", err)
 	}
