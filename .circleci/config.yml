@@ -206,9 +206,9 @@ jobs:
     steps:
       - checkout
       - run: echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin 
-      - run: make docker && make docker-push-test
+      - run: make docker && make docker-push
 
-  deploy-containers:
+  deploy-test-containers:
     machine: true
     steps:
       - checkout
