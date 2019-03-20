@@ -8,11 +8,11 @@ workflows:
       - lint-services:
           requires:
             - test-services
-      - build-reports
-      - test-android
-      - lint-android:
-          requires:
-            - test-android
+      # - build-reports
+      # - test-android
+      # - lint-android:
+      #     requires:
+      #       - test-android
 
 jobs:
   test-services:
@@ -27,7 +27,7 @@ jobs:
       - checkout
       - run:
           name: Setup test database
-          command: sudo apt-get update && sudo apt-get install postgresql && PGPASSWORD=password psql -h localhost -p 5432 -U temp < services/db/init.sql
+          command: sudo apt-get update && sudo apt-get install postgresql && PGPASSWORD=password psql -h localhost -p 5432 -U temp -d test < services/db/init.sql
       - run:
           name: Test account-app
           command: go test
