@@ -97,7 +97,7 @@ jobs:
             DB_DATABASE: thermodb
             DB_PASSWORD: password 
             DB_URL: thermodb
-          working_directory: services/termostatserver
+          working_directory: services/thermostatserver
       - run:
           name: Test userserver
           command: go test
