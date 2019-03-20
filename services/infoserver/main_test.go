@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"io"
+	"io/ioutil"
 	"log"
 	"net"
 	"os"
@@ -24,6 +26,24 @@ import (
 )
 
 var lis *bufconn.Listener
+var db *sql.DB
+
+func resetDatabase(t *testing.T) {
+	_, err := db.Exec("DROP TABLE robots")
+	if err != nil {
+		t.Fatalf("Error dropping table: %v", err)
+	}
+
+	dbSQL, err := ioutil.ReadFile("../infodb/init.sql")
+	if err != nil {
+		t.Fatalf("Error reading SQL: %v", err)
+	}
+
+	_, err = db.Exec(string(dbSQL))
+	if err != nil {
+		t.Fatalf("Error creating table: %v", err)
+	}
+}
 
 type mockSwitchClient struct{}
 
@@ -60,7 +80,8 @@ func TestMain(m *testing.M) {
 		log.Fatalf("Database username must be \"temp\", data will be wiped!")
 	}
 
-	db, err := microservice.ConnectToDB()
+	var err error
+	db, err = microservice.ConnectToDB()
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
@@ -89,6 +110,8 @@ func bufDialer(string, time.Duration) (net.Conn, error) {
 }
 
 func TestGetRobots(t *testing.T) {
+	resetDatabase(t)
+
 	expectedRobots := []*infoserver.Robot{
 		&infoserver.Robot{
 			Id:            "123abc",
@@ -136,6 +159,8 @@ func TestGetRobots(t *testing.T) {
 }
 
 func TestGetRobotWithValidID(t *testing.T) {
+	resetDatabase(t)
+
 	cases := []struct {
 		id            string
 		expectedRobot *infoserver.Robot
@@ -178,6 +203,8 @@ func TestGetRobotWithValidID(t *testing.T) {
 }
 
 func TestGetRobotWithInvalidID(t *testing.T) {
+	resetDatabase(t)
+
 	ctx := context.Background()
 	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithDialer(bufDialer), grpc.WithInsecure())
 	if err != nil {
@@ -205,6 +232,8 @@ func TestGetRobotWithInvalidID(t *testing.T) {
 }
 
 func TestSetRobotUsecase(t *testing.T) {
+	resetDatabase(t)
+
 	ctx := context.Background()
 	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithDialer(bufDialer), grpc.WithInsecure())
 	if err != nil {
