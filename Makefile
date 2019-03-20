@@ -114,8 +114,31 @@ db-down:
 test-android:
 	@(cd android && ./gradlew test)
 
-test-services:
-	@for d in services/*/ ; do (cd "$d" && test -f go.mod && go test); done
+test-account-app:
+	@(cd services/account-app && go test)
+
+test-clientserver:
+	@(cd services/clientserver && go test)
+
+test-infoserver:
+	@(cd services/infoserver && DB_URL=localhost:5001 DB_USERNAME=temp DB_PASSWORD=password DB_DATABASE=temp go test)
+
+test-microservice:
+	@(cd services/microservice && go test)
+
+test-robotserver:
+	@(cd services/robotserver && go test)
+
+test-switchserver:
+	@(cd services/switchserver && DB_URL=localhost:5002 DB_USERNAME=temp DB_PASSWORD=password DB_DATABASE=temp go test)
+
+test-thermostatserver:
+	@(cd services/thermostatserver && DB_URL=localhost:5003 DB_USERNAME=temp DB_PASSWORD=password DB_DATABASE=temp go test)
+
+test-userserver:
+	@(cd services/userserver && DB_URL=localhost:5004 DB_USERNAME=temp DB_PASSWORD=password DB_DATABASE=temp go test)
+
+test-services: test-account-app test-clientserver test-infoserver test-microservice test-robotserver test-switchserver test-thermostatserver test-userserver
 
 test: test-services test-android
 
