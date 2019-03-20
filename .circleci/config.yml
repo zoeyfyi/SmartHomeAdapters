@@ -18,8 +18,9 @@ jobs:
   test-services:
     docker:
       - image: circleci/golang:1.12
-      - image: circleci/postgres:9.6
-          POSTGRES_USER: root
+      - image: postgres:11.2
+          POSTGRES_USER: temp
+          POSTGRES_PASSWORD: password
           POSTGRES_DB: test
     steps:
       - checkout
@@ -36,7 +37,12 @@ jobs:
           working_directory: services/clientserver
       - run:
           name: Test infoserver
-          command: go test
+          environment:
+            - DB_USERNAME: temp 
+            - DB_DATABASE: infodb
+            - DB_PASSWORD: password 
+            - DB_URL: 127.0.0.1
+          command:  go test
           working_directory: services/infoserver
       - run:
           name: Test robotserver

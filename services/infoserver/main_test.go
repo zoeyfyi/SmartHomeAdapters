@@ -2,8 +2,6 @@ package main
 
 import (
 	"context"
-	"database/sql"
-	"fmt"
 	"io"
 	"log"
 	"net"
@@ -12,8 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ory/dockertest"
-
 	"google.golang.org/grpc/codes"
 
 	"google.golang.org/grpc/status"
@@ -21,6 +17,7 @@ import (
 
 	"github.com/golang/protobuf/ptypes/empty"
 	_ "github.com/lib/pq"
+	"github.com/mrbenshef/SmartHomeAdapters/microservice"
 	"github.com/mrbenshef/SmartHomeAdapters/microservice/infoserver"
 	"github.com/mrbenshef/SmartHomeAdapters/microservice/switchserver"
 	"google.golang.org/grpc"
@@ -58,30 +55,14 @@ func (c mockSwitchClient) CalibrateSwitch(_ context.Context, _ *switchserver.Swi
 }
 
 func TestMain(m *testing.M) {
-	// connect to docker
-	pool, err := dockertest.NewPool("")
-	if err != nil {
-		log.Fatalf("Could not connect to docker: %s", err)
+	usernaem := os.Getenv("DB_USERNAME")
+	if username != "temp" {
+		log.Fatalf("Database username must be \"temp\", data will be wiped!")
 	}
 
-	// start infodb
-	resource, err := pool.Run("smarthomeadapters/infodb", "latest", []string{"POSTGRES_PASSWORD=password"})
+	db, err := microservice.ConnectToDB()
 	if err != nil {
-		log.Fatalf("Could not start resource: %s", err)
-	}
-
-	url = fmt.Sprintf("localhost:%s", resource.GetPort("5432/tcp"))
-
-	// wait till db is up
-	if err = pool.Retry(func() error {
-		var err error
-		db, err := sql.Open("postgres", fmt.Sprintf("postgres://postgres:password@localhost:%s/%s?sslmode=disable", resource.GetPort("5432/tcp"), database))
-		if err != nil {
-			return err
-		}
-		return db.Ping()
-	}); err != nil {
-		log.Fatalf("Could not connect to docker: %s", err)
+		log.Fatalf("Failed to connect to database: %v", err)
 	}
 
 	// start test gRPC server
@@ -89,7 +70,7 @@ func TestMain(m *testing.M) {
 	s := grpc.NewServer()
 
 	infoserver.RegisterInfoServerServer(s, &server{
-		DB:           getDb(),
+		DB:           db,
 		SwitchClient: mockSwitchClient{},
 	})
 	go func() {
@@ -99,8 +80,6 @@ func TestMain(m *testing.M) {
 	}()
 
 	exitCode := m.Run()
-
-	pool.Purge(resource)
 
 	os.Exit(exitCode)
 }
