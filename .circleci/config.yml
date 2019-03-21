@@ -238,7 +238,7 @@ jobs:
           at: android/app/build/outputs/apk/release
       - run:
           name: Decrypt keystore
-          command: openssl enc -aes-256-cbc -d -md sha256 -in keystore.jks.enc -out keystore.jks -pass env:KEYSTORE_ENC_PW
+          command: openssl enc -aes-256-cbc -d -md sha256 -in keystore.jks.enc -out $HOME/keystore.jks -pass env:KEYSTORE_ENC_PW
       - run:
           name: Sign APK
           working_directory: android/app/build/outputs/apk/release
