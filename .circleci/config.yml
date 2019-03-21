@@ -235,7 +235,7 @@ jobs:
       - checkout
       - run:
           name: Decrypt keystore
-          command: openssl aes-256-cbc -d -in keystore.jks.enc -out keystore.jks -pass env:KEYSTORE_ENC_PW
+          command: openssl enc -aes-256-cbc -d -in keystore.jks.enc -out keystore.jks.test -pass env:KEYSTORE_ENC_PW
       - run:
           name: Sign APK
           command: cd apks/ && jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore ../keystore.jks -storepass $KEYSTORE_PASS -keypass $KEY_PASS app-release-unsigned.apk KEY_ALIAS
