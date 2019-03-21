@@ -233,6 +233,8 @@ jobs:
       - image: circleci/android:api-28-alpha
     steps:
       - checkout
+      - attach_workspace:
+          at: ./apks
       - run:
           name: Decrypt keystore
           command: openssl enc -aes-256-cbc -d -md sha256 -in keystore.jks.enc -out keystore.jks -pass env:KEYSTORE_ENC_PW
