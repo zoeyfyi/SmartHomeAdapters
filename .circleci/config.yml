@@ -1,5 +1,4 @@
 version: 2
-
 workflows:
   version: 2
   main:
@@ -19,20 +18,27 @@ workflows:
           filters:
             branches:
               only: master
-      - sign-apk:
+  deploy-apk:
+    jobs:
+      - test-android:
           filters:
             branches:
               only: master
+            tags:
+              only: /^\d+\.\d+\.\d+$/
+      - sign-apk:
+          requires:
+            - test-android
+          filters:
             tags:
               only: /^\d+\.\d+\.\d+$/
       - deploy-app:
           requires:
             - sign-apk
           filters:
-            branches:
-              only: master
             tags:
               only: /^\d+\.\d+\.\d+$/
+
 
 jobs:
   test-services:
@@ -210,10 +216,12 @@ jobs:
           command: ./gradlew lint
       - run:
           name: Initial build
+          working_directory: android
           command: ./gradlew clean assembleRelease --no-daemon --stacktrace
-      - store_artifacts:
-          path: app/build/outputs/apk/
-          destination: apks/
+      - persist_to_workspace:
+          root: android/app/build/outputs/apk/release
+          paths:
+            - app-release-unsigned.apk
 
   deploy-containers:
     machine: true
@@ -234,26 +242,37 @@ jobs:
       - image: circleci/android:api-28-alpha
     steps:
       - checkout
+      - attach_workspace:
+          at: android/app/build/outputs/apk/release
       - run:
           name: Decrypt keystore
-          command: echo -n $KEYSTORE_ENC_PW | openssl aes-256-cbc -d -in keystore.jks.enc -out keystore.jks
+          command: openssl enc -aes-256-cbc -d -md sha256 -in keystore.jks.enc -out $HOME/keystore.jks -pass env:KEYSTORE_ENC_PW
       - run:
           name: Sign APK
-          command: cd apks/ && jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore ../keystore.jks -storepass $KEYSTORE_PASS -keypass $KEY_PASS app-release-unsigned.apk KEY_ALIAS
+          working_directory: android/app/build/outputs/apk/release
+          command: jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore $HOME/keystore.jks -storepass $KEYSTORE_PASS -keypass $KEY_PASS app-release-unsigned.apk $KEY_ALIAS
       - run:
           name: Verify APK
+          working_directory: android/app/build/outputs/apk/release
           command: jarsigner -verify app-release-unsigned.apk
       - run:
           name: Zip-align the signed APK
-          command: ${ANDROID_HOME}build-tools/28.0.0/zipalign -v 4 app-release-unsigned.apk smarthomeadapters_android.apk
+          working_directory: android/app/build/outputs/apk/release
+          command: ${ANDROID_HOME}/build-tools/28.0.0/zipalign -v 4 app-release-unsigned.apk smarthomeadapters_android.apk
+      - persist_to_workspace:
+          root: android/app/build/outputs/apk/release
+          paths:
+            - smarthomeadapters_android.apk
 
   deploy-app:
     docker:
       - image: circleci/golang:1.8
-    dependencies:
-      pre:
-        - go get https://github.com/tcnksm/ghr
     steps:
+      - attach_workspace:
+          at: android/app/build/outputs/apk/release
+      - run:
+          name: Get ghr
+          command: go get github.com/tcnksm/ghr
       - run:
           name: Deploy APK to GitHub Releases
-          command: ghr -r $GITHUB_TOKEN -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME --replace `git describe --tags` apks/smarthomeadapters_android.apk
+          command: ghr -r $GITHUB_TOKEN -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME --replace "$(git describe --tags)" android/app/build/outputs/apk/release/smarthomeadapters_android.apk
