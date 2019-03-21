@@ -267,5 +267,4 @@ jobs:
           command: go get github.com/tcnksm/ghr
       - run:
           name: Deploy APK to GitHub Releases
-          working_directory: android/app/build/outputs/apk/release
-          command: ghr -r $GITHUB_TOKEN -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME --replace `git describe --tags` smarthomeadapters_android.apk
+          command: ghr -r $GITHUB_TOKEN -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME --replace "$(git describe --tags)" android/app/build/outputs/apk/release/smarthomeadapters_android.apk
