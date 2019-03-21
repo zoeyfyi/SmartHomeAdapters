@@ -19,6 +19,14 @@ workflows:
           filters:
             branches:
               only: master
+      - deploy-app:
+          requires:
+            - test-android
+          filters:
+            branches:
+              only: master
+            tags:
+              only: /^\d+\.\d+\.\d+$/
 
 jobs:
   test-services:
@@ -214,3 +222,10 @@ jobs:
       - checkout
       - run: echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin 
       - run: make docker && make docker-push-test
+
+  deploy-app:
+    dependencies:
+      pre:
+        - go get https://github.com/tcnksm/ghr
+    release:
+      command: ghr -r $GITHUB_TOKEN -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME --replace `git describe --tags` apks/
