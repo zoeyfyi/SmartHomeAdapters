@@ -20,6 +20,8 @@ workflows:
             branches:
               only: master
       - sign-apk:
+          requires:
+            test-android
           filters:
             tags:
               only: /^\d+\.\d+\.\d+$/
@@ -199,7 +201,7 @@ jobs:
       - run:
           name: Run Tests
           working_directory: android
-          command: ./gradlew test
+          command: cd android && ./gradlew test
       - run:
           name: Run Lint
           working_directory: android
@@ -232,7 +234,7 @@ jobs:
       - checkout
       - run:
           name: Decrypt keystore
-          command: echo -n $KEYSTORE_ENC_PW | openssl aes-256-cbc -d -in keystore.jks.enc -out keystore.jks
+          command: openssl aes-256-cbc -d -in keystore.jks.enc -out keystore.jks -pass env:KEYSTORE_ENC_PW
       - run:
           name: Sign APK
           command: cd apks/ && jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore ../keystore.jks -storepass $KEYSTORE_PASS -keypass $KEY_PASS app-release-unsigned.apk KEY_ALIAS
