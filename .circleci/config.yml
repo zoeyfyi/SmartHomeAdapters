@@ -210,9 +210,10 @@ jobs:
           name: Initial build
           working_directory: android
           command: ./gradlew clean assembleRelease --no-daemon --stacktrace && ls app/build/outputs/apk && ls app/build/outputs/apk/release
-      - store_artifacts:
-          path: android/app/build/outputs/apk/release/app-release-unsigned.apk
-          destination: apks/app-release-unsigned.apk
+      - persist_to_workspace:
+          root: android/app/build/outputs/apk/release
+          paths:
+            - app-release-unsigned.apk
 
   deploy-containers:
     machine: true
@@ -234,19 +235,21 @@ jobs:
     steps:
       - checkout
       - attach_workspace:
-          at: ./apks
+          at: android/app/build/outputs/apk/release
       - run:
           name: Decrypt keystore
           command: openssl enc -aes-256-cbc -d -md sha256 -in keystore.jks.enc -out keystore.jks -pass env:KEYSTORE_ENC_PW
       - run:
           name: Sign APK
-          working_directory: apks
-          command: ls -a && ls -a ../ && jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore ../keystore.jks -storepass $KEYSTORE_PASS -keypass $KEY_PASS app-release-unsigned.apk $KEY_ALIAS
+          working_directory: android/app/build/outputs/apk/release
+          command: ls -a && ls -a ../ && jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore $HOME/keystore.jks -storepass $KEYSTORE_PASS -keypass $KEY_PASS app-release-unsigned.apk $KEY_ALIAS
       - run:
           name: Verify APK
+          working_directory: android/app/build/outputs/apk/release
           command: jarsigner -verify app-release-unsigned.apk
       - run:
           name: Zip-align the signed APK
+          working_directory: android/app/build/outputs/apk/release
           command: ${ANDROID_HOME}build-tools/28.0.0/zipalign -v 4 app-release-unsigned.apk smarthomeadapters_android.apk
 
   deploy-app:
