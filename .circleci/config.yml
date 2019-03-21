@@ -19,19 +19,25 @@ workflows:
           filters:
             branches:
               only: master
+  deploy-apk:
+    jobs:
+      - test-android:
+          filters:
+            tags:
+              only: /.*/
       - sign-apk:
           requires:
             - test-android
           filters:
-            # by default, ignore all commits
-            branches:
-              ignore: /.*/
-            # run only on tagged commits
             tags:
               only: /^\d+\.\d+\.\d+$/
       - deploy-app:
           requires:
             - sign-apk
+          filters:
+            tags:
+              only: /^\d+\.\d+\.\d+$/
+
 
 jobs:
   test-services:
