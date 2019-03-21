@@ -211,7 +211,7 @@ jobs:
           working_directory: android
           command: ./gradlew clean assembleRelease --no-daemon --stacktrace
       - store_artifacts:
-          path: app/build/outputs/apk/
+          path: app/build/outputs/apk/release/
           destination: apks/
 
   deploy-containers:
