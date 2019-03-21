@@ -18,19 +18,18 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - portainer_data:/data
   userdb:
+    image: smarthomeadapters/userdb
     build:
-      context: ./userdb
+      context: ./services/userdb
     restart: always
     environment:
       - POSTGRES_PASSWORD=password
     volumes:
       - userdb_data:/var/lib/postgresql/data
   userserver:
-    build: 
-      context: .
-      dockerfile: go.Dockerfile
-      args:
-        SERVICE: userserver
+    image: smarthomeadapters/userserver
+    build:
+      context: ./services/userserver
     depends_on:
       - userdb
     restart: always
@@ -42,28 +41,25 @@ services:
       - DB_DATABASE=postgres
       - DB_URL=userdb
   clientserver:
-    build: 
-      context: .
-      dockerfile: go.Dockerfile
-      args:
-        SERVICE: clientserver
+    image: smarthomeadapters/clientserver
+    build:
+      context: ./services/clientserver
     restart: always
     ports:
       - 80:80
   infodb:
+    image: smarthomeadapters/infodb
     build: 
-      context: ./infodb
+      context: ./services/infodb
     restart: always
     environment:
       - POSTGRES_PASSWORD=password
     volumes:
       - infodb_data:/var/lib/postgresql/data
   infoserver:
-    build: 
-      context: .
-      dockerfile: go.Dockerfile
-      args:
-        SERVICE: infoserver
+    image: smarthomeadapters/infoserver
+    build:
+      context: ./services/infoserver
     depends_on:
       - infodb
     restart: always
@@ -75,19 +71,18 @@ services:
       - DB_DATABASE=postgres
       - DB_URL=infodb
   switchdb:
+    image: smarthomeadapters/switchdb
     build: 
-      context: ./switchdb
+      context: ./services/switchdb
     restart: always
     environment:
       - POSTGRES_PASSWORD=password
     volumes:
       - switchdb_data:/var/lib/postgresql/data
   switchserver:
-    build: 
-      context: .
-      dockerfile: go.Dockerfile
-      args:
-        SERVICE: switchserver
+    image: smarthomeadapters/switchserver
+    build:
+      context: ./services/switchserver
     depends_on:
       - switchdb
     restart: always
@@ -99,19 +94,18 @@ services:
       - DB_DATABASE=postgres
       - DB_URL=switchdb
   thermodb:
-    build: 
-      context: ./thermodb
+    image: smarthomeadapters/thermodb
+    build:
+      context: ./services/thermodb
     restart: always
     environment:
       - POSTGRES_PASSWORD=password
     volumes:
       - thermodb_data:/var/lib/postgresql/data
   thermostatserver:
-    build: 
-      context: .
-      dockerfile: go.Dockerfile
-      args:
-        SERVICE: infoserver
+    image: smarthomeadapters/thermostatserver
+    build:
+      context: ./services/infoserver
     depends_on:
       - thermodb
     restart: always
@@ -123,20 +117,16 @@ services:
       - DB_DATABASE=postgres
       - DB_URL=thermodb
   robotserver:
-    build: 
-      context: .
-      dockerfile: go.Dockerfile
-      args:
-        SERVICE: robotserver
+    image: smarthomeadapters/robotserver
+    build:
+      context: ./services/robotserver
     restart: always
     ports:
       - 8083:80
   account-app:
-    build: 
-      context: .
-      dockerfile: go.Dockerfile
-      args:
-        SERVICE: account-app
+    image: smarthomeadapters/account-app
+    build:
+      context: ./services/account-app
     restart: always
     ports:
       - 4001:80

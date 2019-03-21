@@ -1,0 +1,278 @@
+version: 2
+workflows:
+  version: 2
+  main:
+    jobs:
+      - test-services
+      - build-reports
+      - test-android
+      - deploy-test-containers:
+          requires:
+            - test-services
+          filters:
+            branches:
+              only: webserver
+      - deploy-containers:
+          requires:
+            - test-services
+          filters:
+            branches:
+              only: master
+  deploy-apk:
+    jobs:
+      - test-android:
+          filters:
+            branches:
+              only: master
+            tags:
+              only: /^\d+\.\d+\.\d+$/
+      - sign-apk:
+          requires:
+            - test-android
+          filters:
+            tags:
+              only: /^\d+\.\d+\.\d+$/
+      - deploy-app:
+          requires:
+            - sign-apk
+          filters:
+            tags:
+              only: /^\d+\.\d+\.\d+$/
+
+
+jobs:
+  test-services:
+    docker:
+      - image: circleci/golang:1.12
+      - image: postgres:11.2
+        name: infodb
+        environment:
+          POSTGRES_USER: temp
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: infodb
+      - image: postgres:11.2
+        name: switchdb
+        environment:
+          POSTGRES_USER: temp
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: switchdb
+      - image: postgres:11.2
+        name: thermodb
+        environment:
+          POSTGRES_USER: temp
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: thermodb
+      - image: postgres:11.2
+        name: userdb
+        environment:
+          POSTGRES_USER: temp
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: userdb
+    steps:
+      - checkout
+      - run:
+          name: Install dependencys
+          command: sudo apt-get update && sudo apt-get install postgresql
+      - run:
+          name: Initialize infodb
+          command: PGPASSWORD=password psql -h infodb -p 5432 -U temp -d infodb < services/infodb/init.sql
+      - run:
+          name: Initialize switchdb
+          command: PGPASSWORD=password psql -h switchdb -p 5432 -U temp -d switchdb < services/switchdb/init.sql
+      - run:
+          name: Initialize thermodb
+          command: PGPASSWORD=password psql -h thermodb -p 5432 -U temp -d thermodb < services/thermodb/init.sql
+      - run:
+          name: Initialize userdb
+          command: PGPASSWORD=password psql -h userdb -p 5432 -U temp -d userdb < services/userdb/init.sql
+      - run:
+          name: Test account-app
+          command: go test
+          working_directory: services/account-app
+      - run:
+          name: Test clientserver
+          command: go test
+          working_directory: services/clientserver
+      - run:
+          name: Test infoserver
+          environment:
+            DB_USERNAME: temp 
+            DB_DATABASE: infodb
+            DB_PASSWORD: password 
+            DB_URL: infodb
+          command:  go test
+          working_directory: services/infoserver
+      - run:
+          name: Test robotserver
+          command: go test
+          working_directory: services/robotserver
+      - run:
+          name: Test switchserver
+          command: go test
+          environment:
+            DB_USERNAME: temp 
+            DB_DATABASE: switchdb
+            DB_PASSWORD: password 
+            DB_URL: switchdb
+          working_directory: services/switchserver
+      - run:
+          name: Test termostatserver
+          command: go test
+          environment:
+            DB_USERNAME: temp 
+            DB_DATABASE: thermodb
+            DB_PASSWORD: password 
+            DB_URL: thermodb
+          working_directory: services/thermostatserver
+      - run:
+          name: Test userserver
+          command: go test
+          environment:
+            DB_USERNAME: temp 
+            DB_DATABASE: userdb
+            DB_PASSWORD: password 
+            DB_URL: userdb
+          working_directory: services/userserver
+      - run: 
+          name: Install golangci-lint
+          command: go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
+      - run:
+          name: Lint account-app
+          command: golangci-lint run
+          working_directory: services/account-app
+      - run:
+          name: Lint clientserver
+          command: golangci-lint run
+          working_directory: services/clientserver
+      - run:
+          name: Lint infoserver
+          command: golangci-lint run
+          working_directory: services/infoserver
+      - run:
+          name: Lint robotserver
+          command: golangci-lint run
+          working_directory: services/robotserver
+      - run:
+          name: Lint switchserver
+          command: golangci-lint run
+          working_directory: services/switchserver
+      - run:
+          name: Lint termostatserver
+          command: golangci-lint run
+          working_directory: services/termostatserver
+      - run:
+          name: Lint userserver
+          command: golangci-lint run
+          working_directory: services/userserver
+
+  build-reports:
+    docker:
+      - image: blang/latex
+    steps:
+      - checkout
+      - run:
+          name: Compile demo 1 report
+          working_directory: reports/demo-1
+          command: |
+            pdflatex document.tex
+      - run:
+          name: Compile demo 2 report
+          working_directory: reports/demo-2
+          command: |
+            pdflatex document.tex
+      - run:
+          name: Compile demo 3 report
+          working_directory: reports/demo-3
+          command: |
+            pdflatex document.tex
+      - run:
+          name: Compile project-plan report
+          working_directory: reports/project-plan
+          command: |
+            pdflatex document.tex
+      - run:
+          name: Compile technical-report report
+          working_directory: reports/technical-report
+          command: |
+            pdflatex document.tex
+      - run:
+          name: Compile user-guide report
+          working_directory: reports/user-guide
+          command: |
+            pdflatex document.tex
+
+  test-android:
+    docker:
+      - image: circleci/android:api-28-alpha
+    steps:
+      - checkout
+      - run:
+          name: Run Tests
+          working_directory: android
+          command: ./gradlew test
+      - run:
+          name: Run Lint
+          working_directory: android
+          command: ./gradlew lint
+      - run:
+          name: Initial build
+          working_directory: android
+          command: ./gradlew clean assembleRelease --no-daemon --stacktrace
+      - persist_to_workspace:
+          root: android/app/build/outputs/apk/release
+          paths:
+            - app-release-unsigned.apk
+
+  deploy-containers:
+    machine: true
+    steps:
+      - checkout
+      - run: echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin 
+      - run: make docker && make docker-push
+
+  deploy-test-containers:
+    machine: true
+    steps:
+      - checkout
+      - run: echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin 
+      - run: make docker && make docker-push-test
+
+  sign-apk:
+    docker:
+      - image: circleci/android:api-28-alpha
+    steps:
+      - checkout
+      - attach_workspace:
+          at: android/app/build/outputs/apk/release
+      - run:
+          name: Decrypt keystore
+          command: openssl enc -aes-256-cbc -d -md sha256 -in keystore.jks.enc -out $HOME/keystore.jks -pass env:KEYSTORE_ENC_PW
+      - run:
+          name: Sign APK
+          working_directory: android/app/build/outputs/apk/release
+          command: jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore $HOME/keystore.jks -storepass $KEYSTORE_PASS -keypass $KEY_PASS app-release-unsigned.apk $KEY_ALIAS
+      - run:
+          name: Verify APK
+          working_directory: android/app/build/outputs/apk/release
+          command: jarsigner -verify app-release-unsigned.apk
+      - run:
+          name: Zip-align the signed APK
+          working_directory: android/app/build/outputs/apk/release
+          command: ${ANDROID_HOME}/build-tools/28.0.0/zipalign -v 4 app-release-unsigned.apk smarthomeadapters_android.apk
+      - persist_to_workspace:
+          root: android/app/build/outputs/apk/release
+          paths:
+            - smarthomeadapters_android.apk
+
+  deploy-app:
+    docker:
+      - image: circleci/golang:1.8
+    steps:
+      - attach_workspace:
+          at: android/app/build/outputs/apk/release
+      - run:
+          name: Get ghr
+          command: go get github.com/tcnksm/ghr
+      - run:
+          name: Deploy APK to GitHub Releases
+          command: ghr -r $GITHUB_TOKEN -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME --replace "$(git describe --tags)" android/app/build/outputs/apk/release/smarthomeadapters_android.apk
