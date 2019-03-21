@@ -238,7 +238,8 @@ jobs:
           command: openssl enc -aes-256-cbc -d -md sha256 -in keystore.jks.enc -out keystore.jks -pass env:KEYSTORE_ENC_PW
       - run:
           name: Sign APK
-          command: cd apks/ && jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore ../keystore.jks -storepass $KEYSTORE_PASS -keypass $KEY_PASS app-release-unsigned.apk KEY_ALIAS
+          working_directory: apks
+          command: ls -a && ls -a ../ && jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore ../keystore.jks -storepass $KEYSTORE_PASS -keypass $KEY_PASS app-release-unsigned.apk KEY_ALIAS
       - run:
           name: Verify APK
           command: jarsigner -verify app-release-unsigned.apk
