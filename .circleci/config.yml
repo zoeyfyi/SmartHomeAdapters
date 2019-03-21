@@ -211,7 +211,7 @@ jobs:
           working_directory: android
           command: ./gradlew clean assembleRelease --no-daemon --stacktrace && ls app/build/outputs/apk && ls app/build/outputs/apk/release
       - store_artifacts:
-          path: app/build/outputs/apk/release/app-release-unsigned.apk
+          path: android/app/build/outputs/apk/release/app-release-unsigned.apk
           destination: apks/app-release-unsigned.apk
 
   deploy-containers:
