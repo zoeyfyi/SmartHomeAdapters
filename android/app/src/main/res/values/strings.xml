@@ -2,14 +2,7 @@
     <string name="app_name">Smart Home Adapters</string>
 
     <!-- Strings related to the Authentication Activity -->
-    <string name="email_input_hint">Email</string>
-    <string name="password_input_hint">Password</string>
-    <string name="sign_in_button">Sign in</string>
-    <string name="register_button">Register</string>
-
-    <!-- Strings related to the RegisterUser Activity -->
-    <string name="confirm_password_input_hint">Re-enter password</string>
-    <string name="login_button_text">Sign in instead</string>
+    <string name="authorize_button">Sign in or register</string>
 
     <!-- Strings related to MainActivity -->
     <string name="nav_bar_robots">Robots</string>
@@ -20,7 +13,7 @@
     <string name="blank_trigger_placeholder">Triggered</string> <!-- TODO remove/replace -->
 
     <!-- Strings related to SettingsFragment -->
-    <string name="blank_settings_placeholder">Yarr there be settings here</string> <!-- TODO remove/replace -->
+    <string name="logout_button_text">Sign out</string>
 
     <!-- Strings related to QRFragment -->
     <string name="scan_qr_text">Scan QR code</string>
@@ -33,6 +26,7 @@
     <string name="select_from_spinner_text">Choose a use case for your robot!</string>
     <string name="loading_spinner_text">Loading use cases&#8230;</string>
     <string name="failed_spinner_text">Could not fetch use cases.</string>
+    <string name="register_button">Register</string>
 
     <!-- Strings related to ConfigureRobotFragment -->
     <string name="finish_button_text">Save Configuration</string>
