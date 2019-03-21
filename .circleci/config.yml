@@ -21,7 +21,7 @@ workflows:
               only: master
       - sign-apk:
           requires:
-            test-android
+            - test-android
           filters:
             tags:
               only: /^\d+\.\d+\.\d+$/
