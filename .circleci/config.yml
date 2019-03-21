@@ -19,9 +19,15 @@ workflows:
           filters:
             branches:
               only: master
+      - sign-apk:
+          filters:
+            branches:
+              only: master
+            tags:
+              only: /^\d+\.\d+\.\d+$/
       - deploy-app:
           requires:
-            - test-android
+            - sign-apk
           filters:
             branches:
               only: master
@@ -223,9 +229,27 @@ jobs:
       - run: echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin 
       - run: make docker && make docker-push-test
 
+  sign-apk:
+    docker:
+      - image: circleci/android:api-28-alpha
+    steps:
+      - checkout
+      - run:
+          name: Decrypt keystore
+          command: echo -n $KEYSTORE_ENC_PW | openssl aes-256-cbc -d -in keystore.jks.enc -out keystore.jks
+      - run:
+          name: Sign APK
+          command: cd apks/ && jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore ../keystore.jks -storepass $KEYSTORE_PASS -keypass $KEY_PASS app-release-unsigned.apk KEY_ALIAS
+      - run:
+          name: Verify APK
+          command: jarsigner -verify app-release-unsigned.apk
+      - run:
+          name: Zip-align the signed APK
+          command: ${ANDROID_HOME}build-tools/28.0.0/zipalign -v 4 app-release-unsigned.apk smarthomeadapters_android.apk
+
   deploy-app:
     dependencies:
       pre:
         - go get https://github.com/tcnksm/ghr
     release:
-      command: ghr -r $GITHUB_TOKEN -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME --replace `git describe --tags` apks/
+      command: ghr -r $GITHUB_TOKEN -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME --replace `git describe --tags` apks/smarthomeadapters_android.apk
