@@ -251,5 +251,6 @@ jobs:
     dependencies:
       pre:
         - go get https://github.com/tcnksm/ghr
-    release:
-      command: ghr -r $GITHUB_TOKEN -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME --replace `git describe --tags` apks/smarthomeadapters_android.apk
+    steps:
+      release:
+        command: ghr -r $GITHUB_TOKEN -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME --replace `git describe --tags` apks/smarthomeadapters_android.apk
