@@ -264,7 +264,7 @@ jobs:
           at: android/app/build/outputs/apk/release
       - run:
           name: Get ghr
-          command: go get https://github.com/tcnksm/ghr
+          command: go get github.com/tcnksm/ghr
       - run:
           name: Deploy APK to GitHub Releases
           working_directory: android/app/build/outputs/apk/release
