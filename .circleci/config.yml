@@ -21,16 +21,12 @@ workflows:
               only: master
       - sign-apk:
           filters:
-            branches:
-              only: master
             tags:
               only: /^\d+\.\d+\.\d+$/
       - deploy-app:
           requires:
             - sign-apk
           filters:
-            branches:
-              only: master
             tags:
               only: /^\d+\.\d+\.\d+$/
 
