@@ -8,23 +8,60 @@ import android.widget.BaseAdapter
 import android.widget.ImageView
 import android.widget.TextView
 import com.github.halspals.smarthomeadapters.smarthomeadapters.model.Robot
+import org.jetbrains.anko.startActivity
 
 
-class RobotAdapter (private val context: Context, private val robots: List<Robot>, private val onClick: (Robot) -> Unit) :  BaseAdapter() {
+class RobotAdapter (
+        private val context: Context,
+        private val robots: MutableList<Robot>,
+        private val onClick: (Robot) -> Unit
+) :  BaseAdapter() {
 
-    override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
+    init {
+        // Add the dummy robot for starting the [RegisterRobotActivity]
+        robots.add(Robot.ADD_ROBOT)
+    }
+
+    override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View =
+        if (position == count - 1) {
+            assert(robots[position] == Robot.ADD_ROBOT) {
+                "Getting view of last robot but it is not the ADD_ROBOT dummy; robot is " +
+                        "${robots[position]}"
+            }
+
+            getAddRobotDummyView(convertView, parent)
+        } else {
+            getRealRobotView(position, convertView, parent)
+    }
+
+    private fun getRealRobotView(position: Int, convertView: View?, parent: ViewGroup?): View {
+
         // inflate card view
         val inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
         val view: View = convertView ?: inflater.inflate(R.layout.view_robot_card, parent, false)
 
         // get internal views
-        //val robotIcon = view.findViewById<ImageView>(R.id.robot_icon_image_view)
         val robotNickname = view.findViewById<TextView>(R.id.robot_nickname_text_view)
+        val robotCircle = view.findViewById<ImageView>(R.id.robot_circle_drawable)
 
         // configure views
-        view.setOnClickListener { onClick(robots[position]) }
+        robotCircle.setOnClickListener { onClick(robots[position]) }
         //robotIcon.setImageResource(robots[position].iconDrawable)
         robotNickname.text = robots[position].nickname
+
+        return view
+    }
+
+    private fun getAddRobotDummyView(convertView: View?, parent: ViewGroup?): View {
+        // inflate card view
+        val inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+        val view: View = convertView ?: inflater.inflate(R.layout.view_add_robot_card, parent, false)
+
+        // get internal views
+        val robotCircle = view.findViewById<ImageView>(R.id.robot_circle_drawable)
+
+        // configure views
+        robotCircle.setOnClickListener { context.startActivity<RegisterRobotActivity>() }
 
         return view
     }

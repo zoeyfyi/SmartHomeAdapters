@@ -10,7 +10,6 @@ import android.widget.GridView
 import com.github.halspals.smarthomeadapters.smarthomeadapters.model.Robot
 import kotlinx.android.synthetic.main.fragment_robots.*
 import org.jetbrains.anko.design.snackbar
-import org.jetbrains.anko.startActivity
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -33,10 +32,6 @@ class RobotsFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        add_robot_button.setOnClickListener { _ ->
-            parent.startActivity<RegisterRobotActivity>()
-        }
 
         parent.authState.performActionWithFreshTokens(parent.authService)
         { accessToken, _, ex ->
@@ -83,7 +78,7 @@ class RobotsFragment : Fragment() {
 
     private fun displayRobots(view: View, robots: List<Robot>) {
         robotGrid = view.findViewById(R.id.RobotGrid)
-        robotGrid.adapter = RobotAdapter(view.context, robots) { robot ->
+        robotGrid.adapter = RobotAdapter(view.context, robots.toMutableList()) { robot ->
             Log.d(fTag, "Clicked robot: \"${robot.nickname}\"")
 
             // create fragment with robot ID

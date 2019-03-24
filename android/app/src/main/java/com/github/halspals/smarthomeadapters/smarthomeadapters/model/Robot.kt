@@ -31,6 +31,7 @@ data class Robot(
     companion object {
         const val TYPE_TOGGLE = "toggle"
         const val TYPE_RANGE = "range"
+        val ADD_ROBOT = Robot("","","","",RobotStatus(false,0,0,0))
     }
 }
 
