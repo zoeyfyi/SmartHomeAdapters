@@ -29,8 +29,10 @@ data class Robot(
     val iconDrawable: Int = R.drawable.basic_home // default icon
 ) {
     companion object {
-        const val TYPE_TOGGLE = "toggle"
-        const val TYPE_RANGE = "range"
+        const val INTERFACE_TYPE_TOGGLE = "toggle"
+        const val INTERFACE_TYPE_RANGE = "range"
+        const val ROBOT_TYPE_SWITCH = "switch"
+        const val ROBOT_TYPE_THERMOSTAT = "thermostat"
         val ADD_ROBOT = Robot("","","","",RobotStatus(false,0,0,0))
     }
 }

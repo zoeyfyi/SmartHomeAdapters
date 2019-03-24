@@ -122,7 +122,7 @@ class RobotFragment : Fragment() {
         seekBar.visibility = View.INVISIBLE
 
         when(robot.robotInterfaceType) {
-            Robot.TYPE_TOGGLE -> {
+            Robot.INTERFACE_TYPE_TOGGLE -> {
                 switch.visibility = View.VISIBLE
                 switch.isChecked = robot.robotStatus.value
 
@@ -131,7 +131,7 @@ class RobotFragment : Fragment() {
                 }
             }
 
-            Robot.TYPE_RANGE -> {
+            Robot.INTERFACE_TYPE_RANGE -> {
                 seekBar.visibility = View.VISIBLE
                 seekBar.max = robot.robotStatus.max - robot.robotStatus.min
                 seekBar.progress = robot.robotStatus.current - robot.robotStatus.min

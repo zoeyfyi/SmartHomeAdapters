@@ -43,10 +43,17 @@ class RobotAdapter (
         // get internal views
         val robotNickname = view.findViewById<TextView>(R.id.robot_nickname_text_view)
         val robotCircle = view.findViewById<ImageView>(R.id.robot_circle_drawable)
+        val robotIcon = view.findViewById<ImageView>(R.id.robot_image_view)
 
         // configure views
         robotCircle.setOnClickListener { onClick(robots[position]) }
-        //robotIcon.setImageResource(robots[position].iconDrawable)
+        robotIcon.setImageResource(
+            when (robots[position].robotType) {
+                Robot.ROBOT_TYPE_SWITCH -> R.drawable.basic_lightbulb
+                Robot.ROBOT_TYPE_THERMOSTAT -> R.drawable.basic_accelerator
+                else -> R.drawable.basic_home
+            }
+        )
         robotNickname.text = robots[position].nickname
 
         return view
