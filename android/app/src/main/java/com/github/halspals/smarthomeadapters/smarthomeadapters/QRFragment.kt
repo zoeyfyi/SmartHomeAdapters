@@ -54,6 +54,8 @@ class QRFragment : Fragment() {
             registerRobot(registration_code_input.text, nickname_input.text)
         }
 
+        cancel_button.setOnClickListener { _ -> parent.finish() }
+
     }
 
     /**

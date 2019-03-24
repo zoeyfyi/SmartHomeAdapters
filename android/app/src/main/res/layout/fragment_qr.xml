@@ -47,14 +47,29 @@
             app:layout_constraintVertical_bias="0.3"/>
 
     <Button
-            android:text="@string/next_button_text"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/next_button"
-            app:layout_constraintStart_toStartOf="parent"
-            android:layout_marginStart="32dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            android:layout_marginEnd="32dp" android:layout_marginTop="8dp"
-            app:layout_constraintTop_toBottomOf="@+id/nickname_input"/>
+        android:id="@+id/next_button"
+        style="@style/Widget.AppCompat.Button.Colored"
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:layout_marginStart="32dp"
+        android:layout_marginEnd="32dp"
+        android:layout_marginBottom="8dp"
+        android:text="@string/next_button_text"
+        app:layout_constraintBottom_toTopOf="@+id/cancel_button"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <Button
+        android:id="@+id/cancel_button"
+        style="@style/Widget.AppCompat.Button.Borderless.Colored"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="32dp"
+        android:layout_marginEnd="32dp"
+        android:layout_marginBottom="16dp"
+        android:text="CANCEL SETUP"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
 </android.support.constraint.ConstraintLayout>
