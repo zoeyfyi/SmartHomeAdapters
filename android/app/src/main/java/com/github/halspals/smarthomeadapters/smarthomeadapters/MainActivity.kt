@@ -2,17 +2,13 @@ package com.github.halspals.smarthomeadapters.smarthomeadapters
 
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
-import android.support.design.widget.BottomNavigationView
 import android.support.v4.app.Fragment
 import android.support.v4.app.FragmentManager
 import android.util.Log
-import android.view.MenuItem
-import kotlinx.android.synthetic.main.activity_main.*
 import net.openid.appauth.AuthorizationService
 
 class MainActivity :
-        AppCompatActivity(),
-        BottomNavigationView.OnNavigationItemSelectedListener
+        AppCompatActivity()
 {
 
     internal val restApiService by lazy {
@@ -33,23 +29,8 @@ class MainActivity :
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        bottom_nav_bar.setOnNavigationItemSelectedListener(this)
-
         // Start the robots fragment by default
         startFragment(RobotsFragment())
-    }
-
-    override fun onNavigationItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
-            R.id.robots_nav -> startFragment(RobotsFragment())
-            R.id.triggers_nav -> startFragment(TriggersFragment())
-            R.id.settings_nav -> startFragment(SettingsFragment())
-            else -> {
-                Log.e(tag, "[onNavigationItemSelected] id ${item.itemId} not recognized.")
-                return false
-            }
-        }
-        return true
     }
 
     /**
