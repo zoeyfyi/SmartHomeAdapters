@@ -7,31 +7,13 @@
         android:layout_height="match_parent"
         tools:context=".MainActivity">
 
-    <!-- BNV to switch between the fragments (robots, triggers, and settings). -->
-    <android.support.design.widget.BottomNavigationView
-        android:id="@+id/bottom_nav_bar"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        android:visibility="visible"
-        android:background="@color/colorPrimary"
-        app:itemIconTint="@drawable/bottomnavigationviewselector"
-        app:itemTextColor="@drawable/bottomnavigationviewselector"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="1.0"
-        app:menu="@menu/navigation_menu">
-    </android.support.design.widget.BottomNavigationView>
-
     <!-- Layout to inflate the fragments in. -->
     <FrameLayout
         android:id="@+id/fragmentContainer"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:orientation="vertical"
-        app:layout_constraintBottom_toTopOf="@+id/bottom_nav_bar"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
