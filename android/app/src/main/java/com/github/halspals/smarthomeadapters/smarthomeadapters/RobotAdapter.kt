@@ -18,12 +18,12 @@ class RobotAdapter (private val context: Context, private val robots: List<Robot
         val view: View = convertView ?: inflater.inflate(R.layout.view_robot_card, parent, false)
 
         // get internal views
-        val robotIcon = view.findViewById<ImageView>(R.id.robot_icon_image_view)
+        //val robotIcon = view.findViewById<ImageView>(R.id.robot_icon_image_view)
         val robotNickname = view.findViewById<TextView>(R.id.robot_nickname_text_view)
 
         // configure views
         view.setOnClickListener { onClick(robots[position]) }
-        robotIcon.setImageResource(robots[position].iconDrawable)
+        //robotIcon.setImageResource(robots[position].iconDrawable)
         robotNickname.text = robots[position].nickname
 
         return view
