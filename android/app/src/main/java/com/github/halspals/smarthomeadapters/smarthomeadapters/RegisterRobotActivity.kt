@@ -21,7 +21,6 @@ class RegisterRobotActivity : AppCompatActivity() {
     // Keep track of the id of the robot once it has been scanned/entered
     internal lateinit var robotId: String
     internal lateinit var robotNickname: String
-
     // Record the chosen use case so that its parameters can be set up
     internal lateinit var chosenUseCase: UseCase
 
@@ -88,8 +87,8 @@ class RegisterRobotActivity : AppCompatActivity() {
 
         if (robotId != null) {
             Log.d(tag, "[onActivityResult] Scanned robotId $robotId")
-
             this.robotId = robotId
+            startFragment(NicknameFragment())
 
         } else {
             Log.d(tag, "User quit QR scanner early")

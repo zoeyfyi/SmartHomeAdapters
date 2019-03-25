@@ -41,7 +41,7 @@ class QRFragment : Fragment() {
         }
 
         manual_entry_button.setOnClickListener { _ ->
-
+            parent.startFragment(ManualEntryFragment())
         }
 
         cancel_button.setOnClickListener { _ -> parent.finish() }
