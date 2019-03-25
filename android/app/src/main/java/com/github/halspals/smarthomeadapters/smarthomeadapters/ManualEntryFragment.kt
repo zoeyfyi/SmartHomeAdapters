@@ -31,6 +31,7 @@ class ManualEntryFragment : Fragment() {
 
         continue_button.setOnClickListener { _ ->
             parent.robotId = registration_code.toString()
+            parent.startFragment(NicknameFragment())
         }
 
         cancel_button.setOnClickListener { _ -> parent.startFragment(QRFragment()) }
