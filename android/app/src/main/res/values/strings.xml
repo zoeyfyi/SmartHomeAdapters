@@ -20,7 +20,7 @@
     <string name="input_id_default">000000</string>
     <string name="manual_submit_button_text">Submit Robot ID</string>
     <string name="nickname_input_placeholder">Robot nickname</string>
-    <string name="next_button_text">Next</string>
+    <string name="next_button_text">Continue</string>
 
     <!-- Strings related to SelectUseCaseFragment -->
     <string name="select_from_spinner_text">Choose a use case for your robot!</string>
