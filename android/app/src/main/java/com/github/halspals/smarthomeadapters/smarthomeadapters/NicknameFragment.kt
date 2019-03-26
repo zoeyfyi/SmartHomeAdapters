@@ -32,8 +32,8 @@ class NicknameFragment : Fragment() {
 
 
         continue_button.setOnClickListener { _ ->
-            parent.robotNickname = robot_nickname_text_view.toString()
-            parent.startFragment(SelectUseCaseFragment())
+            parent.robotNickname = device_name_text_view.text.toString()
+            parent.startFragment(SelectAttachFragment())
         }
 
         cancel_button.setOnClickListener { _ -> parent.finish() }
