@@ -22,14 +22,8 @@
     <string name="nickname_input_placeholder">Robot nickname</string>
     <string name="next_button_text">Continue</string>
 
-    <!-- Strings related to SelectUseCaseFragment -->
-    <string name="select_from_spinner_text">Choose a use case for your robot!</string>
-    <string name="loading_spinner_text">Loading use cases&#8230;</string>
-    <string name="failed_spinner_text">Could not fetch use cases.</string>
-    <string name="register_button">Register</string>
-
     <!-- Strings related to ConfigureRobotFragment -->
-    <string name="finish_button_text">Save Configuration</string>
+    <string name="finish_button_text">Finish</string>
 
 
 </resources>
