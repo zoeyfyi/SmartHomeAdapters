@@ -5,9 +5,9 @@ import com.google.gson.annotations.SerializedName
 
 data class RobotStatus(
         @SerializedName("value")
-        val value: Boolean,
+        var value: Boolean,
         @SerializedName("current")
-        val current: Int,
+        var current: Int,
         @SerializedName("min")
         val min: Int,
         @SerializedName("max")

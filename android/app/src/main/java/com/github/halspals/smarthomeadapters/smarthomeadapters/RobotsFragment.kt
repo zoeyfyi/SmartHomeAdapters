@@ -9,7 +9,10 @@ import android.view.ViewGroup
 import android.widget.GridView
 import com.github.halspals.smarthomeadapters.smarthomeadapters.model.Robot
 import kotlinx.android.synthetic.main.fragment_robots.*
+import net.openid.appauth.AuthorizationException
+import okhttp3.ResponseBody
 import org.jetbrains.anko.design.snackbar
+import org.jetbrains.anko.toast
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -55,6 +58,8 @@ class RobotsFragment : Fragment() {
                         if (errorMsg != null) {
                             snackbar_layout.snackbar(errorMsg)
                         }
+
+                        displayRobots(view, listOf())
                     }
 
                     override fun onResponse(
@@ -62,33 +67,27 @@ class RobotsFragment : Fragment() {
                             response: Response<List<Robot>>) {
 
                         val robots = response.body()
-                        if (response.isSuccessful && robots != null) {
-                            displayRobots(view, robots)
+                        val robotsToList = if (response.isSuccessful && robots != null) {
+                            robots
                         } else {
                             val error = RestApiService.extractErrorFromResponse(response)
-
                             Log.e(fTag, "getRobots got unsuccessful response, error: $error")
                             if (error != null) {
                                 snackbar_layout.snackbar(error)
                             }
+
+                            listOf()
                         }
+
+                        displayRobots(view, robotsToList)
                     }
                 })
     }
 
     private fun displayRobots(view: View, robots: List<Robot>) {
         robotGrid = view.findViewById(R.id.RobotGrid)
-        robotGrid.adapter = RobotAdapter(view.context, robots.toMutableList()) { robot ->
-            Log.d(fTag, "Clicked robot: \"${robot.nickname}\"")
-
-            // create fragment with robot ID
-            val robotFragment = RobotFragment()
-            val bundle = Bundle()
-            bundle.putString("robotId", robot.id)
-            bundle.putString("robotType", robot.robotType)
-            robotFragment.arguments = bundle
-
-            parent.startFragment(robotFragment, true)
-        }
+        robotGrid.adapter = RobotAdapter(parent, robots.toMutableList())
     }
+
+
 }

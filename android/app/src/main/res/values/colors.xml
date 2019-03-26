@@ -4,4 +4,6 @@
     <color name="colorPrimaryDark">#E7E7E7E7</color>
     <color name="colorPrimaryDarkSemiTransparent">#CCE7E7E7</color>
     <color name="colorAccent">#55DDFF</color>
+    <color name="colorToggleOff">@color/colorPrimaryDark</color>
+    <color name="colorToggleOn">@color/colorAccent</color>
 </resources>
