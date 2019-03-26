@@ -1,7 +1,6 @@
 package com.github.halspals.smarthomeadapters.smarthomeadapters
 
 import android.content.Context
-import android.media.Image
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -100,7 +99,6 @@ class RobotAdapter (
     private fun updateRobotDisplay(robot: Robot, robotCircle: ImageView, robotIcon: ImageView) {
         when (robot.robotInterfaceType) {
             Robot.INTERFACE_TYPE_TOGGLE -> {
-                robotIcon.setImageResource(R.drawable.basic_lightbulb)
                 robotCircle.setColorFilter(
                         if (robot.robotStatus.value) {
                             parent.getColor(R.color.colorToggleOn)
@@ -110,7 +108,25 @@ class RobotAdapter (
                 )
             }
 
-            else -> TODO("NOT IMPLEMENTED")
+            Robot.INTERFACE_TYPE_RANGE -> {/* TODO */}
+
+            else -> TODO("NO OTHER ROBOT INTERFACE TYPE EXPECTED")
+        }
+
+        when (robot.robotType) {
+            /*
+                TODO set different icons depending on the state etc
+             */
+            Robot.ROBOT_TYPE_SWITCH -> {
+                robotIcon.setImageResource(R.drawable.basic_lightbulb)
+            }
+
+            Robot.ROBOT_TYPE_THERMOSTAT -> {
+                robotIcon.setImageResource(R.drawable.basic_accelerator)
+            }
+
+            else -> TODO("NO OTHER ROBOT TYPE EXPECTED")
+
         }
     }
 
