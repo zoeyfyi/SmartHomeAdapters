@@ -8,6 +8,8 @@ import android.view.View
 import android.view.ViewGroup
 import com.google.zxing.integration.android.IntentIntegrator
 import kotlinx.android.synthetic.main.fragment_qr.*
+import org.jetbrains.anko.clearTask
+import org.jetbrains.anko.intentFor
 
 /**
  * A fragment which upon a button click starts a QR scanner from the parent activity.
@@ -44,7 +46,9 @@ class QRFragment : Fragment() {
             parent.startFragment(ManualEntryFragment())
         }
 
-        cancel_button.setOnClickListener { _ -> parent.finish() }
+        cancel_button.setOnClickListener { _ ->
+            parent.startActivity(parent.intentFor<MainActivity>().clearTask())
+        }
 
     }
 }

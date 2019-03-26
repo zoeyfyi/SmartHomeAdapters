@@ -30,7 +30,7 @@ class ManualEntryFragment : Fragment() {
 
 
         continue_button.setOnClickListener { _ ->
-            parent.robotId = registration_code.toString()
+            parent.robotId = registration_code.text.toString()
             parent.startFragment(NicknameFragment())
         }
 

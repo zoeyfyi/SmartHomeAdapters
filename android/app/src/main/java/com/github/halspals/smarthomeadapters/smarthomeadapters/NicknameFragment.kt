@@ -8,6 +8,8 @@ import android.view.View
 import android.view.ViewGroup
 import kotlinx.android.synthetic.main.fragment_nickname.*
 import kotlinx.android.synthetic.main.view_robot_card.*
+import org.jetbrains.anko.clearTask
+import org.jetbrains.anko.intentFor
 
 /**
  * A fragment which upon a button click starts a QR scanner from the parent activity.
@@ -36,7 +38,9 @@ class NicknameFragment : Fragment() {
             parent.startFragment(SelectAttachFragment())
         }
 
-        cancel_button.setOnClickListener { _ -> parent.finish() }
+        cancel_button.setOnClickListener { _ ->
+            parent.startActivity(parent.intentFor<MainActivity>().clearTask())
+        }
 
     }
 }
