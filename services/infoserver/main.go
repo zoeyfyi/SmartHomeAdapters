@@ -26,6 +26,32 @@ type server struct {
 	ThermostatClient thermostatserver.ThermostatServerClient
 }
 
+func (s *server) ReconfigureUsecase(ctx context.Context, query *infoserver.ReconfigureRobotQuery) error {
+
+	log.Printf("reconfiguring usecase for robot with id: %s (user id: %s)", query.Id, query.UserId)
+
+	_, err := s.DB.Exec("UPDATE robots SET robotType = $1 WHERE serial = $2 AND registeredUserId = $3", query.Usecase, query.Id, query.UserId)
+
+	if err != nil {
+		log.Printf("Failed to rename robot %s: %v", query.Id, err)
+	}
+
+	return err
+
+}
+
+func (s *server) RenameRobot(ctx context.Context, query *infoserver.RenameRobotQuery) error {
+
+	log.Printf("renaming robot with id: %s (user id: %s) to nickname %s", query.Id, query.UserId, query.Nickname)
+	_, err := s.DB.Exec("UPDATE robots SET nickname = $1 WHERE serial = $2 AND registeredUserId = $3", query.Nickname, query.Id, query.UserId)
+
+	if err != nil {
+		log.Printf("Failed to rename robot %s: %v", query.Id, err)
+	}
+
+	return err
+
+}
 func (s *server) DeleteRobot(ctx context.Context, query *infoserver.RobotQuery) error {
 
 	log.Printf("deleting robot with id: %s (user id: %s)", query.Id, query.UserId)
@@ -36,7 +62,7 @@ func (s *server) DeleteRobot(ctx context.Context, query *infoserver.RobotQuery) 
 		log.Printf("Failed to delete robot %s: %v", query.Id, err)
 	}
 
-	return nil
+	return err
 
 }
 

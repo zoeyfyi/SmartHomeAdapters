@@ -22,6 +22,20 @@ message RobotQuery {
     string userId = 2;
 }
 
+message RenameRobotQuery {
+    string id = 1;
+    string userId = 2;
+    string nickname = 3;
+}
+
+message ReconfigureRobotQuery {
+
+    string id = 1;
+    string userId = 2;
+    string usecase = 3;
+
+}
+
 message RegisterRobotQuery {
     string id = 1;
     string userId = 2;
