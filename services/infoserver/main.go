@@ -11,10 +11,10 @@ import (
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/golang/protobuf/ptypes/wrappers"
 	_ "github.com/lib/pq"
-	"github.com/mrbenshef/SmartHomeAdapters/microservice"
-	"github.com/mrbenshef/SmartHomeAdapters/microservice/infoserver"
-	"github.com/mrbenshef/SmartHomeAdapters/microservice/switchserver"
-	"github.com/mrbenshef/SmartHomeAdapters/microservice/thermostatserver"
+	"github.com/mrbenshef/SmartHomeAdapters/services/microservice"
+	"github.com/mrbenshef/SmartHomeAdapters/services/microservice/infoserver"
+	"github.com/mrbenshef/SmartHomeAdapters/services/microservice/switchserver"
+	"github.com/mrbenshef/SmartHomeAdapters/services/microservice/thermostatserver"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -24,6 +24,20 @@ type server struct {
 	DB               *sql.DB
 	SwitchClient     switchserver.SwitchServerClient
 	ThermostatClient thermostatserver.ThermostatServerClient
+}
+
+func (s *server) DeleteRobot(ctx context.Context, query *infoserver.RobotQuery) error {
+
+	log.Printf("deleting robot with id: %s (user id: %s)", query.Id, query.UserId)
+
+	_, err := s.DB.Exec("DELETE FROM robots WHERE serial = $1 AND registeredUserId = $2", query.Id, query.UserId)
+
+	if err != nil {
+		log.Printf("Failed to delete robot %s: %v", query.Id, err)
+	}
+
+	return nil
+
 }
 
 func (s *server) GetRobot(ctx context.Context, query *infoserver.RobotQuery) (*infoserver.Robot, error) {
@@ -105,10 +119,9 @@ func (s *server) GetRobots(query *infoserver.RobotsQuery, stream infoserver.Info
 	}
 
 	var (
-		serial        string
-		nickname      string
-		robotType     string
-		interfaceType string
+		serial    string
+		nickname  string
+		robotType string
 	)
 
 	for rows.Next() {
@@ -118,16 +131,46 @@ func (s *server) GetRobots(query *infoserver.RobotsQuery, stream infoserver.Info
 			return err
 		}
 		if robotType == "switch" {
-			interfaceType = "toggle"
-		} else {
-			interfaceType = "range"
+			switchRobot, err := s.SwitchClient.GetSwitch(context.Background(), &switchserver.SwitchQuery{
+				Id: serial,
+			})
+			if err != nil {
+				log.Printf("Failed to retrieve robot information.")
+				return err
+			}
+			stream.Send(&infoserver.Robot{
+				Id:            serial,
+				Nickname:      nickname,
+				RobotType:     robotType,
+				InterfaceType: "toggle",
+				RobotStatus: &infoserver.Robot_ToggleStatus{
+					ToggleStatus: &infoserver.ToggleStatus{
+						Value: switchRobot.IsOn,
+					},
+				},
+			})
+		} else if robotType == "thermostat" {
+			thermostat, err := s.ThermostatClient.GetThermostat(context.Background(), &thermostatserver.ThermostatQuery{
+				Id: serial,
+			})
+			if err != nil {
+				log.Printf("Failed to retrieve robot information.")
+				return err
+			}
+			err = stream.Send(&infoserver.Robot{
+				Id:            serial,
+				Nickname:      nickname,
+				RobotType:     robotType,
+				InterfaceType: "range",
+				RobotStatus: &infoserver.Robot_RangeStatus{
+					RangeStatus: &infoserver.RangeStatus{
+						Min:     thermostat.MinTempreture,
+						Max:     thermostat.MaxTempreture,
+						Current: thermostat.Tempreture,
+					},
+				},
+			})
 		}
-		err = stream.Send(&infoserver.Robot{
-			Id:            serial,
-			Nickname:      nickname,
-			RobotType:     robotType,
-			InterfaceType: interfaceType, // what should this be? used to be "toggle" or "range"
-		})
 		if err != nil {
 			return err
 		}
