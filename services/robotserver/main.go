@@ -106,11 +106,11 @@ func sendMessage(id string, msg string) error {
 			// socket was closed
 			log.Println("Socket closed")
 			return status.New(codes.Unavailable, "Robot not connected").Err()
-		} else {
-			// unknown error
-			log.Printf("Failed to send message: %v", err)
-			return status.New(codes.Internal, "Failed to communicate with robot").Err()
 		}
+
+		// unknown error
+		log.Printf("Failed to send message: %v", err)
+		return status.New(codes.Internal, "Failed to communicate with robot").Err()
 	}
 
 	return nil
@@ -128,7 +128,7 @@ func main() {
 	robotServer := &server{}
 	robotserver.RegisterRobotServerServer(grpcServer, robotServer)
 
-	lis, err := net.Listen("tcp", ":8080")
+	lis, err := net.Listen("tcp", "127.0.0.1:8080")
 	if err != nil {
 		log.Fatalf("Failed to listen: %v", err)
 	}
@@ -136,7 +136,10 @@ func main() {
 	log.Println("Starting grpc server")
 
 	go func() {
-		grpcServer.Serve(lis)
+		serveErr := grpcServer.Serve(lis)
+		if serveErr != nil {
+			log.Fatalf("failed to server GRPC server: %v", serveErr)
+		}
 	}()
 
 	log.Println("Started grpc server, starting http server")
