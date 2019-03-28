@@ -205,7 +205,7 @@ func postRegisterHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 	r.ParseForm()
 	email := r.PostForm.Get("email")
 	password := r.PostForm.Get("password")
-	confirmPassword := r.PostForm.Get("confirm_password")
+	confirmPassword := r.PostForm.Get("password_confirm")
 
 	if password != confirmPassword {
 		err := registerTemplate.Execute(w, registerTemplateData{
