@@ -84,25 +84,31 @@ docker-push-test:
 
 GOLINT = golangci-lint run ./... -E=golint -E=stylecheck -E=gosec -E=unconvert -E=goconst -E=gofmt -E=goimports -E=maligned -E=lll -E=unparam -E=nakedret
 
+lint-account-app:
+	@(cd services/account-app && $(GOLINT))
+
 lint-clientserver:
-	@(cd clientserver && $(GOLINT))
+	@(cd services/clientserver && $(GOLINT))
 
 lint-infoserver:
-	@(cd infoserver && $(GOLINT))
+	@(cd services/infoserver && $(GOLINT))
+
+lint-microservice:
+	@(cd services/microservice && $(GOLINT))
 
 lint-robotserver:
-	@(cd robotserver && $(GOLINT))
+	@(cd services/robotserver && $(GOLINT))
 
 lint-switchserver:
-	@(cd switchserver && $(GOLINT))
+	@(cd services/switchserver && $(GOLINT))
 
 lint-userserver:
-	@(cd userserver && $(GOLINT))
+	@(cd services/userserver && $(GOLINT))
 
 lint-thermostatserver:
-	@(cd thermostatserver && $(GOLINT))
+	@(cd services/thermostatserver && $(GOLINT))
 
-lint-services: lint-clientserver lint-infoserver lint-robotserver lint-switchserver lint-userserver lint-thermostatserver
+lint-services: lint-account-app lint-clientserver lint-infoserver lint-microservice lint-robotserver lint-switchserver lint-thermostatserver lint-userserver
 
 lint-android:
 	@(cd android && ./gradlew lint)
