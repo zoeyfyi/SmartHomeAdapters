@@ -226,7 +226,12 @@ func getLoginHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params
 
 func postRegisterHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	// parse post form
-	r.ParseForm()
+	err := r.ParseForm()
+	if err != nil {
+		http.Error(w, "failed to parse form", http.StatusBadRequest)
+		return
+	}
+
 	email := r.PostForm.Get("email")
 	password := r.PostForm.Get("password")
 	confirmPassword := r.PostForm.Get("password_confirm")
@@ -241,7 +246,7 @@ func postRegisterHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 		return
 	}
 
-	_, err := userserverClient.Register(context.Background(), &userserver.RegisterRequest{
+	_, err = userserverClient.Register(context.Background(), &userserver.RegisterRequest{
 		Email:    email,
 		Password: password,
 	})
