@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:tools="http://schemas.android.com/tools"
-          xmlns:android="http://schemas.android.com/apk/res/android"
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools"
           package="com.github.halspals.smarthomeadapters.smarthomeadapters">
 
     <uses-permission android:name="android.permission.INTERNET"/>
@@ -14,17 +13,27 @@
             android:supportsRtl="true"
             android:theme="@style/AppTheme"
             android:usesCleartextTraffic="true">
+        <activity
+            android:name="net.openid.appauth.RedirectUriReceiverActivity"
+            tools:node="replace">
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="https"
+                    android:host="callback.halspals.co.uk"/>
+            </intent-filter>
+        </activity>
         <activity android:name=".MainActivity"/>
-        <activity android:name=".AuthenticationActivity">
+        <activity
+            android:name=".AuthenticationActivity"
+            android:theme="@style/AppTheme.Launch">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
 
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <activity
-                android:name=".RegisterUserActivity"
-                android:theme="@style/AppTheme"/>
         <activity
                 android:name=".RegisterRobotActivity"
                 android:label="Registration Wizard"

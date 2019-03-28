@@ -8,6 +8,7 @@ import android.support.v4.app.FragmentManager
 import android.util.Log
 import android.view.MenuItem
 import kotlinx.android.synthetic.main.activity_main.*
+import net.openid.appauth.AuthorizationService
 
 class MainActivity :
         AppCompatActivity(),
@@ -18,9 +19,15 @@ class MainActivity :
         RestApiService.new()
     }
 
-    private val tag = "MainActivity"
+    internal val authState by lazy {
+        readAuthState(this)
+    }
 
-    internal lateinit var authToken: String
+    internal val authService by lazy {
+        AuthorizationService(this)
+    }
+
+    private val tag = "MainActivity"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,10 +37,6 @@ class MainActivity :
 
         // Start the robots fragment by default
         startFragment(RobotsFragment())
-
-        // Get the token for the current session
-        authToken = intent.getStringExtra("token")
-        Log.d(tag, "token: $authToken")
     }
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
