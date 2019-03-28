@@ -22,8 +22,9 @@ var (
 )
 
 var (
-	loginTemplate   = template.Must(template.ParseFiles("/app/static/login.html"))
-	consentTemplate = template.Must(template.ParseFiles("/app/static/consent.html"))
+	loginTemplate    = template.Must(template.ParseFiles("/app/static/login.html"))
+	registerTemplate = template.Must(template.ParseFiles("/app/static/register.html"))
+	consentTemplate  = template.Must(template.ParseFiles("/app/static/consent.html"))
 )
 
 type hydraLoginRequest struct {
@@ -45,6 +46,11 @@ type hydraConsentAccept struct {
 
 type consentTemplateData struct {
 	Error error
+}
+
+type registerTemplateData struct {
+	Error   error
+	Success bool
 }
 
 type LoginRequest struct {
@@ -218,6 +224,57 @@ func getLoginHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params
 	}
 }
 
+func postRegisterHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	// parse post form
+	err := r.ParseForm()
+	if err != nil {
+		http.Error(w, "failed to parse form", http.StatusBadRequest)
+		return
+	}
+
+	email := r.PostForm.Get("email")
+	password := r.PostForm.Get("password")
+	confirmPassword := r.PostForm.Get("password_confirm")
+
+	if password != confirmPassword {
+		err := registerTemplate.Execute(w, registerTemplateData{
+			Error: fmt.Errorf("passwords do not match"),
+		})
+		if err != nil {
+			log.Printf("Error rendering template: %v", err)
+		}
+		return
+	}
+
+	_, err = userserverClient.Register(context.Background(), &userserver.RegisterRequest{
+		Email:    email,
+		Password: password,
+	})
+
+	if err != nil {
+		err = registerTemplate.Execute(w, registerTemplateData{
+			Error: err,
+		})
+		if err != nil {
+			log.Printf("Error rendering template: %v", err)
+		}
+	}
+
+	err = registerTemplate.Execute(w, registerTemplateData{
+		Success: true,
+	})
+	if err != nil {
+		log.Printf("Error rendering template: %v", err)
+	}
+}
+
+func getRegisterHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	err := registerTemplate.Execute(w, registerTemplateData{})
+	if err != nil {
+		log.Printf("Error rendering template: %v", err)
+	}
+}
+
 func acceptConsent(w http.ResponseWriter, r *http.Request, challenge string) {
 	urlPut := fmt.Sprintf("https://hydra.halspals.co.uk/oauth2/auth/requests/consent/%s/accept", challenge)
 
@@ -296,8 +353,11 @@ func main() {
 	router := httprouter.New()
 	router.GET("/login", getLoginHandler)
 	router.POST("/login", postLoginHandler)
+	router.GET("/register", getRegisterHandler)
+	router.POST("/register", postRegisterHandler)
 	router.GET("/consent", getConsentHandler)
 	router.POST("/consent", postConsentHandler)
+	router.Handler("GET", "/static/*filepath", http.StripPrefix("/static/", http.FileServer(http.Dir("/app/static/"))))
 
 	userserverConn, err := grpc.Dial("userserver:80", grpc.WithInsecure())
 	if err != nil {
@@ -306,7 +366,7 @@ func main() {
 	defer userserverConn.Close()
 	userserverClient = userserver.NewUserServerClient(userserverConn)
 	// start server
-	if err := http.ListenAndServe(":4001", router); err != nil {
+	if err := http.ListenAndServe(":80", router); err != nil {
 		panic(err)
 	}
 }
