@@ -23,6 +23,8 @@ class MainActivity :
         AuthorizationService(this)
     }
 
+    internal var isInEditMode = false
+
     private val tag = "MainActivity"
 
     override fun onCreate(savedInstanceState: Bundle?) {

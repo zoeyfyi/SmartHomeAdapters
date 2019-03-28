@@ -9,10 +9,7 @@ import android.view.ViewGroup
 import android.widget.GridView
 import com.github.halspals.smarthomeadapters.smarthomeadapters.model.Robot
 import kotlinx.android.synthetic.main.fragment_robots.*
-import net.openid.appauth.AuthorizationException
-import okhttp3.ResponseBody
 import org.jetbrains.anko.design.snackbar
-import org.jetbrains.anko.toast
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -44,6 +41,20 @@ class RobotsFragment : Fragment() {
             } else {
                 fetchRobots(accessToken, view)
             }
+        }
+
+        edit_mode_image_view.setOnClickListener { _ ->
+            parent.isInEditMode = true
+            edit_mode_image_view.visibility = View.INVISIBLE
+            more_options_image_view.visibility = View.INVISIBLE
+            finish_edit_image_view.visibility = View.VISIBLE
+        }
+
+        finish_edit_image_view.setOnClickListener { _ ->
+            parent.isInEditMode = false
+            edit_mode_image_view.visibility = View.VISIBLE
+            more_options_image_view.visibility = View.VISIBLE
+            finish_edit_image_view.visibility = View.INVISIBLE
         }
     }
 

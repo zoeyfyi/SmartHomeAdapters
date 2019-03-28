@@ -3,6 +3,7 @@ package com.github.halspals.smarthomeadapters.smarthomeadapters
 import android.content.Context
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.BaseAdapter
@@ -57,15 +58,29 @@ class RobotAdapter (
         val robotCircle = view.findViewById<ImageView>(R.id.robot_circle_drawable)
         val robotIcon = view.findViewById<ImageView>(R.id.robot_image_view)
 
+        updateRobotDisplay(robot, robotCircle, robotIcon)
+
         // configure interactions with the robot
         when (robot.robotInterfaceType) {
             Robot.INTERFACE_TYPE_TOGGLE -> {
-                robotCircle.setOnClickListener { _ -> onToggle(robot, robotCircle, robotIcon) }
+                robotCircle.setOnClickListener { _ ->
+                    if (parent.isInEditMode) {
+                        val editFrag = EditRobotFragment()
+                        parent.startFragment(editFrag)
+                        editFrag.setRobotView(robot)
+                    } else {
+                        onToggle(robot, robotCircle, robotIcon)
+                    }
+                }
             }
 
             Robot.INTERFACE_TYPE_RANGE -> {
                 robotCircle.setOnDragListener { _, dragEvent ->
-                    TODO("NOT IMPLEMENTED")
+                    if (!parent.isInEditMode) {
+                        TODO("NOT IMPLEMENTED")
+                    } else {
+                        false
+                    }
                 }
             }
         }
@@ -99,13 +114,15 @@ class RobotAdapter (
     private fun updateRobotDisplay(robot: Robot, robotCircle: ImageView, robotIcon: ImageView) {
         when (robot.robotInterfaceType) {
             Robot.INTERFACE_TYPE_TOGGLE -> {
+                /*
                 robotCircle.setColorFilter(
+
                         if (robot.robotStatus.value) {
                             parent.getColor(R.color.colorToggleOn)
                         } else {
                             parent.getColor(R.color.colorToggleOff)
                         }
-                )
+                )*/
             }
 
             Robot.INTERFACE_TYPE_RANGE -> {/* TODO */}

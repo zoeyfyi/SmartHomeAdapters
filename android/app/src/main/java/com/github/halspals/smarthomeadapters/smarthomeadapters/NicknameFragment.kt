@@ -17,7 +17,7 @@ import org.jetbrains.anko.intentFor
  */
 class NicknameFragment : Fragment() {
 
-    private val fTag = "QRFragment"
+    private val fTag = "NicknameFragment"
 
     private val parent by lazy { activity as RegisterRobotActivity }
 
