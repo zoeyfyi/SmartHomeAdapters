@@ -9,7 +9,6 @@ import (
 	"os"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/mrbenshef/SmartHomeAdapters/microservice/robotserver"
 
@@ -53,7 +52,7 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func bufDialer(string, time.Duration) (net.Conn, error) {
+func bufDialer(context.Context, string) (net.Conn, error) {
 	return lis.Dial()
 }
 
@@ -83,7 +82,7 @@ func TestSendLEDCommand(t *testing.T) {
 
 	for _, r := range requests {
 		ctx := context.Background()
-		conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithDialer(bufDialer), grpc.WithInsecure())
+		conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
 		if err != nil {
 			t.Fatalf("Failed to dial bufnet: %v", err)
 		}
@@ -110,7 +109,7 @@ func TestSendLEDCommand(t *testing.T) {
 
 func TestUnavailableWhenRobotNotConnected(t *testing.T) {
 	ctx := context.Background()
-	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithDialer(bufDialer), grpc.WithInsecure())
+	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
 	if err != nil {
 		t.Fatalf("Failed to dial bufnet: %v", err)
 	}
@@ -152,7 +151,7 @@ func TestSendServoCommand(t *testing.T) {
 
 	for _, r := range requests {
 		ctx := context.Background()
-		conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithDialer(bufDialer), grpc.WithInsecure())
+		conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
 		if err != nil {
 			t.Fatalf("Failed to dial bufnet: %v", err)
 		}
@@ -197,7 +196,7 @@ func TestSendInvalidServoCommand(t *testing.T) {
 
 	for _, r := range requests {
 		ctx := context.Background()
-		conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithDialer(bufDialer), grpc.WithInsecure())
+		conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
 		if err != nil {
 			t.Fatalf("Failed to dial bufnet: %v", err)
 		}
