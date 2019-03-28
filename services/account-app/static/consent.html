@@ -5,19 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>HalsPals Login</title>
+    <link rel="stylesheet" href="static/style.css" />
 </head>
 <body>
-    <h1>HalsPals</h1>
-    
-    {{ if .Error }}
-    <p>{{ .Error }}</p>
-    {{ end }}
-    
-    <form action="https://account.halspals.co.uk/consent" method="POST">
-        <input id="challenge" name="challenge" type="hidden" />
-        <p>TODO: setup OAuth scopes, etc</p>
-        <button type="submit">Consent</button>
-    </form>
+    <div class="form">
+        <h1>HalsPals</h1>
+        
+        {{ if .Error }}
+        <p class="error">{{ .Error }}</p>
+        {{ end }}
+        
+        <form action="https://account.halspals.co.uk/consent" method="POST">
+            <input id="challenge" name="challenge" type="hidden" />
+            <p>TODO: setup OAuth scopes, etc</p>
+            <button type="submit">Consent</button>
+        </form>
+    </div>
 
     <script>
         var urlParams = new URLSearchParams(window.location.search);
