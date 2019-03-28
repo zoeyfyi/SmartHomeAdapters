@@ -20,20 +20,18 @@ class QRFragment : Fragment() {
 
     private val fTag = "QRFragment"
 
-    private lateinit var parent: RegisterRobotActivity
+    private val parent by lazy { activity as RegisterRobotActivity }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View? {
-
+        
         Log.d(fTag, "[onCreateView] Invoked")
         return inflater.inflate(R.layout.fragment_qr, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        parent = activity as RegisterRobotActivity
 
         scan_qr_button.setOnClickListener { _ ->
             // Start a QR scan from the parent using ZXING

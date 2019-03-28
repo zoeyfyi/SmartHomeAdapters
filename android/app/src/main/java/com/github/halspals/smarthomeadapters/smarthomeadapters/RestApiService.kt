@@ -36,12 +36,6 @@ interface RestApiService {
         }
     }
 
-    @POST("register")
-    fun registerUser(@Body user: User): Call<User>
-
-    @POST("login")
-    fun loginUser(@Body user: User): Call<Token>
-
     @GET("robots")
     fun getRobots(@Header("token") token: String): Call<List<Robot>>
 
@@ -69,4 +63,11 @@ interface RestApiService {
             @Header("token") token: String,
             @Body params: List<ConfigResult>): Call<ResponseBody>
 
+    @PATCH("robot/{id}/range/{current}")
+    fun robotRange(
+            @Path("id") id: String,
+            @Path("current") value: Int,
+            @Header("token") token: String,
+            @Body map: Map<String, Boolean>
+    ) : Call<ResponseBody>
 }
