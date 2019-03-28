@@ -23,7 +23,8 @@ img {
 
 .logo {
     width: 256px;
-    margin: 0 auto;
+    margin: 0 auto 30px auto;
+
 }
 
 .error {
