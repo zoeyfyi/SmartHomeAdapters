@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"os"
 	"strconv"
 
 	"github.com/golang/protobuf/ptypes/empty"
@@ -19,13 +18,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-)
-
-var (
-	username = os.Getenv("DB_USERNAME")
-	password = os.Getenv("DB_PASSWORD")
-	database = os.Getenv("DB_DATABASE")
-	url      = os.Getenv("DB_URL")
 )
 
 const (

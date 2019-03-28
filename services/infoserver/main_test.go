@@ -10,7 +10,6 @@ import (
 	"os"
 	"reflect"
 	"testing"
-	"time"
 
 	"google.golang.org/grpc/codes"
 
@@ -125,7 +124,7 @@ func TestMain(m *testing.M) {
 	os.Exit(exitCode)
 }
 
-func bufDialer(string, time.Duration) (net.Conn, error) {
+func bufDialer(context.Context, string) (net.Conn, error) {
 	return lis.Dial()
 }
 
@@ -148,7 +147,7 @@ func TestGetRobots(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithDialer(bufDialer), grpc.WithInsecure())
+	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
 	if err != nil {
 		t.Fatalf("Failed to dial bufnet: %v", err)
 	}
@@ -203,7 +202,7 @@ func TestGetRobotWithValidID(t *testing.T) {
 
 	for _, c := range cases {
 		ctx := context.Background()
-		conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithDialer(bufDialer), grpc.WithInsecure())
+		conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
 		if err != nil {
 			t.Fatalf("Failed to dial bufnet: %v", err)
 		}
@@ -226,7 +225,7 @@ func TestGetRobotWithInvalidID(t *testing.T) {
 	resetDatabase(t)
 
 	ctx := context.Background()
-	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithDialer(bufDialer), grpc.WithInsecure())
+	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
 	if err != nil {
 		t.Fatalf("Failed to dial bufnet: %v", err)
 	}
@@ -255,7 +254,7 @@ func TestSetRobotUsecase(t *testing.T) {
 	resetDatabase(t)
 
 	ctx := context.Background()
-	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithDialer(bufDialer), grpc.WithInsecure())
+	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
 	if err != nil {
 		t.Fatalf("Failed to dial bufnet: %v", err)
 	}
@@ -272,5 +271,4 @@ func TestSetRobotUsecase(t *testing.T) {
 	if err.Error() != expectedError {
 		t.Fatalf("Expected error: %s, got error: %v", expectedError, err)
 	}
-
 }
