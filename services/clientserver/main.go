@@ -599,14 +599,14 @@ func rangeHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 }
 
 type hydraIntrospect struct {
-	Subject    string `json:"sub"`
-	Active     bool   `json:"active"`
-	Scope      string `json:"scope"`
-	Client_id  string `json:"client_id"`
-	Exp        int    `json:"exp"`
-	Iat        int    `json:"iat"`
-	Iss        string `json:"iss"`
-	Token_type string `json:"token_type"`
+	Subject   string `json:"sub"`
+	Active    bool   `json:"active"`
+	Scope     string `json:"scope"`
+	ClientID  string `json:"client_id"`
+	Exp       int    `json:"exp"`
+	Iat       int    `json:"iat"`
+	Iss       string `json:"iss"`
+	TokenType string `json:"token_type"`
 }
 
 func auth(h httprouter.Handle) httprouter.Handle {
@@ -641,14 +641,12 @@ func auth(h httprouter.Handle) httprouter.Handle {
 		err = json.NewDecoder(resp.Body).Decode(&introspect)
 
 		if err != nil {
-
 			log.Printf("JSON decode error %v", err)
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
-
 		}
 
-		if err != nil || introspect.Subject == "" {
+		if introspect.Subject == "" {
 			log.Printf("Authentication error: %v", err)
 			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 			return
@@ -681,7 +679,9 @@ func createRouter() *httprouter.Router {
 
 func main() {
 	log.Println("Server starting ")
-	// FIX THIS
+
+	// TODO: FIX THIS
+	// nolint
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 
 	// connect to infoserver
