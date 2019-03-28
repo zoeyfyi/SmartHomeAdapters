@@ -9,6 +9,7 @@ import android.util.Log
 import com.github.halspals.smarthomeadapters.smarthomeadapters.model.UseCase
 import com.google.zxing.integration.android.IntentIntegrator
 import com.google.zxing.integration.android.IntentResult
+import net.openid.appauth.AuthorizationService
 
 /**
  * The activity forming the base of the robot registration wizard.
@@ -21,8 +22,6 @@ class RegisterRobotActivity : AppCompatActivity() {
     internal lateinit var robotId: String
     internal lateinit var robotNickname: String
 
-    internal lateinit var authToken: String
-
     // Record the chosen use case so that its parameters can be set up
     internal lateinit var chosenUseCase: UseCase
 
@@ -30,13 +29,17 @@ class RegisterRobotActivity : AppCompatActivity() {
         RestApiService.new()
     }
 
+    internal val authState by lazy {
+        readAuthState(this)
+    }
+
+    internal val authService by lazy {
+        AuthorizationService(this)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_register_robot)
-
-        // Get the token for the current session
-        authToken = intent.getStringExtra("token")
-        Log.d(tag, "token: $authToken")
 
         startFragment(QRFragment())
     }

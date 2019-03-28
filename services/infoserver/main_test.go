@@ -10,7 +10,6 @@ import (
 	"os"
 	"reflect"
 	"testing"
-	"time"
 
 	"google.golang.org/grpc/codes"
 
@@ -47,30 +46,50 @@ func resetDatabase(t *testing.T) {
 
 type mockSwitchClient struct{}
 
-func (c mockSwitchClient) GetSwitch(ctx context.Context, query *switchserver.SwitchQuery, _ ...grpc.CallOption) (*switchserver.Switch, error) {
+func (c mockSwitchClient) GetSwitch(
+	ctx context.Context,
+	query *switchserver.SwitchQuery,
+	_ ...grpc.CallOption,
+) (*switchserver.Switch, error) {
 	if query.Id == "123abc" {
 		return &switchserver.Switch{
 			Id:   "123abc",
 			IsOn: true,
 		}, nil
-	} else {
-		return nil, status.New(codes.NotFound, "Switch does not exist").Err()
 	}
+
+	return nil, status.New(codes.NotFound, "Switch does not exist").Err()
 }
 
-func (c mockSwitchClient) AddSwitch(_ context.Context, _ *switchserver.AddSwitchRequest, _ ...grpc.CallOption) (*switchserver.Switch, error) {
+func (c mockSwitchClient) AddSwitch(
+	_ context.Context,
+	_ *switchserver.AddSwitchRequest,
+	_ ...grpc.CallOption,
+) (*switchserver.Switch, error) {
 	return nil, nil
 }
 
-func (c mockSwitchClient) RemoveSwitch(_ context.Context, _ *switchserver.RemoveSwitchRequest, _ ...grpc.CallOption) (*empty.Empty, error) {
+func (c mockSwitchClient) RemoveSwitch(
+	_ context.Context,
+	_ *switchserver.RemoveSwitchRequest,
+	_ ...grpc.CallOption,
+) (*empty.Empty, error) {
 	return nil, nil
 }
 
-func (c mockSwitchClient) SetSwitch(_ context.Context, _ *switchserver.SetSwitchRequest, _ ...grpc.CallOption) (switchserver.SwitchServer_SetSwitchClient, error) {
+func (c mockSwitchClient) SetSwitch(
+	_ context.Context,
+	_ *switchserver.SetSwitchRequest,
+	_ ...grpc.CallOption,
+) (switchserver.SwitchServer_SetSwitchClient, error) {
 	return nil, nil
 }
 
-func (c mockSwitchClient) CalibrateSwitch(_ context.Context, _ *switchserver.SwitchCalibrationParameters, _ ...grpc.CallOption) (*empty.Empty, error) {
+func (c mockSwitchClient) CalibrateSwitch(
+	_ context.Context,
+	_ *switchserver.SwitchCalibrationParameters,
+	_ ...grpc.CallOption,
+) (*empty.Empty, error) {
 	return nil, nil
 }
 
@@ -105,7 +124,7 @@ func TestMain(m *testing.M) {
 	os.Exit(exitCode)
 }
 
-func bufDialer(string, time.Duration) (net.Conn, error) {
+func bufDialer(context.Context, string) (net.Conn, error) {
 	return lis.Dial()
 }
 
@@ -113,13 +132,13 @@ func TestGetRobots(t *testing.T) {
 	resetDatabase(t)
 
 	expectedRobots := []*infoserver.Robot{
-		&infoserver.Robot{
+		{
 			Id:            "123abc",
 			Nickname:      "testLightbot",
 			RobotType:     "switch",
 			InterfaceType: "toggle",
 		},
-		&infoserver.Robot{
+		{
 			Id:            "qwerty",
 			Nickname:      "testThermoBot",
 			RobotType:     "thermostat",
@@ -128,7 +147,7 @@ func TestGetRobots(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithDialer(bufDialer), grpc.WithInsecure())
+	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
 	if err != nil {
 		t.Fatalf("Failed to dial bufnet: %v", err)
 	}
@@ -183,7 +202,7 @@ func TestGetRobotWithValidID(t *testing.T) {
 
 	for _, c := range cases {
 		ctx := context.Background()
-		conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithDialer(bufDialer), grpc.WithInsecure())
+		conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
 		if err != nil {
 			t.Fatalf("Failed to dial bufnet: %v", err)
 		}
@@ -206,7 +225,7 @@ func TestGetRobotWithInvalidID(t *testing.T) {
 	resetDatabase(t)
 
 	ctx := context.Background()
-	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithDialer(bufDialer), grpc.WithInsecure())
+	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
 	if err != nil {
 		t.Fatalf("Failed to dial bufnet: %v", err)
 	}
@@ -235,7 +254,7 @@ func TestSetRobotUsecase(t *testing.T) {
 	resetDatabase(t)
 
 	ctx := context.Background()
-	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithDialer(bufDialer), grpc.WithInsecure())
+	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
 	if err != nil {
 		t.Fatalf("Failed to dial bufnet: %v", err)
 	}
@@ -252,5 +271,4 @@ func TestSetRobotUsecase(t *testing.T) {
 	if err.Error() != expectedError {
 		t.Fatalf("Expected error: %s, got error: %v", expectedError, err)
 	}
-
 }

@@ -127,7 +127,12 @@ class ParameterAdapter (private val context: Context, private val parameters: Li
     internal fun getConfigValuesSnapshot(): List<ConfigResult> {
         val snapshot = ArrayList<ConfigResult>()
         for (paramName in configSettings.keys) {
-            snapshot.add(ConfigResult(paramName.replace(" ", ""), configSettings[paramName]!!))
+            snapshot.add(
+                    ConfigResult(
+                            paramName.replace(" ", ""),
+                            configSettings[paramName]!!
+                    )
+            )
         }
 
         return snapshot

@@ -82,8 +82,33 @@ docker-push-test:
 # LINT
 #
 
-lint-services:
-	@for d in services/*/ ; do (cd "$d" && test -f go.mod && golangci-lint run); done
+GOLINT = golangci-lint run ./... -E=golint -E=stylecheck -E=gosec -E=unconvert -E=goconst -E=gofmt -E=goimports -E=maligned -E=lll -E=unparam -E=nakedret
+
+lint-account-app:
+	@(cd services/account-app && $(GOLINT))
+
+lint-clientserver:
+	@(cd services/clientserver && $(GOLINT))
+
+lint-infoserver:
+	@(cd services/infoserver && $(GOLINT))
+
+lint-microservice:
+	@(cd services/microservice && $(GOLINT))
+
+lint-robotserver:
+	@(cd services/robotserver && $(GOLINT))
+
+lint-switchserver:
+	@(cd services/switchserver && $(GOLINT))
+
+lint-userserver:
+	@(cd services/userserver && $(GOLINT))
+
+lint-thermostatserver:
+	@(cd services/thermostatserver && $(GOLINT))
+
+lint-services: lint-account-app lint-clientserver lint-infoserver lint-microservice lint-robotserver lint-switchserver lint-thermostatserver lint-userserver
 
 lint-android:
 	@(cd android && ./gradlew lint)
@@ -162,4 +187,4 @@ compile-reports:
 ci-test-android: 
 	@docker run -it --rm -v $$PWD/android:/root/tmp budtmo/docker-android-x86-9.0 bash -c "(cd tmp && ./gradlew test)"
 
-ci: docker-dbs test-services ci-test-android compile-reports lint-docker-compose
+ci: docker-dbs test-services ci-test-android compile-reports lint-services lint-docker-compose
