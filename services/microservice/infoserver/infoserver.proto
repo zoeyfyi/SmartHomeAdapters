@@ -4,6 +4,9 @@ import "google/protobuf/empty.proto";
 
 service InfoServer {
     rpc GetRobot (RobotQuery) returns (Robot) {}
+    rpc DeleteRobot (RobotQuery) returns (google.protobuf.Empty) {}
+    rpc ReconfigureUsecase (ReconfigureRobotQuery) returns (google.protobuf.Empty) {}
+    rpc RenameRobot (RenameRobotQuery) returns (google.protobuf.Empty) {}
     rpc GetRobots (RobotsQuery) returns (stream Robot) {}
     rpc RegisterRobot (RegisterRobotQuery) returns (google.protobuf.Empty) {}
     rpc ToggleRobot (ToggleRequest) returns (google.protobuf.Empty) {}
@@ -29,11 +32,9 @@ message RenameRobotQuery {
 }
 
 message ReconfigureRobotQuery {
-
     string id = 1;
     string userId = 2;
     string usecase = 3;
-
 }
 
 message RegisterRobotQuery {
