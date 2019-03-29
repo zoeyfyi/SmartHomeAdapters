@@ -13,8 +13,8 @@ import (
 	"strconv"
 
 	"github.com/julienschmidt/httprouter"
-	"github.com/mrbenshef/SmartHomeAdapters/microservice/infoserver"
-	"github.com/mrbenshef/SmartHomeAdapters/microservice/userserver"
+	"github.com/mrbenshef/SmartHomeAdapters/services/microservice/infoserver"
+	"github.com/mrbenshef/SmartHomeAdapters/services/microservice/userserver"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -216,6 +216,82 @@ func robotsHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(robots)
+}
+
+func deleteRobotHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+
+	id := ps.ByName("id")
+	log.Printf("Deleting robot with id %s", id)
+
+	userId := r.Context().Value("userId").(string)
+
+	_, err := infoserverClient.DeleteRobot(context.Background(), &infoserver.RobotQuery{Id: id, UserId: userId})
+	if err != nil {
+		HTTPError(w, err)
+		return
+	}
+	// convert robot status
+	w.WriteHeader(http.StatusOK)
+
+}
+
+type PatchUsecaseParameters struct {
+	Nickname string `json:"usecase"`
+}
+
+func patchUsecaseHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+
+	id := ps.ByName("id")
+	log.Printf("Patching usecase of robot with id %s", id)
+
+	var patchUsecaseParameters PatchUsecaseParameters
+
+	err := json.NewDecoder(r.Body).Decode(&patchUsecaseParameters)
+
+	if err != nil {
+		log.Printf("Invalid usecase patch JSON: %v", err)
+		HTTPError(w, errors.New("Invalid JSON"))
+		return
+	}
+	userId := r.Context().Value("userId").(string)
+	_, err = infoserverClient.ReconfigureUsecase(context.Background(), &infoserver.ReconfigureRobotQuery{Id: id, UserId: userId, Usecase: patchUsecaseParameters.Nickname})
+	if err != nil {
+		HTTPError(w, err)
+		return
+	}
+	// convert robot status
+	w.WriteHeader(http.StatusOK)
+
+}
+
+type RenameParameters struct {
+	Nickname string `json:"name"`
+}
+
+
+func patchNameHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+
+	id := ps.ByName("id")
+	log.Printf("Patching name of robot with id %s", id)
+
+	userId := r.Context().Value("userId").(string)
+
+	var renameParameters RenameParameters
+
+	err := json.NewDecoder(r.Body).Decode(&renameParameters)
+	if err != nil {
+		log.Printf("Invalid name patch JSON: %v", err)
+		HTTPError(w, errors.New("Invalid JSON"))
+		return
+	}
+	_, err = infoserverClient.RenameRobot(context.Background(), &infoserver.RenameRobotQuery{Id: id, UserId: userId, Nickname: renameParameters.Nickname})
+	if err != nil {
+		HTTPError(w, err)
+		return
+	}
+	// convert robot status
+	w.WriteHeader(http.StatusOK)
+
 }
 
 func robotHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -629,6 +705,9 @@ func createRouter() *httprouter.Router {
 	router.POST("/robot/:id", auth(registerRobotHandler))
 	router.GET("/robots", auth(robotsHandler))
 	router.GET("/robot/:id", auth(robotHandler))
+	router.DELETE("/robot/:id", auth(deleteRobotHandler))
+	router.PATCH("/robot/:id/usecase", auth(patchUsecaseHandler))
+	router.PATCH("/robot/:id/name", auth(patchNameHandler))
 	router.PATCH("/robot/:id/toggle/:value", auth(toggleHandler))
 	router.PATCH("/robot/:id/range/:value", auth(rangeHandler))
 	router.GET("/usecases", auth(usecasesHandler))
