@@ -20,80 +20,17 @@ check: check-docker-deps check-go-deps check-arduino-deps
 # BUILD
 #
 
-build-clientserver: check-go-deps
-	@(cd clientserver && go generate)
-	@(cd clientserver && go build -o ../build/clientserver)
-
-build-infoserver: check-go-deps
-	@(cd infoserver && go generate)
-	@(cd infoserver && go build -o ../build/infoserver)
-
-build-robotserver: check-go-deps
-	@(cd robotserver && go generate)
-	@(cd robotserver && go build -o ../build/robotserver)
-
-build-switchserver: check-go-deps
-	@(cd switchserver && go generate)
-	@(cd switchserver && go build -o ../build/switchserver)
-
-build-userserver: check-go-deps
-	@(cd userserver && go generate)
-	@(cd userserver && go build -o ../build/userserver)
-
-build-thermostatserver: check-go-deps
-	@(cd thermostatserver && go generate)
-	@(cd thermostatserver && go build -o ../build/thermostatserver)
-
-build-account-app: check-go-deps
-	@(cd account-app && go generate)
-	@(cd account-app && go build -o ../build/account-app)
-
 build-android:
 	@(cd android && ./gradlew assembleDebug)
-	@cp android/app/build/outputs/apk/debug/app-debug.apk build/app-debug.apk
-
-build: build-clientserver build-infoserver build-robotserver build-switchserver build-userserver build-thermostatserver build-android build-account-app
 
 #
 # DOCKER
 #
 
-docker-clientserver:
-	@docker build -f go.Dockerfile -t smarthomeadapters/clientserver . --build-arg SERVICE=clientserver
 
-docker-infodb:
-	@(cd infodb && docker build -t smarthomeadapters/infodb .)
-
-docker-infoserver:
-	@docker build -f go.Dockerfile -t smarthomeadapters/infoserver . --build-arg SERVICE=infoserver
-
-docker-robotserver:
-	@docker build -f go.Dockerfile -t smarthomeadapters/robotserver . --build-arg SERVICE=robotserver
-
-docker-switchdb:
-	@(cd switchdb && docker build -t smarthomeadapters/switchdb .)
-
-docker-switchserver:
-	@docker build -f go.Dockerfile -t smarthomeadapters/switchserver . --build-arg SERVICE=switchserver
-
-docker-userdb:
-	@(cd userdb && docker build -t smarthomeadapters/userdb .)
-
-docker-userserver:
-	@docker build -f go.Dockerfile -t smarthomeadapters/userserver . --build-arg SERVICE=userserver
-
-docker-thermostatserver:
-	@docker build -f go.Dockerfile -t smarthomeadapters/thermostatserver . --build-arg SERVICE=thermostatserver
-
-docker-account-app:
-	@(docker build -f go.Dockerfile -t smarthomeadapters/account-app . --build-arg SERVICE=account-app)
-
-docker-thermodb:
-	@(cd thermodb && docker build -t smarthomeadapters/thermodb .)
-
-docker: docker-clientserver docker-infoserver docker-robotserver docker-switchserver docker-userserver docker-thermostatserver docker-infodb docker-switchdb docker-userdb docker-thermodb docker-account-app
-
-docker-dbs: docker-infodb docker-switchdb docker-userdb docker-thermodb
+docker:
+	@(cd services/microservice && docker build -t smarthomeadapters/microservice .)
+	@docker-compose build
 
 docker-push:
 	@docker tag smarthomeadapters/clientserver smarthomeadapters/clientserver:latest
@@ -142,37 +79,36 @@ docker-push-test:
 	@docker push smarthomeadapters/account-app:test
 
 #
-# CLEAN
-#
-
-clean:
-	@rm -rf build/*
-
-#
 # LINT
 #
 
 GOLINT = golangci-lint run ./... -E=golint -E=stylecheck -E=gosec -E=unconvert -E=goconst -E=gofmt -E=goimports -E=maligned -E=lll -E=unparam -E=nakedret
 
+lint-account-app:
+	@(cd services/account-app && $(GOLINT))
+
 lint-clientserver:
-	@(cd clientserver && $(GOLINT))
+	@(cd services/clientserver && $(GOLINT))
 
 lint-infoserver:
-	@(cd infoserver && $(GOLINT))
+	@(cd services/infoserver && $(GOLINT))
+
+lint-microservice:
+	@(cd services/microservice && $(GOLINT))
 
 lint-robotserver:
-	@(cd robotserver && $(GOLINT))
+	@(cd services/robotserver && $(GOLINT))
 
 lint-switchserver:
-	@(cd switchserver && $(GOLINT))
+	@(cd services/switchserver && $(GOLINT))
 
 lint-userserver:
-	@(cd userserver && $(GOLINT))
+	@(cd services/userserver && $(GOLINT))
 
 lint-thermostatserver:
-	@(cd thermostatserver && $(GOLINT))
+	@(cd services/thermostatserver && $(GOLINT))
 
-lint-services: lint-clientserver lint-infoserver lint-robotserver lint-switchserver lint-userserver lint-thermostatserver
+lint-services: lint-account-app lint-clientserver lint-infoserver lint-microservice lint-robotserver lint-switchserver lint-thermostatserver lint-userserver
 
 lint-android:
 	@(cd android && ./gradlew lint)
@@ -183,31 +119,53 @@ lint-docker-compose:
 lint: lint-services lint-android lint-docker-compose
 
 #
-# TEST
+# DB
 #
 
-test-clientserver:
-	@(cd clientserver && go test)
+db-up:
+	@docker run --rm -d --name test_infodb -p 5001:5432 -e POSTGRES_USER=temp -e POSTGRES_PASSWORD=password smarthomeadapters/infodb
+	@docker run --rm -d --name test_switchdb -p 5002:5432 -e POSTGRES_USER=temp -e POSTGRES_PASSWORD=password smarthomeadapters/switchdb
+	@docker run --rm -d --name test_thermodb -p 5003:5432 -e POSTGRES_USER=temp -e POSTGRES_PASSWORD=password smarthomeadapters/thermodb
+	@docker run --rm -d --name test_userdb -p 5004:5432 -e POSTGRES_USER=temp -e POSTGRES_PASSWORD=password smarthomeadapters/userdb
 
-test-infoserver:
-	@(cd infoserver && go test)
+db-down:
+	@docker stop test_infodb
+	@docker stop test_switchdb
+	@docker stop test_thermodb
+	@docker stop test_userdb
 
-test-robotserver:
-	@(cd robotserver && go test)
-
-test-switchserver:
-	@(cd switchserver && go test)
-
-test-userserver:
-	@(cd userserver && go test)
-
-test-thermostatserver:
-	@(cd thermostatserver && go test)
+#
+# TEST
+#
 
 test-android:
 	@(cd android && ./gradlew test)
 
-test-services: test-clientserver test-infoserver test-robotserver test-switchserver test-userserver test-thermostatserver
+test-account-app:
+	@(cd services/account-app && go test)
+
+test-clientserver:
+	@(cd services/clientserver && go test)
+
+test-infoserver:
+	@(cd services/infoserver && DB_URL=localhost:5001 DB_USERNAME=temp DB_PASSWORD=password DB_DATABASE=temp go test)
+
+test-microservice:
+	@(cd services/microservice && go test)
+
+test-robotserver:
+	@(cd services/robotserver && go test)
+
+test-switchserver:
+	@(cd services/switchserver && DB_URL=localhost:5002 DB_USERNAME=temp DB_PASSWORD=password DB_DATABASE=temp go test)
+
+test-thermostatserver:
+	@(cd services/thermostatserver && DB_URL=localhost:5003 DB_USERNAME=temp DB_PASSWORD=password DB_DATABASE=temp go test)
+
+test-userserver:
+	@(cd services/userserver && DB_URL=localhost:5004 DB_USERNAME=temp DB_PASSWORD=password DB_DATABASE=temp go test)
+
+test-services: test-account-app test-clientserver test-infoserver test-microservice test-robotserver test-switchserver test-thermostatserver test-userserver
 
 test-e2e:
 	@(cd e2e-tests && npm i && npm test)
