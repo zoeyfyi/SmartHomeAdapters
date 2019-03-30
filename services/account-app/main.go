@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -189,6 +190,16 @@ func getLoginHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params
 
 	// get hydra challenge
 	challenge := r.URL.Query().Get("login_challenge")
+	if challenge == "" {
+		log.Println("no login challenge")
+		err := loginTemplate.Execute(w, loginTemplateData{
+			Error: errors.New("somthings wrong with your OAUth client"),
+		})
+		if err != nil {
+			log.Printf("Error rendering template: %v", err)
+		}
+		return
+	}
 
 	// get infomation about the login request from hydra
 	urlGet := fmt.Sprintf("https://hydra.halspals.co.uk/oauth2/auth/requests/login/%s", challenge)
@@ -204,8 +215,8 @@ func getLoginHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params
 		return
 	}
 
-	if resp.Body == nil {
-		log.Println("nil responce body")
+	if resp.StatusCode != 200 || resp.Body == nil {
+		log.Printf("invalid responce from hydra (%d)", resp.StatusCode)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -216,7 +227,7 @@ func getLoginHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params
 	if err != nil {
 		buf := new(bytes.Buffer)
 		buf.ReadFrom(resp.Body)
-		log.Printf("failed to decode hydra responce: %s", buf.String())
+		log.Printf("failed to decode hydra responce: \"%s\"\nerror: %v", buf.String(), err)
 
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
