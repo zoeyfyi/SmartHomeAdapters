@@ -73,7 +73,7 @@ func acceptLogin(w http.ResponseWriter, r *http.Request, challenge string) {
 	password := r.PostForm.Get("password")
 
 	log.Printf("Logging in user with email: %s", email)
-	token, err := userserverClient.Login(context.Background(), &userserver.LoginRequest{
+	user, err := userserverClient.CheckCredentials(context.Background(), &userserver.Credentials{
 		Email:    email,
 		Password: password,
 	})
@@ -82,13 +82,7 @@ func acceptLogin(w http.ResponseWriter, r *http.Request, challenge string) {
 		log.Fatalf("Bad login: %v", err)
 	}
 
-	id, err := userserverClient.Authorize(context.Background(), token)
-
-	if err != nil {
-		log.Fatalf("Bad authorize: %v", err)
-	}
-
-	jsonData := &LoginRequest{Remember: false, Subject: id.Id}
+	jsonData := &LoginRequest{Remember: false, Subject: user.Id}
 
 	buf := new(bytes.Buffer)
 	err = json.NewEncoder(buf).Encode(jsonData)
