@@ -80,7 +80,7 @@ func acceptLogin(w http.ResponseWriter, r *http.Request, email string, password 
 	}
 
 	log.Printf("logging in user with email: %s", email)
-	token, err := userserverClient.Login(context.Background(), &userserver.LoginRequest{
+	user, err := userserverClient.CheckCredentials(context.Background(), &userserver.Credentials{
 		Email:    email,
 		Password: password,
 	})
@@ -91,16 +91,8 @@ func acceptLogin(w http.ResponseWriter, r *http.Request, email string, password 
 		return
 	}
 
-	// TODO: remove old token handling
-	id, err := userserverClient.Authorize(context.Background(), token)
-	if err != nil {
-		log.Printf("Bad authorize: %v", err)
-		loginError(w, errors.New("internal error"))
-		return
-	}
-
 	// respond to hydra with user ID
-	jsonData := &LoginRequest{Remember: false, Subject: id.Id}
+	jsonData := &LoginRequest{Remember: false, Subject: user.Id}
 	buf := new(bytes.Buffer)
 	err = json.NewEncoder(buf).Encode(jsonData)
 	if err != nil {
