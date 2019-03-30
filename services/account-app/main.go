@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"net/url"
 	"text/template"
 
 	"google.golang.org/grpc"
@@ -59,89 +58,80 @@ type LoginRequest struct {
 	Subject  string `json:"subject"`
 }
 
-func acceptLogin(w http.ResponseWriter, r *http.Request, challenge string) {
-	urlPut := fmt.Sprintf("https://hydra.halspals.co.uk/oauth2/auth/requests/login/%s/accept", challenge)
+func loginError(w http.ResponseWriter, err error) {
+	err = loginTemplate.Execute(w, loginTemplateData{
+		Error: err,
+	})
+	if err != nil {
+		log.Printf("error rendering template: %v", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	}
+}
+
+func acceptLogin(w http.ResponseWriter, r *http.Request, email string, password string, challenge string) {
+	acceptLoginURL := fmt.Sprintf("https://hydra.halspals.co.uk/oauth2/auth/requests/login/%s/accept", challenge)
 
 	// parse the email and password from the form and attempt to log the user in
 	err := r.ParseForm()
 	if err != nil {
-		http.Error(w, "failed to parse form", http.StatusBadRequest)
+		log.Printf("failed to parse form: %v", err)
+		loginError(w, errors.New("internal error"))
 		return
 	}
 
-	email := r.PostForm.Get("email")
-	password := r.PostForm.Get("password")
-
-	log.Printf("Logging in user with email: %s", email)
+	log.Printf("logging in user with email: %s", email)
 	user, err := userserverClient.CheckCredentials(context.Background(), &userserver.Credentials{
 		Email:    email,
 		Password: password,
 	})
 
 	if err != nil {
-		log.Fatalf("Bad login: %v", err)
+		log.Printf("bad login: %v", err)
+		loginError(w, err)
+		return
 	}
 
+	// respond to hydra with user ID
 	jsonData := &LoginRequest{Remember: false, Subject: user.Id}
-
 	buf := new(bytes.Buffer)
 	err = json.NewEncoder(buf).Encode(jsonData)
 	if err != nil {
 		log.Printf("failed to encode hydra responce: %v", err)
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		loginError(w, errors.New("internal error"))
 		return
 	}
 
-	data := url.Values{}
-	data.Set("\"remember\"", "false")
-	data.Set("\"subject\"", "\"subject123\"")
-
-	req, err := http.NewRequest("PUT", urlPut, buf)
+	req, err := http.NewRequest("PUT", acceptLoginURL, buf)
 	if err != nil {
-		err = loginTemplate.Execute(w, loginTemplateData{
-			Error: fmt.Errorf("internal error"),
-		})
-		if err != nil {
-			log.Printf("error rendering template: %v", err)
-		}
+		log.Printf("error making hydra request: %v", err)
+		loginError(w, errors.New("internal error"))
 		return
 	}
+
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		err = loginTemplate.Execute(w, loginTemplateData{
-			Error: fmt.Errorf("internal error"),
-		})
-		if err != nil {
-			log.Printf("error rendering template: %v", err)
-		}
+		log.Printf("error doing hydra request: %v", err)
+		loginError(w, errors.New("internal error"))
 		return
 	}
 
 	if resp.Body == nil {
-		err = loginTemplate.Execute(w, loginTemplateData{
-			Error: fmt.Errorf("internal error"),
-		})
-		if err != nil {
-			log.Printf("error rendering template: %v", err)
-		}
+		log.Println("received nil responce body from hydra")
+		loginError(w, errors.New("internal error"))
 		return
 	}
-	var loginAccept hydraLoginAccept
 
+	var loginAccept hydraLoginAccept
 	err = json.NewDecoder(resp.Body).Decode(&loginAccept)
 	if err != nil {
 		log.Printf("error reading hydra login accept body: %v", err)
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		loginError(w, errors.New("internal error"))
 		return
 	}
 
-	// TODO: strings.Replace is a pure function, do we need this?
-	// strings.Replace(loginAccept.RedirectTo, "\\u0026", "&", -1)
-
 	// redirect back to hydra
 	http.Redirect(w, r, loginAccept.RedirectTo, http.StatusMovedPermanently)
-
 }
 
 func postLoginHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
@@ -156,27 +146,7 @@ func postLoginHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Param
 	password := r.PostForm.Get("password")
 	challenge := r.Form.Get("challenge")
 
-	// check email/password
-	if email == "" {
-		err = loginTemplate.Execute(w, loginTemplateData{
-			Error: fmt.Errorf("email is blank"),
-		})
-		if err != nil {
-			log.Printf("error rendering template: %v", err)
-		}
-		return
-	}
-	if password == "" {
-		err = loginTemplate.Execute(w, loginTemplateData{
-			Error: fmt.Errorf("password is blank"),
-		})
-		if err != nil {
-			log.Printf("error rendering template: %v", err)
-		}
-		return
-	}
-
-	acceptLogin(w, r, challenge)
+	acceptLogin(w, r, email, password, challenge)
 }
 
 func getLoginHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
@@ -186,12 +156,7 @@ func getLoginHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params
 	challenge := r.URL.Query().Get("login_challenge")
 	if challenge == "" {
 		log.Println("no login challenge")
-		err := loginTemplate.Execute(w, loginTemplateData{
-			Error: errors.New("somthings wrong with your OAUth client"),
-		})
-		if err != nil {
-			log.Printf("Error rendering template: %v", err)
-		}
+		loginError(w, errors.New("bad OAuth client"))
 		return
 	}
 
@@ -200,23 +165,15 @@ func getLoginHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params
 	resp, err := http.DefaultClient.Get(urlGet)
 	if err != nil {
 		// problem with hydra, fallback to login form
-		err = loginTemplate.Execute(w, loginTemplateData{
-			Error: err,
-		})
-		if err != nil {
-			log.Printf("error rendering template: %v", err)
-		}
+		log.Printf("error doing hydra request: %v", err)
+		loginError(w, errors.New("internal error"))
 		return
 	}
 
+	// check responce is valid
 	if resp.StatusCode != 200 || resp.Body == nil {
 		log.Printf("invalid responce from hydra (%d)", resp.StatusCode)
-		err = loginTemplate.Execute(w, loginTemplateData{
-			Error: errors.New("internal error"),
-		})
-		if err != nil {
-			log.Printf("error rendering template: %v", err)
-		}
+		loginError(w, errors.New("internal error"))
 		return
 	}
 
@@ -238,16 +195,27 @@ func getLoginHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params
 	// hydra recognizes user, skip login
 	if loginRequest.Skip {
 		log.Println("skipping login")
-		acceptLogin(w, r, challenge)
+		loginError(w, errors.New("login skip is unimplemented"))
+		// TODO: need to get info from userserver without password
+		// acceptLogin(w, r, challenge, "", "")
 		return
 	}
 
 	// render login form
-	err = loginTemplate.Execute(w, loginTemplateData{
-		Error: nil,
-	})
+	err = loginTemplate.Execute(w, loginTemplateData{})
 	if err != nil {
 		log.Printf("Error rendering template: %v", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	}
+}
+
+func registerError(w http.ResponseWriter, err error) {
+	err = registerTemplate.Execute(w, registerTemplateData{
+		Error: err,
+	})
+	if err != nil {
+		log.Printf("error rendering template: %v", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
 }
 
@@ -255,7 +223,7 @@ func postRegisterHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 	// parse post form
 	err := r.ParseForm()
 	if err != nil {
-		http.Error(w, "failed to parse form", http.StatusBadRequest)
+		registerError(w, errors.New("internal error"))
 		return
 	}
 
@@ -263,36 +231,29 @@ func postRegisterHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 	password := r.PostForm.Get("password")
 	confirmPassword := r.PostForm.Get("password_confirm")
 
+	// check passwords match
 	if password != confirmPassword {
-		err := registerTemplate.Execute(w, registerTemplateData{
-			Error: fmt.Errorf("passwords do not match"),
-		})
-		if err != nil {
-			log.Printf("Error rendering template: %v", err)
-		}
+		registerError(w, errors.New("passwords do not match"))
 		return
 	}
 
+	// register user
 	_, err = userserverClient.Register(context.Background(), &userserver.RegisterRequest{
 		Email:    email,
 		Password: password,
 	})
-
 	if err != nil {
-		err = registerTemplate.Execute(w, registerTemplateData{
-			Error: err,
-		})
-		if err != nil {
-			log.Printf("Error rendering template: %v", err)
-		}
+		registerError(w, err)
 		return
 	}
 
+	// return success
 	err = registerTemplate.Execute(w, registerTemplateData{
 		Success: true,
 	})
 	if err != nil {
-		log.Printf("Error rendering template: %v", err)
+		log.Printf("error rendering template: %v", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
 }
 
@@ -300,51 +261,51 @@ func getRegisterHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Par
 	err := registerTemplate.Execute(w, registerTemplateData{})
 	if err != nil {
 		log.Printf("Error rendering template: %v", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	}
+}
+
+func consentError(w http.ResponseWriter, err error) {
+	err = consentTemplate.Execute(w, consentTemplateData{
+		Error: err,
+	})
+	if err != nil {
+		log.Printf("error rendering template: %v", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
 }
 
 func acceptConsent(w http.ResponseWriter, r *http.Request, challenge string) {
-	urlPut := fmt.Sprintf("https://hydra.halspals.co.uk/oauth2/auth/requests/consent/%s/accept", challenge)
+	acceptConsentURL := fmt.Sprintf("https://hydra.halspals.co.uk/oauth2/auth/requests/consent/%s/accept", challenge)
 
 	jsonData := []byte(`{ "remember":false, "grant_scope":["openid"]}`)
-
-	req, err := http.NewRequest("PUT", urlPut, bytes.NewBuffer(jsonData))
+	req, err := http.NewRequest("PUT", acceptConsentURL, bytes.NewBuffer(jsonData))
 	if err != nil {
-		err = consentTemplate.Execute(w, consentTemplateData{
-			Error: fmt.Errorf("internal error"),
-		})
-		if err != nil {
-			log.Printf("error rendering template: %v", err)
-		}
+		log.Printf("error making hydra request: %v", err)
+		consentError(w, errors.New("internal error"))
 		return
 	}
 
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		err = consentTemplate.Execute(w, consentTemplateData{
-			Error: fmt.Errorf("internal error"),
-		})
-		if err != nil {
-			log.Printf("Error rendering template: %v", err)
-		}
+		log.Printf("error doing hydra request: %v", err)
+		consentError(w, errors.New("internal error"))
 		return
 	}
 
 	if resp.Body == nil {
-		err = consentTemplate.Execute(w, consentTemplateData{
-			Error: fmt.Errorf("internal error"),
-		})
-		if err != nil {
-			log.Printf("Error rendering template: %v", err)
-		}
+		log.Println("recevied nil body from hydra")
+		consentError(w, errors.New("internal error"))
 		return
 	}
 
 	var consentAccept hydraConsentAccept
 	err = json.NewDecoder(resp.Body).Decode(&consentAccept)
 	if err != nil {
-		http.Error(w, "failed to decode JSON", http.StatusBadRequest)
+		log.Printf("failed to decode JSON: %v", err)
+		consentError(w, errors.New("internal error"))
+		return
 	}
 
 	// redirect back to hydra
@@ -355,12 +316,12 @@ func postConsentHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Par
 	// get hydra challenge
 	err := r.ParseForm()
 	if err != nil {
-		http.Error(w, "failed to parse form", http.StatusBadRequest)
+		log.Printf("failed to parse form: %v", err)
+		consentError(w, errors.New("bad request"))
 		return
 	}
 
 	challenge := r.Form.Get("challenge")
-
 	acceptConsent(w, r, challenge)
 }
 
@@ -370,6 +331,7 @@ func getConsentHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Para
 	})
 	if err != nil {
 		log.Printf("error rendering template: %v", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
 }
 
