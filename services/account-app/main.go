@@ -275,48 +275,48 @@ func getRegisterHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Par
 	}
 }
 
+func consentError(w http.ResponseWriter, err error) {
+	err = consentTemplate.Execute(w, consentTemplateData{
+		Error: err,
+	})
+	if err != nil {
+		log.Printf("error rendering template: %v", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	}
+	return
+}
+
 func acceptConsent(w http.ResponseWriter, r *http.Request, challenge string) {
-	urlPut := fmt.Sprintf("https://hydra.halspals.co.uk/oauth2/auth/requests/consent/%s/accept", challenge)
+	acceptConsentURL := fmt.Sprintf("https://hydra.halspals.co.uk/oauth2/auth/requests/consent/%s/accept", challenge)
 
 	jsonData := []byte(`{ "remember":false, "grant_scope":["openid"]}`)
-
-	req, err := http.NewRequest("PUT", urlPut, bytes.NewBuffer(jsonData))
+	req, err := http.NewRequest("PUT", acceptConsentURL, bytes.NewBuffer(jsonData))
 	if err != nil {
-		err = consentTemplate.Execute(w, consentTemplateData{
-			Error: fmt.Errorf("internal error"),
-		})
-		if err != nil {
-			log.Printf("error rendering template: %v", err)
-		}
+		log.Printf("error making hydra request: %v", err)
+		consentError(w, errors.New("internal error"))
 		return
 	}
 
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		err = consentTemplate.Execute(w, consentTemplateData{
-			Error: fmt.Errorf("internal error"),
-		})
-		if err != nil {
-			log.Printf("Error rendering template: %v", err)
-		}
+		log.Printf("error doing hydra request: %v", err)
+		consentError(w, errors.New("internal error"))
 		return
 	}
 
 	if resp.Body == nil {
-		err = consentTemplate.Execute(w, consentTemplateData{
-			Error: fmt.Errorf("internal error"),
-		})
-		if err != nil {
-			log.Printf("Error rendering template: %v", err)
-		}
+		log.Println("recevied nil body from hydra")
+		consentError(w, errors.New("internal error"))
 		return
 	}
 
 	var consentAccept hydraConsentAccept
 	err = json.NewDecoder(resp.Body).Decode(&consentAccept)
 	if err != nil {
-		http.Error(w, "failed to decode JSON", http.StatusBadRequest)
+		log.Printf("failed to decode JSON: %v", err)
+		consentError(w, errors.New("internal error"))
+		return
 	}
 
 	// redirect back to hydra
@@ -327,12 +327,12 @@ func postConsentHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Par
 	// get hydra challenge
 	err := r.ParseForm()
 	if err != nil {
-		http.Error(w, "failed to parse form", http.StatusBadRequest)
+		log.Printf("failed to parse form: %v", err)
+		consentError(w, errors.New("bad request"))
 		return
 	}
 
 	challenge := r.Form.Get("challenge")
-
 	acceptConsent(w, r, challenge)
 }
 
@@ -342,6 +342,7 @@ func getConsentHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Para
 	})
 	if err != nil {
 		log.Printf("error rendering template: %v", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
 }
 
