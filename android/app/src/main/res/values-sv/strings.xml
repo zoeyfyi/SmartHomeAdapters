@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Smarta Hemadaptrar</string>
+    <string name="authorize_button">Logga in eller registrera</string>
+    <string name="cancel_button_text">AVBRYT</string>
+    <string name="finish_button_text">Slutför</string>
+    <string name="reconfigure_button_text">Omkalibrera</string>
+    <string name="rename_button_text">Byt namn</string>
+    <string name="delete_button_text">Radera</string>
+    <string name="erf_title_text">Redigera %s</string>
+    <string name="mef_title_text">Ange Registreringskod Manuellt</string>
+    <string name="registration_code_placeholder">Registreringskod</string>
+    <string name="back_button_text">GÅ TILLBAKA</string>
+    <string name="nf_title_text">Döp Apparat</string>
+    <string name="device_name_placeholder">Apparatens namn</string>
+    <string name="qrf_title_text">Skanna QR</string>
+    <string name="camera_button_text">Tryck för att starta kamera</string>
+    <string name="manual_entry_button_text">Ange manuellt</string>
+    <string name="saf_title_text">Välj Funktion</string>
+    <string name="register_button_text">Registrera</string>
+</resources>
