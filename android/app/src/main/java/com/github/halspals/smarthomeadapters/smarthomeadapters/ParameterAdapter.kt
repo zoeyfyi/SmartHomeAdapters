@@ -114,17 +114,11 @@ class ParameterAdapter(
         return view
     }
 
-    override fun getCount(): Int {
-        return parameters.size
-    }
+    override fun getCount(): Int = parameters.size
 
-    override fun getItem(position: Int): Any {
-        return parameters[position]
-    }
+    override fun getItem(position: Int): Any = parameters[position]
 
-    override fun getItemId(p0: Int): Long {
-        return 0L
-    }
+    override fun getItemId(p0: Int): Long = 0L
 
     // TODO make more elegant solution than just stripping the space
     internal fun getConfigValuesSnapshot(): List<ConfigResult> {
