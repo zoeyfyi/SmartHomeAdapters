@@ -36,7 +36,7 @@ func (m *ServoRequest) Reset()         { *m = ServoRequest{} }
 func (m *ServoRequest) String() string { return proto.CompactTextString(m) }
 func (*ServoRequest) ProtoMessage()    {}
 func (*ServoRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_robotserver_f9763c5700f781b5, []int{0}
+	return fileDescriptor_robotserver_c4d3f1f89a56371f, []int{0}
 }
 func (m *ServoRequest) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ServoRequest.Unmarshal(m, b)
@@ -82,7 +82,7 @@ func (m *LEDRequest) Reset()         { *m = LEDRequest{} }
 func (m *LEDRequest) String() string { return proto.CompactTextString(m) }
 func (*LEDRequest) ProtoMessage()    {}
 func (*LEDRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_robotserver_f9763c5700f781b5, []int{1}
+	return fileDescriptor_robotserver_c4d3f1f89a56371f, []int{1}
 }
 func (m *LEDRequest) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_LEDRequest.Unmarshal(m, b)
@@ -227,10 +227,10 @@ var _RobotServer_serviceDesc = grpc.ServiceDesc{
 }
 
 func init() {
-	proto.RegisterFile("robotserver/robotserver.proto", fileDescriptor_robotserver_f9763c5700f781b5)
+	proto.RegisterFile("robotserver/robotserver.proto", fileDescriptor_robotserver_c4d3f1f89a56371f)
 }
 
-var fileDescriptor_robotserver_f9763c5700f781b5 = []byte{
+var fileDescriptor_robotserver_c4d3f1f89a56371f = []byte{
 	// 201 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x92, 0x2d, 0xca, 0x4f, 0xca,
 	0x2f, 0x29, 0x4e, 0x2d, 0x2a, 0x4b, 0x2d, 0xd2, 0x47, 0x62, 0xeb, 0x15, 0x14, 0xe5, 0x97, 0xe4,

@@ -139,44 +139,6 @@ func registerHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params
 	}
 }
 
-type loginBody struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
-
-type tokenResponce struct {
-	Token string `json:"token"`
-}
-
-func loginHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	var body loginBody
-	err := json.NewDecoder(r.Body).Decode(&body)
-	if err != nil {
-		log.Printf("Invalid register JSON: %v", err)
-		HTTPError(w, errInvalidJSON)
-		return
-	}
-
-	log.Printf("Logging in user with email: %s", body.Email)
-	token, err := userserverClient.Login(context.Background(), &userserver.LoginRequest{
-		Email:    body.Email,
-		Password: body.Password,
-	})
-	if err != nil {
-		HTTPError(w, err)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	err = json.NewEncoder(w).Encode(&tokenResponce{
-		Token: token.Token,
-	})
-	if err != nil {
-		log.Printf("failed to encode error responce: %v", err)
-		HTTPError(w, errFailedEncode)
-	}
-}
-
 type robot struct {
 	ID            string      `json:"id"`
 	Nickname      string      `json:"nickname"`
@@ -663,7 +625,6 @@ func createRouter() *httprouter.Router {
 	// register routes
 	router.GET("/ping", pingHandler)
 	router.POST("/register", registerHandler)
-	router.POST("/login", loginHandler)
 	router.POST("/robot/:id", auth(registerRobotHandler))
 	router.GET("/robots", auth(robotsHandler))
 	router.GET("/robot/:id", auth(robotHandler))
