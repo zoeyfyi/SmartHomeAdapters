@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.support.v4.app.FragmentManager
 import android.util.Log
+import com.github.halspals.smarthomeadapters.smarthomeadapters.model.Robot
 import net.openid.appauth.AuthorizationService
 
 /**
@@ -25,6 +26,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     internal var isInEditMode = false
+    internal lateinit var robotToEdit: Robot
 
     private val tag = "MainActivity"
 

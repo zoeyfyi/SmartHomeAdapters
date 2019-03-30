@@ -71,8 +71,8 @@ class RobotAdapter (
                 robotCircle.setOnClickListener { _ ->
                     if (parent.isInEditMode) {
                         val editFrag = EditRobotFragment()
+                        parent.robotToEdit = robot
                         parent.startFragment(editFrag)
-                        editFrag.setRobotView(robot)
                     } else {
                         onToggle(robot, robotCircle, robotIcon)
                     }
