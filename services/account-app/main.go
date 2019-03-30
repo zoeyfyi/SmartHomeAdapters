@@ -230,9 +230,7 @@ func getLoginHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params
 	var loginRequest hydraLoginRequest
 	err = json.NewDecoder(resp.Body).Decode(&loginRequest)
 	if err != nil {
-		buf := new(bytes.Buffer)
-		buf.ReadFrom(resp.Body)
-		log.Printf("failed to decode hydra responce: \"%s\"\nerror: %v", buf.String(), err)
+		log.Printf("failed to decode hydra responce, error: %v", err)
 
 		err = loginTemplate.Execute(w, loginTemplateData{
 			Error: errors.New("internal error"),
