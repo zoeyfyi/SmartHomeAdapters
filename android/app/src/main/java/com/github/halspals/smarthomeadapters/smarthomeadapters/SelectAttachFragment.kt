@@ -84,6 +84,12 @@ class SelectAttachFragment : Fragment() {
         }
     }
 
+    /**
+     * Fetches all the use cases that the user can choose from.
+     *
+     * @param token the access token for the current session
+     * @param view the parent view to inflate the use cases in
+     */
     private fun fetchUseCases(token: String, view: View) {
         Log.v(fTag, "Getting use cases")
         parent.restApiService
@@ -136,9 +142,10 @@ class SelectAttachFragment : Fragment() {
     }
 
     /**
-     * WIP: Register the use case chosen to the robot being registered and set up.
+     * Registers the robot with ID [RegisterRobotActivity.robotId] with the chosen use case
+     * to the user.
      *
-     * @param useCase the use case chosen by the user for the robot
+     * @param useCase the use case chosen by the user for the robot, or null
      */
     private fun registerRobotAndUseCase(useCase: UseCase?) {
 

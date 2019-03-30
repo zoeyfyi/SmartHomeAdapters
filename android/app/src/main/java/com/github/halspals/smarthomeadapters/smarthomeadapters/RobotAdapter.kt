@@ -3,7 +3,6 @@ package com.github.halspals.smarthomeadapters.smarthomeadapters
 import android.content.Context
 import android.util.Log
 import android.view.LayoutInflater
-import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.BaseAdapter
@@ -21,6 +20,9 @@ import retrofit2.Callback
 import retrofit2.Response
 
 
+/**
+ * Provides means of listing a series of [Robot]s with various functionality.
+ */
 class RobotAdapter (
         private val parent: MainActivity,
         private val robots: MutableList<Robot>
@@ -45,6 +47,9 @@ class RobotAdapter (
             getRealRobotView(position, convertView, parent)
     }
 
+    /**
+     * Inflates and sets up the view corresponding to a non-dummy [Robot] register to the user.
+     */
     private fun getRealRobotView(position: Int, convertView: View?, viewGroup: ViewGroup?): View {
 
         val robot = robots[position]
@@ -91,6 +96,9 @@ class RobotAdapter (
         return view
     }
 
+    /**
+     * Inflates and sets up the view for the [Robot.ADD_ROBOT] dummy robot.
+     */
     private fun getAddRobotDummyView(convertView: View?, viewGroup: ViewGroup?): View {
         // inflate card view
         val inflater = parent.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater

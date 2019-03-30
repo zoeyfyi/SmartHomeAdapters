@@ -10,13 +10,16 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.*
 
+/**
+ * Defines the Rest API interface for use with [Retrofit].
+ */
 interface RestApiService {
 
     companion object {
         fun new(): RestApiService {
             return Retrofit.Builder()
                     .addConverterFactory(GsonConverterFactory.create())
-                    .baseUrl("https://client.api.halspals.co.uk/")
+                    .baseUrl("https://client.api.test.halspals.co.uk/")
                     .build()
                     .create(RestApiService::class.java)
         }
@@ -46,13 +49,15 @@ interface RestApiService {
     fun registerRobot(
             @Path("id") id: String,
             @Header("token") token: String,
-            @Body robot: RobotRegistrationBody): Call<ResponseBody>
+            @Body robot: RobotRegistrationBody
+    ): Call<ResponseBody>
 
     @PATCH("robot/{id}/toggle/{current}")
     fun robotToggle(
             @Path("id") id: String, @Path("current") value: Boolean,
             @Header("token") token: String,
-            @Body map: Map<String, Boolean>): Call<ResponseBody>
+            @Body map: Map<String, Boolean>
+    ): Call<ResponseBody>
 
     @GET("usecases")
     fun getAllUseCases(@Header("token") token: String): Call<List<UseCase>>
@@ -61,7 +66,8 @@ interface RestApiService {
     fun setConfigParameters(
             @Path("robotId") robotId: String,
             @Header("token") token: String,
-            @Body params: List<ConfigResult>): Call<ResponseBody>
+            @Body params: List<ConfigResult>
+    ): Call<ResponseBody>
 
     @PATCH("robot/{id}/range/{current}")
     fun robotRange(
@@ -69,5 +75,24 @@ interface RestApiService {
             @Path("current") value: Int,
             @Header("token") token: String,
             @Body map: Map<String, Boolean>
-    ) : Call<ResponseBody>
+    ): Call<ResponseBody>
+
+    @DELETE("/robot/{id]/delete")
+    fun deleteRobot(
+            @Path("id") id: String,
+            @Header("token") token: String
+    ): Call<ResponseBody>
+
+    @PATCH("/robot/{id}/rename")
+    fun renameRobot(
+            @Path("id") id:  String,
+            @Header("token") token: String,
+            @Body nameMap: Map<String, String>
+    ): Call<ResponseBody>
+
+    @PATCH("/robot/{id}/reconfigure")
+    fun patchUseCase(
+            @Path("id") id:  String,
+            @Body useCaseMap: Map<String, String>
+    ): Call<ResponseBody>
 }

@@ -17,7 +17,7 @@ import retrofit2.Callback
 import retrofit2.Response
 
 /**
- * The final (optional) screen of the robot registration wizard, where the user configures the robot parameters.
+ * The final screen of the robot registration wizard, where the user configures the robot parameters.
  */
 class ConfigureRobotFragment : Fragment() {
 

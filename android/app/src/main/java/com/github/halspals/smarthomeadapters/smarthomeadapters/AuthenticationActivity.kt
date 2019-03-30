@@ -9,6 +9,9 @@ import kotlinx.android.synthetic.main.activity_authentication.*
 import net.openid.appauth.*
 import org.jetbrains.anko.*
 
+/**
+ * A screen which interacts with the OAuth server to provide authorization of the user.
+ */
 class AuthenticationActivity : AppCompatActivity() {
 
     private val tag = "AuthenticationActivity"
@@ -46,17 +49,22 @@ class AuthenticationActivity : AppCompatActivity() {
         }
 
         auth_button.setOnClickListener { _ ->
-            startOAuthLogin()
+            startOAuthView()
         }
     }
 
-    private fun startOAuthLogin() {
-        // Start the authorization webview
+    /**
+     * Starts the authorization [WebView], allowing the user to login or register.
+     */
+    private fun startOAuthView() {
         Log.d(tag, "Starting Oauth2 call")
         val authIntent = authService.getAuthorizationRequestIntent(authRequest)
         startActivityForResult(authIntent, authRequestCode)
     }
 
+    /**
+     * Listens for the result of the OAuth webview.
+     */
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
 
         if (requestCode == authRequestCode) {
@@ -82,6 +90,12 @@ class AuthenticationActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Starts an [TokenRequest] to exchange an authorization code for authorization tokens.
+     * Updates the [AuthState] on the device.
+     *
+     * @param response the [AuthorizationResponse] with the received auth code
+     */
     private fun exchangeCodeForTokens(response: AuthorizationResponse) {
         Log.d(tag, "[exchangeCodeForTokens] Starting code-for-tokens exchange")
         authService.performTokenRequest(response.createTokenExchangeRequest())

@@ -14,6 +14,9 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
+/**
+ * The main screen of the app, presenting the user with their robots and allowing interaction thereof.
+ */
 class RobotsFragment : Fragment() {
 
     private val fTag = "RobotsFragment"
@@ -58,6 +61,9 @@ class RobotsFragment : Fragment() {
         }
     }
 
+    /**
+     * Fetches all the robots associated with the user and invokes [displayRobots].
+     */
     private fun fetchRobots(token: String, view: View) {
         parent.restApiService
                 .getRobots(token)
@@ -95,6 +101,9 @@ class RobotsFragment : Fragment() {
                 })
     }
 
+    /**
+     * Sets up the [robotGrid] with the robots associated with the user.
+     */
     private fun displayRobots(view: View, robots: List<Robot>) {
         robotGrid = view.findViewById(R.id.RobotGrid)
         robotGrid.adapter = RobotAdapter(parent, robots.toMutableList())

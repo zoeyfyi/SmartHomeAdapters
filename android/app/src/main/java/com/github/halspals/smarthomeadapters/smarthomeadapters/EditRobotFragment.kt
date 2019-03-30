@@ -16,6 +16,9 @@ import kotlinx.android.synthetic.main.view_robot_card.*
 import org.jetbrains.anko.clearTask
 import org.jetbrains.anko.intentFor
 
+/**
+ * A screen which presents the user with various options to edit a robot already added to their account.
+ */
 class EditRobotFragment : Fragment() {
 
     private val fTag = "QRFragment"
@@ -41,6 +44,9 @@ class EditRobotFragment : Fragment() {
 
     }
 
+    /**
+     * Inflates a Robot card view into the layout for the robot which is being edited.
+     */
     internal fun setRobotView(robot: Robot) {
         // inflate card view
         val inflater = parent.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater

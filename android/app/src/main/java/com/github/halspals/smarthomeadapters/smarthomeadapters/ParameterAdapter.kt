@@ -15,7 +15,10 @@ import com.github.halspals.smarthomeadapters.smarthomeadapters.model.ConfigResul
  * @property context the context invoking the adapter
  * @property parameters the configuration parameters to list
  */
-class ParameterAdapter (private val context: Context, private val parameters: List<ConfigParameter>):  BaseAdapter() {
+class ParameterAdapter(
+        private val context: Context,
+        private val parameters: List<ConfigParameter>
+):  BaseAdapter() {
 
     private val configSettings = HashMap<String, String>()
 

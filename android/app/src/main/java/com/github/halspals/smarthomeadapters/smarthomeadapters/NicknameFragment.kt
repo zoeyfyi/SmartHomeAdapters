@@ -7,13 +7,11 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import kotlinx.android.synthetic.main.fragment_nickname.*
-import kotlinx.android.synthetic.main.view_robot_card.*
 import org.jetbrains.anko.clearTask
 import org.jetbrains.anko.intentFor
 
 /**
- * A fragment which upon a button click starts a QR scanner from the parent activity.
- * This is the first screen in the registration wizard.
+ * A fragment which allows the user to set the nickname for a robot being registered or edited.
  */
 class NicknameFragment : Fragment() {
 

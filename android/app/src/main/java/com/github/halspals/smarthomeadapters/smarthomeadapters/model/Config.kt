@@ -2,6 +2,13 @@ package com.github.halspals.smarthomeadapters.smarthomeadapters.model
 
 import com.google.gson.annotations.SerializedName
 
+/**
+ * Model for the fine details of a configuration parameter's possible values.
+ *
+ * @property default the default value of the configuration parameter
+ * @property min the minimum value that the parameter can take on
+ * @property max the maximum value that the parameter can take on
+ */
 data class ConfigDetails(
     @SerializedName("default")
     val default: Int,
@@ -35,6 +42,12 @@ data class ConfigParameter(
     }
 }
 
+/**
+ * Model for the the user's chosen setting for a configuration parameter.
+ *
+ * @property name the configuration parameter's name
+ * @property the value that the user has chosen for the parameter
+ */
 data class ConfigResult(
     @SerializedName("name")
     val name: String,

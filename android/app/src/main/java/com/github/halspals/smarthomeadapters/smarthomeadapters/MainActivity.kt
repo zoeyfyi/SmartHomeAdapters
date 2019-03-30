@@ -7,9 +7,10 @@ import android.support.v4.app.FragmentManager
 import android.util.Log
 import net.openid.appauth.AuthorizationService
 
-class MainActivity :
-        AppCompatActivity()
-{
+/**
+ * The activity encompassing the app's main [Fragment]s.
+ */
+class MainActivity : AppCompatActivity() {
 
     internal val restApiService by lazy {
         RestApiService.new()
