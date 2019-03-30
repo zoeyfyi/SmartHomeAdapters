@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -189,11 +190,22 @@ func getLoginHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params
 
 	// get hydra challenge
 	challenge := r.URL.Query().Get("login_challenge")
+	if challenge == "" {
+		log.Println("no login challenge")
+		err := loginTemplate.Execute(w, loginTemplateData{
+			Error: errors.New("somthings wrong with your OAUth client"),
+		})
+		if err != nil {
+			log.Printf("Error rendering template: %v", err)
+		}
+		return
+	}
 
 	// get infomation about the login request from hydra
 	urlGet := fmt.Sprintf("https://hydra.halspals.co.uk/oauth2/auth/requests/login/%s", challenge)
 	resp, err := http.DefaultClient.Get(urlGet)
 	if err != nil {
+		// problem with hydra, fallback to login form
 		err = loginTemplate.Execute(w, loginTemplateData{
 			Error: err,
 		})
@@ -203,19 +215,40 @@ func getLoginHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params
 		return
 	}
 
-	if resp.Body != nil {
-		var loginRequest hydraLoginRequest
-		err = json.NewDecoder(resp.Body).Decode(&loginRequest)
+	if resp.StatusCode != 200 || resp.Body == nil {
+		log.Printf("invalid responce from hydra (%d)", resp.StatusCode)
+		err = loginTemplate.Execute(w, loginTemplateData{
+			Error: errors.New("internal error"),
+		})
 		if err != nil {
-			http.Error(w, "failed to decode JSON", http.StatusBadRequest)
+			log.Printf("error rendering template: %v", err)
 		}
-
-		if loginRequest.Skip {
-			acceptLogin(w, r, challenge)
-			return
-		}
+		return
 	}
 
+	// decode hydra responce
+	var loginRequest hydraLoginRequest
+	err = json.NewDecoder(resp.Body).Decode(&loginRequest)
+	if err != nil {
+		log.Printf("failed to decode hydra responce, error: %v", err)
+
+		err = loginTemplate.Execute(w, loginTemplateData{
+			Error: errors.New("internal error"),
+		})
+		if err != nil {
+			log.Printf("error rendering template: %v", err)
+		}
+		return
+	}
+
+	// hydra recognizes user, skip login
+	if loginRequest.Skip {
+		log.Println("skipping login")
+		acceptLogin(w, r, challenge)
+		return
+	}
+
+	// render login form
 	err = loginTemplate.Execute(w, loginTemplateData{
 		Error: nil,
 	})
