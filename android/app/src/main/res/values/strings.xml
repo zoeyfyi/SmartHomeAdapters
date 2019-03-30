@@ -6,13 +6,7 @@
 
     <!-- Strings related to all screens in the Registration Wizard (RobotRegistrationActivity) -->
     <string name="cancel_button_text">CANCEL SETUP</string>
-
-    <!-- Strings related to QRFragment -->
-    <string name="scan_qr_text">Scan QR code</string>
-    <string name="manual_submit_button_text">Submit Robot ID</string>
-    <string name="nickname_input_placeholder">Robot nickname</string>
-    <string name="next_button_text">Continue</string>
-
+    
     <!-- Strings related to ConfigureRobotFragment -->
     <string name="finish_button_text">Finish</string>
 
