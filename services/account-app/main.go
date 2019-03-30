@@ -86,7 +86,7 @@ func acceptLogin(w http.ResponseWriter, r *http.Request, email string, password 
 	})
 
 	if err != nil {
-		log.Fatalf("bad login: %v", err)
+		log.Printf("bad login: %v", err)
 		loginError(w, err)
 		return
 	}
@@ -94,7 +94,7 @@ func acceptLogin(w http.ResponseWriter, r *http.Request, email string, password 
 	// TODO: remove old token handling
 	id, err := userserverClient.Authorize(context.Background(), token)
 	if err != nil {
-		log.Fatalf("Bad authorize: %v", err)
+		log.Printf("Bad authorize: %v", err)
 		loginError(w, errors.New("internal error"))
 		return
 	}
