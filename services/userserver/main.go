@@ -175,7 +175,7 @@ func main() {
 	grpcServer := grpc.NewServer()
 	userServer := &server{DB: db}
 	userserver.RegisterUserServerServer(grpcServer, userServer)
-	lis, err := net.Listen("tcp", "127.0.0.1:80")
+	lis, err := net.Listen("tcp", "userserver:80")
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}

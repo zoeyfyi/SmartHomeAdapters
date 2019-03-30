@@ -205,7 +205,7 @@ func main() {
 		RobotClient: robotClient,
 	}
 	thermostatserver.RegisterThermostatServerServer(grpcServer, thermostatServer)
-	lis, err := net.Listen("tcp", "127.0.0.1:80")
+	lis, err := net.Listen("tcp", "thermostatserver:80")
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}

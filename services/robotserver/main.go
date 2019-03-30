@@ -128,7 +128,7 @@ func main() {
 	robotServer := &server{}
 	robotserver.RegisterRobotServerServer(grpcServer, robotServer)
 
-	lis, err := net.Listen("tcp", "127.0.0.1:8080")
+	lis, err := net.Listen("tcp", "robotserver:8080")
 	if err != nil {
 		log.Fatalf("Failed to listen: %v", err)
 	}

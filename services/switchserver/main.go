@@ -293,7 +293,7 @@ func main() {
 	grpcServer := grpc.NewServer()
 	switchServer := &server{DB: db}
 	switchserver.RegisterSwitchServerServer(grpcServer, switchServer)
-	lis, err := net.Listen("tcp", "127.0.0.1:80")
+	lis, err := net.Listen("tcp", "switchserver:80")
 	if err != nil {
 		log.Fatalf("Failed to listen: %v", err)
 	}

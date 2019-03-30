@@ -445,7 +445,7 @@ func main() {
 		ThermostatClient: thermostatClient,
 	}
 	infoserver.RegisterInfoServerServer(grpcServer, infoServer)
-	lis, err := net.Listen("tcp", "127.0.0.1:80")
+	lis, err := net.Listen("tcp", "infoserver:80")
 	if err != nil {
 		log.Fatalf("Failed to listen: %v", err)
 	}
