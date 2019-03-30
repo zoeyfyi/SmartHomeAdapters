@@ -194,6 +194,7 @@ func getLoginHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params
 	urlGet := fmt.Sprintf("https://hydra.halspals.co.uk/oauth2/auth/requests/login/%s", challenge)
 	resp, err := http.DefaultClient.Get(urlGet)
 	if err != nil {
+		// problem with hydra, fallback to login form
 		err = loginTemplate.Execute(w, loginTemplateData{
 			Error: err,
 		})
@@ -203,19 +204,32 @@ func getLoginHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params
 		return
 	}
 
-	if resp.Body != nil {
-		var loginRequest hydraLoginRequest
-		err = json.NewDecoder(resp.Body).Decode(&loginRequest)
-		if err != nil {
-			http.Error(w, "failed to decode JSON", http.StatusBadRequest)
-		}
-
-		if loginRequest.Skip {
-			acceptLogin(w, r, challenge)
-			return
-		}
+	if resp.Body == nil {
+		log.Println("nil responce body")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
 	}
 
+	// decode hydra responce
+	var loginRequest hydraLoginRequest
+	err = json.NewDecoder(resp.Body).Decode(&loginRequest)
+	if err != nil {
+		buf := new(bytes.Buffer)
+		buf.ReadFrom(resp.Body)
+		log.Printf("failed to decode hydra responce: %s", buf.String())
+
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	// hydra recognizes user, skip login
+	if loginRequest.Skip {
+		log.Println("skipping login")
+		acceptLogin(w, r, challenge)
+		return
+	}
+
+	// render login form
 	err = loginTemplate.Execute(w, loginTemplateData{
 		Error: nil,
 	})
