@@ -218,11 +218,22 @@ func getLoginHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params
 	}
 }
 
+func registerError(w http.ResponseWriter, err error) {
+	err = registerTemplate.Execute(w, registerTemplateData{
+		Error: err,
+	})
+	if err != nil {
+		log.Printf("error rendering template: %v", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	}
+	return
+}
+
 func postRegisterHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	// parse post form
 	err := r.ParseForm()
 	if err != nil {
-		http.Error(w, "failed to parse form", http.StatusBadRequest)
+		registerError(w, errors.New("internal error"))
 		return
 	}
 
@@ -230,35 +241,29 @@ func postRegisterHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 	password := r.PostForm.Get("password")
 	confirmPassword := r.PostForm.Get("password_confirm")
 
+	// check passwords match
 	if password != confirmPassword {
-		err := registerTemplate.Execute(w, registerTemplateData{
-			Error: fmt.Errorf("passwords do not match"),
-		})
-		if err != nil {
-			log.Printf("Error rendering template: %v", err)
-		}
+		registerError(w, errors.New("passwords do not match"))
 		return
 	}
 
+	// register user
 	_, err = userserverClient.Register(context.Background(), &userserver.RegisterRequest{
 		Email:    email,
 		Password: password,
 	})
-
 	if err != nil {
-		err = registerTemplate.Execute(w, registerTemplateData{
-			Error: err,
-		})
-		if err != nil {
-			log.Printf("Error rendering template: %v", err)
-		}
+		registerError(w, err)
+		return
 	}
 
+	// return success
 	err = registerTemplate.Execute(w, registerTemplateData{
 		Success: true,
 	})
 	if err != nil {
-		log.Printf("Error rendering template: %v", err)
+		log.Printf("error rendering template: %v", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
 }
 
@@ -266,6 +271,7 @@ func getRegisterHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Par
 	err := registerTemplate.Execute(w, registerTemplateData{})
 	if err != nil {
 		log.Printf("Error rendering template: %v", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
 }
 
