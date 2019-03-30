@@ -291,6 +291,7 @@ func postRegisterHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 		if err != nil {
 			log.Printf("Error rendering template: %v", err)
 		}
+		return
 	}
 
 	err = registerTemplate.Execute(w, registerTemplateData{
