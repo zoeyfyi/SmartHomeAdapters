@@ -217,7 +217,12 @@ func getLoginHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params
 
 	if resp.StatusCode != 200 || resp.Body == nil {
 		log.Printf("invalid responce from hydra (%d)", resp.StatusCode)
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		err = loginTemplate.Execute(w, loginTemplateData{
+			Error: errors.New("internal error"),
+		})
+		if err != nil {
+			log.Printf("error rendering template: %v", err)
+		}
 		return
 	}
 
@@ -229,7 +234,12 @@ func getLoginHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params
 		buf.ReadFrom(resp.Body)
 		log.Printf("failed to decode hydra responce: \"%s\"\nerror: %v", buf.String(), err)
 
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		err = loginTemplate.Execute(w, loginTemplateData{
+			Error: errors.New("internal error"),
+		})
+		if err != nil {
+			log.Printf("error rendering template: %v", err)
+		}
 		return
 	}
 
