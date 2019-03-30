@@ -66,7 +66,6 @@ func loginError(w http.ResponseWriter, err error) {
 		log.Printf("error rendering template: %v", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
-	return
 }
 
 func acceptLogin(w http.ResponseWriter, r *http.Request, email string, password string, challenge string) {
@@ -226,7 +225,6 @@ func registerError(w http.ResponseWriter, err error) {
 		log.Printf("error rendering template: %v", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
-	return
 }
 
 func postRegisterHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
@@ -283,7 +281,6 @@ func consentError(w http.ResponseWriter, err error) {
 		log.Printf("error rendering template: %v", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
-	return
 }
 
 func acceptConsent(w http.ResponseWriter, r *http.Request, challenge string) {
