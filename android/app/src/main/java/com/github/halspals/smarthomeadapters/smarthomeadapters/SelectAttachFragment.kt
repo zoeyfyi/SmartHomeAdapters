@@ -105,18 +105,8 @@ class SelectAttachFragment : Fragment() {
                     Log.v(fTag, "[getAllUseCases] Successfully got list of ${useCases.size} "
                             + "use cases")
 
-                    attachment_list_view.adapter = object : ArrayAdapter<UseCase>(context!!, 0, useCases) {
-
-                        override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
-                            val inflater =
-                                view.context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-                            val ret = inflater.inflate(R.layout.attachment_list_item, parent, false)
-                            ret.findViewById<TextView>(R.id.list_item_header).text = useCases[position].name
-                            ret.findViewById<TextView>(R.id.list_item_description).text = useCases[position].name // TODO change obvs
-                            return ret
-                        }
-                    }
-
+                    // Set up the listView with the downloaded use cases
+                    attachment_list_view.adapter = UseCaseAdapter(view.context, useCases)
                     attachment_list_view.visibility = View.VISIBLE
 
                 } else {
