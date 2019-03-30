@@ -15,7 +15,7 @@
         android:layout_marginStart="8dp"
         android:layout_marginTop="16dp"
         android:layout_marginEnd="8dp"
-        android:text="Name Your Device"
+        android:text="@string/nf_title_text"
         android:textSize="24sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -40,7 +40,7 @@
             android:id="@+id/device_name_text_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:hint="Device name"
+            android:hint="@string/device_name_placeholder"
             android:inputType="textNoSuggestions"
             android:maxLines="1"
             android:singleLine="true" />
@@ -69,7 +69,7 @@
         android:layout_marginStart="32dp"
         android:layout_marginEnd="32dp"
         android:layout_marginBottom="16dp"
-        android:text="CANCEL SETUP"
+        android:text="@string/cancel_button_text"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />

@@ -15,7 +15,7 @@
         android:layout_marginStart="8dp"
         android:layout_marginTop="16dp"
         android:layout_marginEnd="8dp"
-        android:text="Manual Robot Code Entry"
+        android:text="@string/mef_title_text"
         android:textSize="24sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -41,7 +41,7 @@
             android:id="@+id/registration_code"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:hint="Registration code"
+            android:hint="@string/registration_code_placeholder"
             android:inputType="textNoSuggestions"
             android:maxLines="1"
             android:singleLine="true" />
@@ -70,7 +70,7 @@
         android:layout_marginStart="32dp"
         android:layout_marginEnd="32dp"
         android:layout_marginBottom="16dp"
-        android:text="GO BACK TO SCANNER"
+        android:text="@string/back_button_text"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
