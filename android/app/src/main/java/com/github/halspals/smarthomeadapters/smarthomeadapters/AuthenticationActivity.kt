@@ -25,10 +25,10 @@ class AuthenticationActivity : AppCompatActivity() {
         )
         AuthorizationRequest.Builder(
                 authServiceConfig,
-                "65a0a8b8-9175-4f12-a270-461cb2e8fd85",
+                "refresh_test4",
                 ResponseTypeValues.CODE,
                 Uri.parse("https://callback.halspals.co.uk")
-        ).setScope("openid").build()
+        ).setScope("offline").build()
     }
 
     private val authService: AuthorizationService by lazy {
@@ -54,7 +54,7 @@ class AuthenticationActivity : AppCompatActivity() {
     }
 
     /**
-     * Starts the authorization [WebView], allowing the user to login or register.
+     * Starts the authorization web view, allowing the user to login or register.
      */
     private fun startOAuthView() {
         Log.d(tag, "Starting Oauth2 call")
@@ -63,7 +63,7 @@ class AuthenticationActivity : AppCompatActivity() {
     }
 
     /**
-     * Listens for the result of the OAuth webview.
+     * Listens for the result of the OAuth web view.
      */
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
 
