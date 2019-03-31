@@ -173,7 +173,13 @@ func (s *server) RegisterRobot(ctx context.Context, query *infoserver.RegisterRo
 	}
 
 	// update robot
-	_, err = s.DB.Exec("UPDATE robots SET nickname = $1, robotType = $2, registeredUserId = $3 WHERE serial = $4", query.Nickname, query.RobotType, query.UserId, query.Id)
+	_, err = s.DB.Exec(
+		"UPDATE robots SET nickname = $1, robotType = $2, registeredUserId = $3 WHERE serial = $4",
+		query.Nickname,
+		query.RobotType,
+		query.UserId,
+		query.Id,
+	)
 	if err != nil {
 		log.Printf("failed to update robots: %v", err)
 		return nil, status.New(codes.Internal, "internal error").Err()

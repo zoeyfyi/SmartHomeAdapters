@@ -210,7 +210,7 @@ func TestGetRobots(t *testing.T) {
 
 	client := infoserver.NewInfoServerClient(conn)
 
-	client.RegisterRobot(ctx, &infoserver.RegisterRobotQuery{
+	_, err = client.RegisterRobot(ctx, &infoserver.RegisterRobotQuery{
 		Id:        "123abc",
 		Nickname:  "testLightbot",
 		RobotType: "switch",
@@ -288,7 +288,7 @@ func TestGetRobotWithValidID(t *testing.T) {
 
 		client := infoserver.NewInfoServerClient(conn)
 
-		client.RegisterRobot(ctx, &infoserver.RegisterRobotQuery{
+		_, err = client.RegisterRobot(ctx, &infoserver.RegisterRobotQuery{
 			Id:        "123abc",
 			Nickname:  "testLightbot",
 			RobotType: "switch",
