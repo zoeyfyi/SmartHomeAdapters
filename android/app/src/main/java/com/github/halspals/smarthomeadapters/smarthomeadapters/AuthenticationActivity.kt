@@ -43,13 +43,17 @@ class AuthenticationActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_authentication)
 
+        auth_button.setOnClickListener { _ ->
+            startOAuthView()
+        }
+    }
+
+    override fun onStart() {
+        super.onStart()
+
         // Check if there is already an active auth session
         if (authState.isAuthorized) {
             startActivity<MainActivity>()
-        }
-
-        auth_button.setOnClickListener { _ ->
-            startOAuthView()
         }
     }
 

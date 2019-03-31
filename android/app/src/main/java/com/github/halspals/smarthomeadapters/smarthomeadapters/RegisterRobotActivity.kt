@@ -42,6 +42,10 @@ class RegisterRobotActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_register_robot)
+    }
+
+    override fun onStart() {
+        super.onStart()
 
         val goToScreen = if (intent?.hasExtra(SKIP_TO_SCREEN_FLAG) == true) {
             intent?.getStringExtra(SKIP_TO_SCREEN_FLAG)
