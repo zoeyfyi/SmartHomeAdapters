@@ -57,7 +57,7 @@ class EditRobotFragment : Fragment() {
         // Set the icon accordingly
         when (robot.robotType) {
             Robot.ROBOT_TYPE_SWITCH -> {
-                robotIcon.setImageResource(R.drawable.basic_lightbulb)
+                robotIcon.setImageResource(R.drawable.ic_light_on)
             }
 
             Robot.ROBOT_TYPE_THERMOSTAT -> {

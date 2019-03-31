@@ -143,7 +143,7 @@ class RobotAdapter (
                 TODO set different icons depending on the state etc
              */
             Robot.ROBOT_TYPE_SWITCH -> {
-                robotIcon.setImageResource(R.drawable.basic_lightbulb)
+                robotIcon.setImageResource(R.drawable.ic_light_off)
             }
 
             Robot.ROBOT_TYPE_THERMOSTAT -> {
