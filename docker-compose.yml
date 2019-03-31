@@ -123,6 +123,28 @@ services:
     restart: always
     ports:
       - 8083:80
+  usecasedb:
+    image: smarthomeadapters/usecasedb
+    build:
+      context: ./services/usecasedb
+    restart: always
+    environment:
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - usecasedb_data:/var/lib/postgresql/data
+  usecaseserver:
+    image: smarthomeadapters/usecaseserver
+    build:
+      context: ./services/usecaseserver
+    restart: always
+    depends_on:
+      - usecasedb
+      - robotserver
+    environment:
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=password
+      - DB_DATABASE=postgres
+      - DB_URL=usecasedb
   account-app:
     image: smarthomeadapters/account-app
     build:
@@ -134,5 +156,6 @@ volumes:
   portainer_data:
   userdb_data:
   infodb_data:
+  usecasedb_data:
   switchdb_data:
   thermodb_data:
