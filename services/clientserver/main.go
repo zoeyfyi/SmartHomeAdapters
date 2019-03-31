@@ -208,9 +208,14 @@ func deleteRobotHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Pa
 	id := ps.ByName("id")
 	log.Printf("Deleting robot with id %s", id)
 
-	userId := r.Context().Value("userId").(string)
-
-	_, err := infoserverClient.DeleteRobot(context.Background(), &infoserver.RobotQuery{Id: id, UserId: userId})
+	userID := r.Context().Value("userId").(string)
+	_, err := infoserverClient.DeleteRobot(
+		context.Background(),
+		&infoserver.RobotQuery{
+			Id:     id,
+			UserId: userID,
+		},
+	)
 	if err != nil {
 		HTTPError(w, err)
 		return
@@ -235,11 +240,18 @@ func patchUsecaseHandler(w http.ResponseWriter, r *http.Request, ps httprouter.P
 
 	if err != nil {
 		log.Printf("Invalid usecase patch JSON: %v", err)
-		HTTPError(w, errors.New("Invalid JSON"))
+		HTTPError(w, errors.New("invalid JSON"))
 		return
 	}
-	userId := r.Context().Value("userId").(string)
-	_, err = infoserverClient.ReconfigureUsecase(context.Background(), &infoserver.ReconfigureRobotQuery{Id: id, UserId: userId, Usecase: patchUsecaseParameters.Nickname})
+	userID := r.Context().Value("userId").(string)
+	_, err = infoserverClient.ReconfigureUsecase(
+		context.Background(),
+		&infoserver.ReconfigureRobotQuery{
+			Id:      id,
+			UserId:  userID,
+			Usecase: patchUsecaseParameters.Nickname,
+		},
+	)
 	if err != nil {
 		HTTPError(w, err)
 		return
@@ -254,21 +266,26 @@ type RenameParameters struct {
 }
 
 func patchNameHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-
 	id := ps.ByName("id")
-	log.Printf("Patching name of robot with id %s", id)
+	log.Printf("patching name of robot with id %s", id)
 
-	userId := r.Context().Value("userId").(string)
+	userID := r.Context().Value("userId").(string)
 
 	var renameParameters RenameParameters
-
 	err := json.NewDecoder(r.Body).Decode(&renameParameters)
 	if err != nil {
-		log.Printf("Invalid name patch JSON: %v", err)
-		HTTPError(w, errors.New("Invalid JSON"))
+		log.Printf("invalid name patch JSON: %v", err)
+		HTTPError(w, errors.New("invalid JSON"))
 		return
 	}
-	_, err = infoserverClient.RenameRobot(context.Background(), &infoserver.RenameRobotQuery{Id: id, UserId: userId, Nickname: renameParameters.Nickname})
+	_, err = infoserverClient.RenameRobot(
+		context.Background(),
+		&infoserver.RenameRobotQuery{
+			Id:       id,
+			UserId:   userID,
+			Nickname: renameParameters.Nickname,
+		},
+	)
 	if err != nil {
 		HTTPError(w, err)
 		return
