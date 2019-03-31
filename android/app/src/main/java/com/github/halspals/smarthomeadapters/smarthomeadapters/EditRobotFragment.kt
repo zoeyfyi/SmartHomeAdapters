@@ -10,8 +10,14 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import com.github.halspals.smarthomeadapters.smarthomeadapters.model.Robot
+import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.fragment_edit_robot.*
-import org.jetbrains.anko.intentFor
+import okhttp3.ResponseBody
+import org.jetbrains.anko.*
+import org.jetbrains.anko.design.snackbar
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 /**
  * A screen which presents the user with various options to edit a robot already added to their account.
@@ -44,7 +50,16 @@ class EditRobotFragment : Fragment() {
                     )
             )
         }
-        delete_layout.setOnClickListener { _ -> /*TODO*/ }
+
+        delete_layout.setOnClickListener { _ ->
+            parent.alert(
+                    "Are you sure you want to delete ${parent.robotToEdit.nickname}?\n" +
+                            "This will permanently remove the robot from your account.",
+                    "Permanently delete robot") {
+                yesButton { deleteRobot(parent.robotToEdit.id) }
+                noButton {}
+            }.show()
+        }
 
         setRobotViewAndTitle(parent.robotToEdit)
     }
@@ -82,4 +97,53 @@ class EditRobotFragment : Fragment() {
 
         title_text_view.text = context?.getString(R.string.erf_title_text, robot.nickname)
     }
+
+    /**
+     * Deletes the robot with the matching ID from the user's account.
+     *
+     * @param robotId the unique ID of the robot to remove
+     */
+    private fun deleteRobot(robotId: String) {
+        parent.authState.performActionWithFreshTokens(parent.authService) {
+            accessToken, _, ex ->
+            if (accessToken == null) {
+                Log.e(fTag, "[deleteRobot] got null access token, ex: $ex")
+            } else {
+
+                progress_bar.visibility = View.VISIBLE
+
+                parent.restApiService
+                        .deleteRobot(robotId, accessToken)
+                        .enqueue(object: Callback<ResponseBody> {
+
+                            override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
+                                progress_bar.visibility = View.GONE
+
+                                if (response.isSuccessful) {
+                                    Log.v(fTag, "[deleteRobot] Success")
+                                    parent.toast("Deleted robot")
+                                    parent.finish()
+                                } else {
+                                    val error = RestApiService.extractErrorFromResponse(response)
+                                    Log.e(fTag, "[deleteRobot] got unsuccessful "
+                                            + "response, error: $error")
+                                    if (error != null) {
+                                        parent.snackbar_layout.snackbar(error)
+                                    }
+                                }
+                            }
+
+                            override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                                progress_bar.visibility = View.GONE
+                                val error = t.message
+                                Log.e(fTag, "[deleteRobot] FAILED, error: $error")
+                                if (error != null) {
+                                    parent.snackbar_layout.snackbar(error)
+                                }
+                            }
+                        })
+            }
+        }
+    }
+
 }

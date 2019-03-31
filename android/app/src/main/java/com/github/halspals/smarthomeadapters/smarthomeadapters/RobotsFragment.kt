@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.GridView
 import com.github.halspals.smarthomeadapters.smarthomeadapters.model.Robot
+import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.fragment_robots.*
 import org.jetbrains.anko.design.snackbar
 import retrofit2.Call
@@ -73,7 +74,7 @@ class RobotsFragment : Fragment() {
                         val errorMsg = t.message
                         Log.e(fTag, "getRobots FAILED, got error: $errorMsg")
                         if (errorMsg != null) {
-                            snackbar_layout.snackbar(errorMsg)
+                            parent.snackbar_layout.snackbar(errorMsg)
                         }
 
                         displayRobots(view, listOf())
@@ -90,7 +91,7 @@ class RobotsFragment : Fragment() {
                             val error = RestApiService.extractErrorFromResponse(response)
                             Log.e(fTag, "getRobots got unsuccessful response, error: $error")
                             if (error != null) {
-                                snackbar_layout.snackbar(error)
+                                parent.snackbar_layout.snackbar(error)
                             }
 
                             listOf()
