@@ -6,4 +6,5 @@
     <color name="colorAccent">#55DDFF</color>
     <color name="colorToggleOff">@color/colorPrimaryDark</color>
     <color name="colorToggleOn">@color/colorAccent</color>
+    <color name="colorOffBlack">#4F4F4F</color>
 </resources>
