@@ -4,13 +4,9 @@ package main
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"log"
 	"net"
-	"os"
 	"regexp"
-	"strconv"
-	"time"
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/mrbenshef/SmartHomeAdapters/microservice"
@@ -19,14 +15,10 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/lib/pq"
 	_ "github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
 )
-
-// signingKey key for signing json web tokens
-var signingKey = os.Getenv("JWT_SIGNING_KEY")
 
 // bcryptRounds number of rounds bcrypt uses to hash passwords
 const bcryptRounds = 10
@@ -56,7 +48,7 @@ func (s *server) Register(ctx context.Context, request *userserver.RegisterReque
 	}
 
 	// hash password
-	hash, err := bcrypt.GenerateFromPassword([]byte(request.Password), 10)
+	hash, err := bcrypt.GenerateFromPassword([]byte(request.Password), bcryptRounds)
 	if err != nil {
 		return nil, status.New(codes.Internal, "Internal error").Err()
 	}
@@ -66,85 +58,63 @@ func (s *server) Register(ctx context.Context, request *userserver.RegisterReque
 	if err != nil {
 		if err, ok := err.(*pq.Error); ok && err.Code.Name() == "unique_violation" {
 			// email already exists
-			return nil, status.Newf(codes.AlreadyExists, "A user with email \"%s\" already exists", request.Email).Err()
-		} else {
-			log.Printf("Failed to insert user into database: %v", err)
-			return nil, status.New(codes.Internal, "Internal error").Err()
+			return nil, status.Newf(codes.AlreadyExists, "a user with email \"%s\" already exists", request.Email).Err()
 		}
+
+		log.Printf("failed to insert user into database: %v", err)
+		return nil, status.New(codes.Internal, "internal error").Err()
 	}
 
 	return &empty.Empty{}, nil
 }
 
-func (s *server) Login(ctx context.Context, request *userserver.LoginRequest) (*userserver.Token, error) {
+func (s *server) CheckCredentials(ctx context.Context, credentials *userserver.Credentials) (*userserver.User, error) {
 	// get email/hash from database
-	var id int
-	var hash string
-	row := s.DB.QueryRow("SELECT id, password FROM users WHERE email = $1", request.Email)
+	var (
+		id   string
+		hash string
+	)
+	row := s.DB.QueryRow("SELECT id, password FROM users WHERE email = $1", credentials.Email)
 	err := row.Scan(&id, &hash)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, status.Newf(codes.NotFound, "User with email \"%s\" does not exist", request.Email).Err()
-		} else {
-			log.Printf("Error scanning database: %v", err)
-			return nil, status.New(codes.Internal, "Internal error").Err()
+			return nil, status.Newf(codes.NotFound, "user with email \"%s\" does not exist", credentials.Email).Err()
 		}
+
+		log.Printf("error scanning database: %v", err)
+		return nil, status.New(codes.Internal, "internal error").Err()
 	}
 
 	// check password
-	err = bcrypt.CompareHashAndPassword([]byte(hash), []byte(request.Password))
+	err = bcrypt.CompareHashAndPassword([]byte(hash), []byte(credentials.Password))
 	if err != nil {
 		if err == bcrypt.ErrMismatchedHashAndPassword {
-			return nil, status.New(codes.InvalidArgument, "Password incorrect").Err()
-		} else {
-			log.Printf("Error comparing hashes: %v", err)
-			return nil, status.New(codes.Internal, "Internal error").Err()
+			return nil, status.New(codes.InvalidArgument, "password incorrect").Err()
 		}
+
+		log.Printf("error comparing hashes: %v", err)
+		return nil, status.New(codes.Internal, "internal error").Err()
 	}
 
-	// create token
-	expire := time.Now().Add(time.Hour * 24)
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"exp": expire,
-		"id":  strconv.Itoa(id),
-	})
-	tokenString, err := token.SignedString([]byte(signingKey))
-	if err != nil {
-		log.Printf("Error signing token: %v", err)
-		return nil, status.New(codes.Internal, "Internal error").Err()
-	}
-
-	return &userserver.Token{
-		Token: tokenString,
+	return &userserver.User{
+		Id: id,
 	}, nil
 }
 
-func (s *server) Authorize(ctx context.Context, token *userserver.Token) (*userserver.User, error) {
-
-	// parse token
-	jwtToken, err := jwt.Parse(token.Token, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
-		}
-		return []byte(signingKey), nil
-	})
+func (s *server) GetUserID(ctx context.Context, email *userserver.Email) (*userserver.User, error) {
+	// get email/hash from database
+	var (
+		id string
+	)
+	row := s.DB.QueryRow("SELECT id FROM users WHERE email = $1", email.Email)
+	err := row.Scan(&id)
 	if err != nil {
-		log.Printf("Couldnt parse token: %v", err)
-		return nil, status.New(codes.InvalidArgument, "Invalid token").Err()
-	}
+		if err == sql.ErrNoRows {
+			return nil, status.Newf(codes.NotFound, "user with email \"%s\" does not exist", email.Email).Err()
+		}
 
-	// get claims
-	claims, ok := jwtToken.Claims.(jwt.MapClaims)
-	if !ok || !jwtToken.Valid {
-		log.Printf("Could not get token claims")
-		return nil, status.New(codes.InvalidArgument, "Invalid token").Err()
-	}
-
-	// get ID from claims
-	id, ok := claims["id"].(string)
-	if !ok {
-		log.Printf("Token did not have ID claim, claims: %+v", claims)
-		return nil, status.New(codes.InvalidArgument, "Invalid token").Err()
+		log.Printf("error scanning database: %v", err)
+		return nil, status.New(codes.Internal, "internal error").Err()
 	}
 
 	return &userserver.User{
@@ -175,9 +145,13 @@ func main() {
 	grpcServer := grpc.NewServer()
 	userServer := &server{DB: db}
 	userserver.RegisterUserServerServer(grpcServer, userServer)
-	lis, err := net.Listen("tcp", ":80")
+	lis, err := net.Listen("tcp", "userserver:80")
 	if err != nil {
-		log.Fatalf("Failed to listen: %v", err)
+		log.Fatalf("failed to listen: %v", err)
 	}
-	grpcServer.Serve(lis)
+
+	err = grpcServer.Serve(lis)
+	if err != nil {
+		log.Fatalf("failed to serve: %v", err)
+	}
 }

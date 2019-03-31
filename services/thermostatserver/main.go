@@ -23,7 +23,10 @@ type server struct {
 	RobotClient robotserver.RobotServerClient
 }
 
-func (s *server) GetThermostat(ctx context.Context, query *thermostatserver.ThermostatQuery) (*thermostatserver.Thermostat, error) {
+func (s *server) GetThermostat(
+	ctx context.Context,
+	query *thermostatserver.ThermostatQuery,
+) (*thermostatserver.Thermostat, error) {
 	var (
 		tempreture    int64
 		minAngle      int64
@@ -33,7 +36,14 @@ func (s *server) GetThermostat(ctx context.Context, query *thermostatserver.Ther
 		isCalibrated  bool
 	)
 
-	row := s.DB.QueryRow("SELECT tempreture, minAngle, maxAngle, minTempreture, maxTempreture, isCalibrated FROM thermostats WHERE serial = $1", query.Id)
+	row := s.DB.QueryRow(
+		`
+		SELECT tempreture, minAngle, maxAngle, minTempreture, maxTempreture, isCalibrated 
+		FROM thermostats 
+		WHERE serial = $1
+		`,
+		query.Id,
+	)
 	err := row.Scan(&tempreture, &minAngle, &maxAngle, &minTempreture, &maxTempreture, &isCalibrated)
 	if err != nil {
 		log.Printf("Failed to scan database: %v", err)
@@ -51,7 +61,10 @@ func (s *server) GetThermostat(ctx context.Context, query *thermostatserver.Ther
 	}, nil
 }
 
-func (s *server) SetThermostat(request *thermostatserver.SetThermostatRequest, stream thermostatserver.ThermostatServer_SetThermostatServer) error {
+func (s *server) SetThermostat(
+	request *thermostatserver.SetThermostatRequest,
+	stream thermostatserver.ThermostatServer_SetThermostatServer,
+) error {
 	// get thermostat
 	thermostat, err := s.GetThermostat(context.Background(), &thermostatserver.ThermostatQuery{
 		Id: request.Id,
@@ -75,23 +88,42 @@ func (s *server) SetThermostat(request *thermostatserver.SetThermostatRequest, s
 	case "fahrenheit":
 		targetKelvin = int64((float32(request.Tempreture)-32)*5/9 + 273.15)
 	default:
-		return status.Newf(codes.InvalidArgument, "\"%s\" is an unrecognized unit of tempreture", request.Unit).Err()
+		return status.Newf(
+			codes.InvalidArgument,
+			"\"%s\" is an unrecognized unit of tempreture",
+			request.Unit,
+		).Err()
 	}
 
 	// check tempreture is within range
 	if targetKelvin < thermostat.MinTempreture {
-		return status.Newf(codes.FailedPrecondition, "%d %s is less than the minimum tempreture", request.Tempreture, request.Unit).Err()
+		return status.Newf(
+			codes.FailedPrecondition,
+			"%d %s is less than the minimum tempreture",
+			request.Tempreture,
+			request.Unit,
+		).Err()
 	} else if targetKelvin > thermostat.MaxTempreture {
-		return status.Newf(codes.FailedPrecondition, "%d %s is more than the maximum tempreture", request.Tempreture, request.Unit).Err()
+		return status.Newf(
+			codes.FailedPrecondition,
+			"%d %s is more than the maximum tempreture",
+			request.Tempreture,
+			request.Unit,
+		).Err()
 	}
 
 	// compute angle
-	tempretureRatio := float64(targetKelvin-thermostat.MinTempreture) / float64(thermostat.MaxTempreture-thermostat.MinTempreture)
+	tempretureRatio := float64(targetKelvin-thermostat.MinTempreture) /
+		float64(thermostat.MaxTempreture-thermostat.MinTempreture)
 	angle := float64(thermostat.MinAngle) + float64(thermostat.MaxAngle-thermostat.MinAngle)*tempretureRatio
 
-	stream.Send(&thermostatserver.SetThermostatStatus{
+	err = stream.Send(&thermostatserver.SetThermostatStatus{
 		Status: thermostatserver.SetThermostatStatus_SETTING,
 	})
+	if err != nil {
+		log.Fatalf("Failed to send set thermostat status: %v", err)
+		return status.Newf(codes.Internal, "internal error").Err()
+	}
 
 	// set servo
 	_, err = s.RobotClient.SetServo(context.Background(), &robotserver.ServoRequest{
@@ -103,15 +135,23 @@ func (s *server) SetThermostat(request *thermostatserver.SetThermostatRequest, s
 	}
 
 	// TODO: replace waiting with message acknowledment
-	stream.Send(&thermostatserver.SetThermostatStatus{
+	err = stream.Send(&thermostatserver.SetThermostatStatus{
 		Status: thermostatserver.SetThermostatStatus_WAITING,
 	})
+	if err != nil {
+		log.Fatalf("Failed to send set thermostat status: %v", err)
+		return status.Newf(codes.Internal, "internal error").Err()
+	}
 	time.Sleep(time.Second * 3)
 
 	// done
-	stream.Send(&thermostatserver.SetThermostatStatus{
+	err = stream.Send(&thermostatserver.SetThermostatStatus{
 		Status: thermostatserver.SetThermostatStatus_DONE,
 	})
+	if err != nil {
+		log.Fatalf("Failed to send set thermostat status: %v", err)
+		return status.Newf(codes.Internal, "internal error").Err()
+	}
 
 	// update database
 	res, err := s.DB.Exec("UPDATE thermostats SET tempreture = $1 WHERE serial = $2", targetKelvin, request.Id)
@@ -165,9 +205,14 @@ func main() {
 		RobotClient: robotClient,
 	}
 	thermostatserver.RegisterThermostatServerServer(grpcServer, thermostatServer)
-	lis, err := net.Listen("tcp", ":80")
+	lis, err := net.Listen("tcp", "thermostatserver:80")
 	if err != nil {
-		log.Fatalf("Failed to listen: %v", err)
+		log.Fatalf("failed to listen: %v", err)
 	}
-	grpcServer.Serve(lis)
+
+	err = grpcServer.Serve(lis)
+	if err != nil {
+		log.Fatalf("failed to serve: %v", err)
+	}
+
 }

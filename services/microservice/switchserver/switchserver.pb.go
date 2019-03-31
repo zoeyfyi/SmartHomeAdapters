@@ -51,7 +51,7 @@ func (x SetSwitchStatus_Status) String() string {
 	return proto.EnumName(SetSwitchStatus_Status_name, int32(x))
 }
 func (SetSwitchStatus_Status) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_switchserver_391a31fcd7eed6bf, []int{5, 0}
+	return fileDescriptor_switchserver_ccae8c92f6982009, []int{5, 0}
 }
 
 type Switch struct {
@@ -70,7 +70,7 @@ func (m *Switch) Reset()         { *m = Switch{} }
 func (m *Switch) String() string { return proto.CompactTextString(m) }
 func (*Switch) ProtoMessage()    {}
 func (*Switch) Descriptor() ([]byte, []int) {
-	return fileDescriptor_switchserver_391a31fcd7eed6bf, []int{0}
+	return fileDescriptor_switchserver_ccae8c92f6982009, []int{0}
 }
 func (m *Switch) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Switch.Unmarshal(m, b)
@@ -144,7 +144,7 @@ func (m *AddSwitchRequest) Reset()         { *m = AddSwitchRequest{} }
 func (m *AddSwitchRequest) String() string { return proto.CompactTextString(m) }
 func (*AddSwitchRequest) ProtoMessage()    {}
 func (*AddSwitchRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_switchserver_391a31fcd7eed6bf, []int{1}
+	return fileDescriptor_switchserver_ccae8c92f6982009, []int{1}
 }
 func (m *AddSwitchRequest) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_AddSwitchRequest.Unmarshal(m, b)
@@ -189,7 +189,7 @@ func (m *RemoveSwitchRequest) Reset()         { *m = RemoveSwitchRequest{} }
 func (m *RemoveSwitchRequest) String() string { return proto.CompactTextString(m) }
 func (*RemoveSwitchRequest) ProtoMessage()    {}
 func (*RemoveSwitchRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_switchserver_391a31fcd7eed6bf, []int{2}
+	return fileDescriptor_switchserver_ccae8c92f6982009, []int{2}
 }
 func (m *RemoveSwitchRequest) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RemoveSwitchRequest.Unmarshal(m, b)
@@ -227,7 +227,7 @@ func (m *SwitchQuery) Reset()         { *m = SwitchQuery{} }
 func (m *SwitchQuery) String() string { return proto.CompactTextString(m) }
 func (*SwitchQuery) ProtoMessage()    {}
 func (*SwitchQuery) Descriptor() ([]byte, []int) {
-	return fileDescriptor_switchserver_391a31fcd7eed6bf, []int{3}
+	return fileDescriptor_switchserver_ccae8c92f6982009, []int{3}
 }
 func (m *SwitchQuery) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_SwitchQuery.Unmarshal(m, b)
@@ -267,7 +267,7 @@ func (m *SetSwitchRequest) Reset()         { *m = SetSwitchRequest{} }
 func (m *SetSwitchRequest) String() string { return proto.CompactTextString(m) }
 func (*SetSwitchRequest) ProtoMessage()    {}
 func (*SetSwitchRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_switchserver_391a31fcd7eed6bf, []int{4}
+	return fileDescriptor_switchserver_ccae8c92f6982009, []int{4}
 }
 func (m *SetSwitchRequest) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_SetSwitchRequest.Unmarshal(m, b)
@@ -319,7 +319,7 @@ func (m *SetSwitchStatus) Reset()         { *m = SetSwitchStatus{} }
 func (m *SetSwitchStatus) String() string { return proto.CompactTextString(m) }
 func (*SetSwitchStatus) ProtoMessage()    {}
 func (*SetSwitchStatus) Descriptor() ([]byte, []int) {
-	return fileDescriptor_switchserver_391a31fcd7eed6bf, []int{5}
+	return fileDescriptor_switchserver_ccae8c92f6982009, []int{5}
 }
 func (m *SetSwitchStatus) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_SetSwitchStatus.Unmarshal(m, b)
@@ -361,7 +361,7 @@ func (m *SwitchCalibrationParameters) Reset()         { *m = SwitchCalibrationPa
 func (m *SwitchCalibrationParameters) String() string { return proto.CompactTextString(m) }
 func (*SwitchCalibrationParameters) ProtoMessage()    {}
 func (*SwitchCalibrationParameters) Descriptor() ([]byte, []int) {
-	return fileDescriptor_switchserver_391a31fcd7eed6bf, []int{6}
+	return fileDescriptor_switchserver_ccae8c92f6982009, []int{6}
 }
 func (m *SwitchCalibrationParameters) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_SwitchCalibrationParameters.Unmarshal(m, b)
@@ -660,10 +660,10 @@ var _SwitchServer_serviceDesc = grpc.ServiceDesc{
 }
 
 func init() {
-	proto.RegisterFile("switchserver/switchserver.proto", fileDescriptor_switchserver_391a31fcd7eed6bf)
+	proto.RegisterFile("switchserver/switchserver.proto", fileDescriptor_switchserver_ccae8c92f6982009)
 }
 
-var fileDescriptor_switchserver_391a31fcd7eed6bf = []byte{
+var fileDescriptor_switchserver_ccae8c92f6982009 = []byte{
 	// 513 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x93, 0x4f, 0x6f, 0xd3, 0x30,
 	0x18, 0xc6, 0x9b, 0xf4, 0x6f, 0xde, 0x96, 0xae, 0x33, 0x13, 0x54, 0xe9, 0x80, 0xca, 0x02, 0xa9,

@@ -7,7 +7,6 @@ import (
 	"os"
 	"reflect"
 	"testing"
-	"time"
 
 	"github.com/mrbenshef/SmartHomeAdapters/microservice"
 	"github.com/mrbenshef/SmartHomeAdapters/microservice/robotserver"
@@ -54,26 +53,32 @@ func TestMain(m *testing.M) {
 	os.Exit(exitCode)
 }
 
-type mockRobotServerClient struct {
-	thisIsAMock bool
-}
+type mockRobotServerClient struct{}
 
-func (c mockRobotServerClient) SetServo(ctx context.Context, in *robotserver.ServoRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
+func (c mockRobotServerClient) SetServo(
+	ctx context.Context,
+	in *robotserver.ServoRequest,
+	opts ...grpc.CallOption,
+) (*empty.Empty, error) {
 	servoRequests = append(servoRequests, in)
 	return &empty.Empty{}, nil
 }
 
-func (c mockRobotServerClient) SetLED(ctx context.Context, in *robotserver.LEDRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
+func (c mockRobotServerClient) SetLED(
+	ctx context.Context,
+	in *robotserver.LEDRequest,
+	opts ...grpc.CallOption,
+) (*empty.Empty, error) {
 	panic("Call to SetLED!")
 }
 
-func bufDialer(string, time.Duration) (net.Conn, error) {
+func bufDialer(context.Context, string) (net.Conn, error) {
 	return lis.Dial()
 }
 
 func TestGetThermostat(t *testing.T) {
 	ctx := context.Background()
-	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithDialer(bufDialer), grpc.WithInsecure())
+	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
 	if err != nil {
 		t.Fatalf("Failed to dial bufnet: %v", err)
 	}
@@ -145,7 +150,7 @@ func TestSetThermostat(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithDialer(bufDialer), grpc.WithInsecure())
+	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
 	if err != nil {
 		t.Fatalf("Failed to dial bufnet: %v", err)
 	}

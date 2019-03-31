@@ -47,10 +47,10 @@ func (s *server) AddSwitch(ctx context.Context, request *switchserver.AddSwitchR
 		if err, ok := err.(*pq.Error); ok && err.Code.Name() == "unique_violation" {
 			// robot is already registered
 			return nil, status.Newf(codes.AlreadyExists, "Robot \"%s\" is already a registered switch", switchRobot.Id).Err()
-		} else {
-			log.Printf("Failed to insert user into database: %v", err)
-			return nil, status.Newf(codes.Internal, "Could not register robot \"%s\" as a switch", switchRobot.Id).Err()
 		}
+
+		log.Printf("Failed to insert user into database: %v", err)
+		return nil, status.Newf(codes.Internal, "Could not register robot \"%s\" as a switch", switchRobot.Id).Err()
 	}
 
 	return &switchRobot, nil
@@ -83,7 +83,11 @@ func (s *server) GetSwitch(ctx context.Context, request *switchserver.SwitchQuer
 		restAngle    int
 	)
 
-	row := s.DB.QueryRow("SELECT isOn, isCalibrated, onAngle, offAngle, restAngle FROM switches WHERE serial = $1", request.Id)
+	row := s.DB.QueryRow(
+		"SELECT isOn, isCalibrated, onAngle, offAngle, restAngle FROM switches WHERE serial = $1",
+		request.Id,
+	)
+
 	err := row.Scan(&isOn, &isCalibrated, &onAngle, &offAngle, &restAngle)
 	if err != nil {
 		log.Printf("Failed to scan database: %v", err)
@@ -100,7 +104,10 @@ func (s *server) GetSwitch(ctx context.Context, request *switchserver.SwitchQuer
 	}, nil
 }
 
-func (s *server) SetSwitch(request *switchserver.SetSwitchRequest, stream switchserver.SwitchServer_SetSwitchServer) error {
+func (s *server) SetSwitch(
+	request *switchserver.SetSwitchRequest,
+	stream switchserver.SwitchServer_SetSwitchServer,
+) error {
 	// get switch
 	robotSwitch, err := s.GetSwitch(context.Background(), &switchserver.SwitchQuery{
 		Id: request.Id,
@@ -118,14 +125,18 @@ func (s *server) SetSwitch(request *switchserver.SetSwitchRequest, stream switch
 	if robotSwitch.IsOn == request.On && !request.Force {
 		if robotSwitch.IsOn {
 			return status.New(codes.InvalidArgument, "Switch is already on").Err()
-		} else {
-			return status.New(codes.InvalidArgument, "Switch is already off").Err()
 		}
+
+		return status.New(codes.InvalidArgument, "Switch is already off").Err()
 	}
 
-	stream.Send(&switchserver.SetSwitchStatus{
+	err = stream.Send(&switchserver.SetSwitchStatus{
 		Status: switchserver.SetSwitchStatus_SETTING,
 	})
+	if err != nil {
+		log.Fatalf("Failed to send set switch status: %v", err)
+		return status.Newf(codes.Internal, "internal error").Err()
+	}
 
 	var angle int64
 	if request.On {
@@ -143,15 +154,24 @@ func (s *server) SetSwitch(request *switchserver.SetSwitchRequest, stream switch
 	}
 
 	// TODO: replace waiting with message acknowledment
-	stream.Send(&switchserver.SetSwitchStatus{
+	err = stream.Send(&switchserver.SetSwitchStatus{
 		Status: switchserver.SetSwitchStatus_WAITING,
 	})
+	if err != nil {
+		log.Fatalf("Failed to send set switch status: %v", err)
+		return status.Newf(codes.Internal, "internal error").Err()
+	}
 	time.Sleep(time.Second * 3)
 
 	// return to rest angle
-	stream.Send(&switchserver.SetSwitchStatus{
+	err = stream.Send(&switchserver.SetSwitchStatus{
 		Status: switchserver.SetSwitchStatus_RETURNING,
 	})
+	if err != nil {
+		log.Fatalf("Failed to send set switch status: %v", err)
+		return status.Newf(codes.Internal, "internal error").Err()
+	}
+
 	_, err = robotserverClient.SetServo(context.Background(), &robotserver.ServoRequest{
 		RobotId: request.Id,
 		Angle:   robotSwitch.RestAngle,
@@ -161,9 +181,13 @@ func (s *server) SetSwitch(request *switchserver.SetSwitchRequest, stream switch
 	}
 
 	// done
-	stream.Send(&switchserver.SetSwitchStatus{
+	err = stream.Send(&switchserver.SetSwitchStatus{
 		Status: switchserver.SetSwitchStatus_DONE,
 	})
+	if err != nil {
+		log.Fatalf("Failed to send set switch status: %v", err)
+		return status.Newf(codes.Internal, "internal error").Err()
+	}
 
 	// update database
 	res, err := s.DB.Exec("UPDATE switches SET isOn = $1 WHERE serial = $2", request.On, request.Id)
@@ -186,7 +210,10 @@ func (s *server) SetSwitch(request *switchserver.SetSwitchRequest, stream switch
 	return nil
 }
 
-func (s *server) CalibrateSwitch(ctx context.Context, parameters *switchserver.SwitchCalibrationParameters) (*empty.Empty, error) {
+func (s *server) CalibrateSwitch(
+	ctx context.Context,
+	parameters *switchserver.SwitchCalibrationParameters,
+) (*empty.Empty, error) {
 	fields := make([]string, 0, 4)
 	values := make([]interface{}, 0, 4)
 
@@ -266,9 +293,13 @@ func main() {
 	grpcServer := grpc.NewServer()
 	switchServer := &server{DB: db}
 	switchserver.RegisterSwitchServerServer(grpcServer, switchServer)
-	lis, err := net.Listen("tcp", ":80")
+	lis, err := net.Listen("tcp", "switchserver:80")
 	if err != nil {
 		log.Fatalf("Failed to listen: %v", err)
 	}
-	grpcServer.Serve(lis)
+
+	err = grpcServer.Serve(lis)
+	if err != nil {
+		log.Fatalf("Failed to serve: %v", err)
+	}
 }
