@@ -31,7 +31,10 @@ type server struct {
 	ThermostatClient thermostatserver.ThermostatServerClient
 }
 
-func (s *server) ReconfigureUsecase(ctx context.Context, query *infoserver.ReconfigureRobotQuery) (*empty.Empty, error) {
+func (s *server) ReconfigureUsecase(
+	ctx context.Context,
+	query *infoserver.ReconfigureRobotQuery,
+) (*empty.Empty, error) {
 	log.Printf("reconfiguring usecase for robot with id: %s (user id: %s)", query.Id, query.UserId)
 
 	if query.Usecase != robotTypeSwitch && query.Usecase != robotTypeThermostat {
@@ -39,7 +42,12 @@ func (s *server) ReconfigureUsecase(ctx context.Context, query *infoserver.Recon
 		return nil, status.Newf(codes.Internal, "unrecognized usecase: %s", query.Usecase).Err()
 	}
 
-	_, err := s.DB.Exec("UPDATE robots SET robotType = $1 WHERE serial = $2 AND registeredUserId = $3", query.Usecase, query.Id, query.UserId)
+	_, err := s.DB.Exec(
+		"UPDATE robots SET robotType = $1 WHERE serial = $2 AND registeredUserId = $3",
+		query.Usecase,
+		query.Id,
+		query.UserId,
+	)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, status.Newf(codes.NotFound, "robot \"%s\" does not exist", query.Id).Err()
@@ -54,8 +62,13 @@ func (s *server) ReconfigureUsecase(ctx context.Context, query *infoserver.Recon
 
 func (s *server) RenameRobot(ctx context.Context, query *infoserver.RenameRobotQuery) (*empty.Empty, error) {
 	log.Printf("renaming robot with id: %s (user id: %s) to nickname %s", query.Id, query.UserId, query.Nickname)
-	_, err := s.DB.Exec("UPDATE robots SET nickname = $1 WHERE serial = $2 AND registeredUserId = $3", query.Nickname, query.Id, query.UserId)
 
+	_, err := s.DB.Exec(
+		"UPDATE robots SET nickname = $1 WHERE serial = $2 AND registeredUserId = $3",
+		query.Nickname,
+		query.Id,
+		query.UserId,
+	)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, status.Newf(codes.NotFound, "robot \"%s\" does not exist", query.Id).Err()
