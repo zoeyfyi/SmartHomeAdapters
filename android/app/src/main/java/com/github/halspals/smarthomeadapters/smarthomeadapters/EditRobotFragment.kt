@@ -11,6 +11,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import com.github.halspals.smarthomeadapters.smarthomeadapters.model.Robot
 import kotlinx.android.synthetic.main.fragment_edit_robot.*
+import org.jetbrains.anko.intentFor
 
 /**
  * A screen which presents the user with various options to edit a robot already added to their account.
@@ -35,7 +36,14 @@ class EditRobotFragment : Fragment() {
         finish_edit_image_view.setOnClickListener { _ -> parent.startFragment(RobotsFragment()) }
 
         recalibrate_layout.setOnClickListener { _ -> /*TODO*/ }
-        rename_layout.setOnClickListener { _ -> /*TODO*/ }
+        rename_layout.setOnClickListener { _ ->
+            parent.startActivity(
+                    parent.intentFor<RegisterRobotActivity>(
+                            SKIP_TO_SCREEN_FLAG to true,
+                            ROBOT_ID_FLAG to parent.robotToEdit.id
+                    )
+            )
+        }
         delete_layout.setOnClickListener { _ -> /*TODO*/ }
 
         setRobotViewAndTitle(parent.robotToEdit)
