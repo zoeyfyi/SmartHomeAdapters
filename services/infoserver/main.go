@@ -51,10 +51,9 @@ func (s *server) ReconfigureUsecase(
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, status.Newf(codes.NotFound, "robot \"%s\" does not exist", query.Id).Err()
-		} else if err != nil {
-			log.Printf("failed to reconfigure robot %s: %v", query.Id, err)
-			return nil, status.New(codes.Internal, "internal error").Err()
 		}
+		log.Printf("failed to reconfigure robot %s: %v", query.Id, err)
+		return nil, status.New(codes.Internal, "internal error").Err()
 	}
 
 	return &empty.Empty{}, nil
@@ -72,10 +71,9 @@ func (s *server) RenameRobot(ctx context.Context, query *infoserver.RenameRobotQ
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, status.Newf(codes.NotFound, "robot \"%s\" does not exist", query.Id).Err()
-		} else if err != nil {
-			log.Printf("failed to rename robot %s: %v", query.Id, err)
-			return nil, status.New(codes.Internal, "internal error").Err()
 		}
+		log.Printf("failed to rename robot %s: %v", query.Id, err)
+		return nil, status.New(codes.Internal, "internal error").Err()
 	}
 
 	return nil, err
@@ -88,10 +86,9 @@ func (s *server) DeleteRobot(ctx context.Context, query *infoserver.RobotQuery) 
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, status.Newf(codes.NotFound, "robot \"%s\" does not exist", query.Id).Err()
-		} else if err != nil {
-			log.Printf("failed to delete robot %s: %v", query.Id, err)
-			return nil, status.New(codes.Internal, "internal error").Err()
 		}
+		log.Printf("failed to delete robot %s: %v", query.Id, err)
+		return nil, status.New(codes.Internal, "internal error").Err()
 	}
 
 	return &empty.Empty{}, nil
