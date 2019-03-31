@@ -21,6 +21,7 @@ import (
 	"github.com/mrbenshef/SmartHomeAdapters/microservice"
 	"github.com/mrbenshef/SmartHomeAdapters/microservice/infoserver"
 	"github.com/mrbenshef/SmartHomeAdapters/microservice/switchserver"
+	"github.com/mrbenshef/SmartHomeAdapters/microservice/thermostatserver"
 	"google.golang.org/grpc"
 )
 
@@ -93,6 +94,35 @@ func (c mockSwitchClient) CalibrateSwitch(
 	return nil, nil
 }
 
+type mockThermostatClient struct{}
+
+func (c mockThermostatClient) GetThermostat(
+	ctx context.Context,
+	query *thermostatserver.ThermostatQuery,
+	_ ...grpc.CallOption,
+) (*thermostatserver.Thermostat, error) {
+	if query.Id == "qwerty" {
+		return &thermostatserver.Thermostat{
+			Id:            "qwerty",
+			MaxTempreture: 40,
+			MinTempreture: 20,
+			Tempreture:    30,
+			MinAngle:      0,
+			MaxAngle:      180,
+		}, nil
+	}
+
+	return nil, status.New(codes.NotFound, "Thermostat does not exist").Err()
+}
+
+func (c mockThermostatClient) SetThermostat(
+	_ context.Context,
+	_ *thermostatserver.SetThermostatRequest,
+	_ ...grpc.CallOption,
+) (thermostatserver.ThermostatServer_SetThermostatClient, error) {
+	return nil, nil
+}
+
 func TestMain(m *testing.M) {
 	username := os.Getenv("DB_USERNAME")
 	if username != "temp" {
@@ -110,8 +140,9 @@ func TestMain(m *testing.M) {
 	s := grpc.NewServer()
 
 	infoserver.RegisterInfoServerServer(s, &server{
-		DB:           db,
-		SwitchClient: mockSwitchClient{},
+		DB:               db,
+		SwitchClient:     mockSwitchClient{},
+		ThermostatClient: mockThermostatClient{},
 	})
 	go func() {
 		if err := s.Serve(lis); err != nil {
@@ -137,12 +168,24 @@ func TestGetRobots(t *testing.T) {
 			Nickname:      "testLightbot",
 			RobotType:     "switch",
 			InterfaceType: "toggle",
+			RobotStatus: &infoserver.Robot_ToggleStatus{
+				ToggleStatus: &infoserver.ToggleStatus{
+					Value: true,
+				},
+			},
 		},
 		{
 			Id:            "qwerty",
 			Nickname:      "testThermoBot",
 			RobotType:     "thermostat",
 			InterfaceType: "range",
+			RobotStatus: &infoserver.Robot_RangeStatus{
+				RangeStatus: &infoserver.RangeStatus{
+					Min:     20,
+					Max:     40,
+					Current: 30,
+				},
+			},
 		},
 	}
 

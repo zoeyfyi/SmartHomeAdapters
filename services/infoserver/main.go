@@ -187,7 +187,7 @@ func (s *server) GetRobots(query *infoserver.RobotsQuery, stream infoserver.Info
 				log.Printf("Failed to retrieve robot information.")
 				return err
 			}
-			stream.Send(&infoserver.Robot{
+			err = stream.Send(&infoserver.Robot{
 				Id:            serial,
 				Nickname:      nickname,
 				RobotType:     robotType,
@@ -198,7 +198,10 @@ func (s *server) GetRobots(query *infoserver.RobotsQuery, stream infoserver.Info
 					},
 				},
 			})
-		} else if robotType == robotTypeSwitch {
+			if err != nil {
+				return err
+			}
+		} else if robotType == robotTypeThermostat {
 			thermostat, err := s.ThermostatClient.GetThermostat(context.Background(), &thermostatserver.ThermostatQuery{
 				Id: serial,
 			})
@@ -219,9 +222,9 @@ func (s *server) GetRobots(query *infoserver.RobotsQuery, stream infoserver.Info
 					},
 				},
 			})
-		}
-		if err != nil {
-			return err
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
