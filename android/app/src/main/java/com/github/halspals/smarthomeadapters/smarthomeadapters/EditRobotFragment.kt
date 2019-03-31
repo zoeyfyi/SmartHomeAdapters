@@ -45,7 +45,7 @@ class EditRobotFragment : Fragment() {
         rename_layout.setOnClickListener { _ ->
             parent.startActivity(
                     parent.intentFor<RegisterRobotActivity>(
-                            SKIP_TO_SCREEN_FLAG to true,
+                            SKIP_TO_SCREEN_FLAG to RENAME_FLAG,
                             ROBOT_ID_FLAG to parent.robotToEdit.id
                     )
             )

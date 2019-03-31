@@ -68,20 +68,20 @@ class RegisterRobotActivity : AppCompatActivity() {
                             "robot ID was given")
                 } else {
                     // Start the NicknameFragment and let it know we want to rename
-                    Log.v(tag, "Starting NicknameFragment for renaming $robotId")
+                    Log.v(tag, "Starting NicknameFragment for renaming $givenRobotId")
                     robotId = givenRobotId
                     val args = Bundle()
                     args.putBoolean(RENAME_FLAG, true)
                     startFragment(fragment = NicknameFragment(), args = args)
                 }
             }
+
             null -> {
                 // Default case; the robot registration wizard should run in full.
                 // Start its first screen
                 startFragment(QRFragment())
             }
         }
-        startFragment(QRFragment())
     }
 
     /**
