@@ -10,5 +10,3 @@ CREATE TABLE switches (
     -- Weather the robot has been calibrated
     isCalibrated boolean not null
 );
-
-INSERT INTO switches (serial, isOn, onAngle, offAngle, restAngle, isCalibrated) VALUES ('123abc', false, 90, 0, 45, true);
