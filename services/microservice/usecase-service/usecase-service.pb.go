@@ -35,7 +35,7 @@ func (m *Robot) Reset()         { *m = Robot{} }
 func (m *Robot) String() string { return proto.CompactTextString(m) }
 func (*Robot) ProtoMessage()    {}
 func (*Robot) Descriptor() ([]byte, []int) {
-	return fileDescriptor_usecase_service_7bd09fc0196cc6af, []int{0}
+	return fileDescriptor_usecase_service_e748407e43fc5bc3, []int{0}
 }
 func (m *Robot) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Robot.Unmarshal(m, b)
@@ -62,6 +62,98 @@ func (m *Robot) GetId() string {
 	return ""
 }
 
+type SetUsecaseRequest struct {
+	Robot                *Robot   `protobuf:"bytes,1,opt,name=robot,proto3" json:"robot,omitempty"`
+	Usecase              string   `protobuf:"bytes,2,opt,name=usecase,proto3" json:"usecase,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *SetUsecaseRequest) Reset()         { *m = SetUsecaseRequest{} }
+func (m *SetUsecaseRequest) String() string { return proto.CompactTextString(m) }
+func (*SetUsecaseRequest) ProtoMessage()    {}
+func (*SetUsecaseRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_usecase_service_e748407e43fc5bc3, []int{1}
+}
+func (m *SetUsecaseRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SetUsecaseRequest.Unmarshal(m, b)
+}
+func (m *SetUsecaseRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SetUsecaseRequest.Marshal(b, m, deterministic)
+}
+func (dst *SetUsecaseRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SetUsecaseRequest.Merge(dst, src)
+}
+func (m *SetUsecaseRequest) XXX_Size() int {
+	return xxx_messageInfo_SetUsecaseRequest.Size(m)
+}
+func (m *SetUsecaseRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_SetUsecaseRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SetUsecaseRequest proto.InternalMessageInfo
+
+func (m *SetUsecaseRequest) GetRobot() *Robot {
+	if m != nil {
+		return m.Robot
+	}
+	return nil
+}
+
+func (m *SetUsecaseRequest) GetUsecase() string {
+	if m != nil {
+		return m.Usecase
+	}
+	return ""
+}
+
+type GetStatusRequest struct {
+	Robot                *Robot   `protobuf:"bytes,1,opt,name=robot,proto3" json:"robot,omitempty"`
+	Usecase              string   `protobuf:"bytes,2,opt,name=usecase,proto3" json:"usecase,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *GetStatusRequest) Reset()         { *m = GetStatusRequest{} }
+func (m *GetStatusRequest) String() string { return proto.CompactTextString(m) }
+func (*GetStatusRequest) ProtoMessage()    {}
+func (*GetStatusRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_usecase_service_e748407e43fc5bc3, []int{2}
+}
+func (m *GetStatusRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_GetStatusRequest.Unmarshal(m, b)
+}
+func (m *GetStatusRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_GetStatusRequest.Marshal(b, m, deterministic)
+}
+func (dst *GetStatusRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GetStatusRequest.Merge(dst, src)
+}
+func (m *GetStatusRequest) XXX_Size() int {
+	return xxx_messageInfo_GetStatusRequest.Size(m)
+}
+func (m *GetStatusRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_GetStatusRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GetStatusRequest proto.InternalMessageInfo
+
+func (m *GetStatusRequest) GetRobot() *Robot {
+	if m != nil {
+		return m.Robot
+	}
+	return nil
+}
+
+func (m *GetStatusRequest) GetUsecase() string {
+	if m != nil {
+		return m.Usecase
+	}
+	return ""
+}
+
 type Status struct {
 	Value                string   `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -73,7 +165,7 @@ func (m *Status) Reset()         { *m = Status{} }
 func (m *Status) String() string { return proto.CompactTextString(m) }
 func (*Status) ProtoMessage()    {}
 func (*Status) Descriptor() ([]byte, []int) {
-	return fileDescriptor_usecase_service_7bd09fc0196cc6af, []int{1}
+	return fileDescriptor_usecase_service_e748407e43fc5bc3, []int{3}
 }
 func (m *Status) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Status.Unmarshal(m, b)
@@ -100,50 +192,112 @@ func (m *Status) GetValue() string {
 	return ""
 }
 
-type Action struct {
+type ToggleRequest struct {
 	Robot                *Robot   `protobuf:"bytes,1,opt,name=robot,proto3" json:"robot,omitempty"`
-	NewValue             string   `protobuf:"bytes,2,opt,name=newValue,proto3" json:"newValue,omitempty"`
+	Usecase              string   `protobuf:"bytes,3,opt,name=usecase,proto3" json:"usecase,omitempty"`
+	NewValue             bool     `protobuf:"varint,2,opt,name=newValue,proto3" json:"newValue,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *Action) Reset()         { *m = Action{} }
-func (m *Action) String() string { return proto.CompactTextString(m) }
-func (*Action) ProtoMessage()    {}
-func (*Action) Descriptor() ([]byte, []int) {
-	return fileDescriptor_usecase_service_7bd09fc0196cc6af, []int{2}
+func (m *ToggleRequest) Reset()         { *m = ToggleRequest{} }
+func (m *ToggleRequest) String() string { return proto.CompactTextString(m) }
+func (*ToggleRequest) ProtoMessage()    {}
+func (*ToggleRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_usecase_service_e748407e43fc5bc3, []int{4}
 }
-func (m *Action) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Action.Unmarshal(m, b)
+func (m *ToggleRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ToggleRequest.Unmarshal(m, b)
 }
-func (m *Action) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Action.Marshal(b, m, deterministic)
+func (m *ToggleRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ToggleRequest.Marshal(b, m, deterministic)
 }
-func (dst *Action) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Action.Merge(dst, src)
+func (dst *ToggleRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ToggleRequest.Merge(dst, src)
 }
-func (m *Action) XXX_Size() int {
-	return xxx_messageInfo_Action.Size(m)
+func (m *ToggleRequest) XXX_Size() int {
+	return xxx_messageInfo_ToggleRequest.Size(m)
 }
-func (m *Action) XXX_DiscardUnknown() {
-	xxx_messageInfo_Action.DiscardUnknown(m)
+func (m *ToggleRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_ToggleRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_Action proto.InternalMessageInfo
+var xxx_messageInfo_ToggleRequest proto.InternalMessageInfo
 
-func (m *Action) GetRobot() *Robot {
+func (m *ToggleRequest) GetRobot() *Robot {
 	if m != nil {
 		return m.Robot
 	}
 	return nil
 }
 
-func (m *Action) GetNewValue() string {
+func (m *ToggleRequest) GetUsecase() string {
+	if m != nil {
+		return m.Usecase
+	}
+	return ""
+}
+
+func (m *ToggleRequest) GetNewValue() bool {
 	if m != nil {
 		return m.NewValue
 	}
+	return false
+}
+
+type RangeRequest struct {
+	Robot                *Robot   `protobuf:"bytes,1,opt,name=robot,proto3" json:"robot,omitempty"`
+	Usecase              string   `protobuf:"bytes,3,opt,name=usecase,proto3" json:"usecase,omitempty"`
+	NewValue             int64    `protobuf:"varint,2,opt,name=newValue,proto3" json:"newValue,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *RangeRequest) Reset()         { *m = RangeRequest{} }
+func (m *RangeRequest) String() string { return proto.CompactTextString(m) }
+func (*RangeRequest) ProtoMessage()    {}
+func (*RangeRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_usecase_service_e748407e43fc5bc3, []int{5}
+}
+func (m *RangeRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_RangeRequest.Unmarshal(m, b)
+}
+func (m *RangeRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_RangeRequest.Marshal(b, m, deterministic)
+}
+func (dst *RangeRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RangeRequest.Merge(dst, src)
+}
+func (m *RangeRequest) XXX_Size() int {
+	return xxx_messageInfo_RangeRequest.Size(m)
+}
+func (m *RangeRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_RangeRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_RangeRequest proto.InternalMessageInfo
+
+func (m *RangeRequest) GetRobot() *Robot {
+	if m != nil {
+		return m.Robot
+	}
+	return nil
+}
+
+func (m *RangeRequest) GetUsecase() string {
+	if m != nil {
+		return m.Usecase
+	}
 	return ""
+}
+
+func (m *RangeRequest) GetNewValue() int64 {
+	if m != nil {
+		return m.NewValue
+	}
+	return 0
 }
 
 type IntParameter struct {
@@ -160,7 +314,7 @@ func (m *IntParameter) Reset()         { *m = IntParameter{} }
 func (m *IntParameter) String() string { return proto.CompactTextString(m) }
 func (*IntParameter) ProtoMessage()    {}
 func (*IntParameter) Descriptor() ([]byte, []int) {
-	return fileDescriptor_usecase_service_7bd09fc0196cc6af, []int{3}
+	return fileDescriptor_usecase_service_e748407e43fc5bc3, []int{6}
 }
 func (m *IntParameter) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_IntParameter.Unmarshal(m, b)
@@ -220,7 +374,7 @@ func (m *BoolParameter) Reset()         { *m = BoolParameter{} }
 func (m *BoolParameter) String() string { return proto.CompactTextString(m) }
 func (*BoolParameter) ProtoMessage()    {}
 func (*BoolParameter) Descriptor() ([]byte, []int) {
-	return fileDescriptor_usecase_service_7bd09fc0196cc6af, []int{4}
+	return fileDescriptor_usecase_service_e748407e43fc5bc3, []int{7}
 }
 func (m *BoolParameter) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_BoolParameter.Unmarshal(m, b)
@@ -271,7 +425,7 @@ func (m *CalibrationParameter) Reset()         { *m = CalibrationParameter{} }
 func (m *CalibrationParameter) String() string { return proto.CompactTextString(m) }
 func (*CalibrationParameter) ProtoMessage()    {}
 func (*CalibrationParameter) Descriptor() ([]byte, []int) {
-	return fileDescriptor_usecase_service_7bd09fc0196cc6af, []int{5}
+	return fileDescriptor_usecase_service_e748407e43fc5bc3, []int{8}
 }
 func (m *CalibrationParameter) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CalibrationParameter.Unmarshal(m, b)
@@ -423,9 +577,56 @@ func _CalibrationParameter_OneofSizer(msg proto.Message) (n int) {
 	return n
 }
 
+type GetCalibrationParametersRequest struct {
+	Robot                *Robot   `protobuf:"bytes,1,opt,name=robot,proto3" json:"robot,omitempty"`
+	Usecase              string   `protobuf:"bytes,2,opt,name=usecase,proto3" json:"usecase,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *GetCalibrationParametersRequest) Reset()         { *m = GetCalibrationParametersRequest{} }
+func (m *GetCalibrationParametersRequest) String() string { return proto.CompactTextString(m) }
+func (*GetCalibrationParametersRequest) ProtoMessage()    {}
+func (*GetCalibrationParametersRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_usecase_service_e748407e43fc5bc3, []int{9}
+}
+func (m *GetCalibrationParametersRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_GetCalibrationParametersRequest.Unmarshal(m, b)
+}
+func (m *GetCalibrationParametersRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_GetCalibrationParametersRequest.Marshal(b, m, deterministic)
+}
+func (dst *GetCalibrationParametersRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GetCalibrationParametersRequest.Merge(dst, src)
+}
+func (m *GetCalibrationParametersRequest) XXX_Size() int {
+	return xxx_messageInfo_GetCalibrationParametersRequest.Size(m)
+}
+func (m *GetCalibrationParametersRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_GetCalibrationParametersRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GetCalibrationParametersRequest proto.InternalMessageInfo
+
+func (m *GetCalibrationParametersRequest) GetRobot() *Robot {
+	if m != nil {
+		return m.Robot
+	}
+	return nil
+}
+
+func (m *GetCalibrationParametersRequest) GetUsecase() string {
+	if m != nil {
+		return m.Usecase
+	}
+	return ""
+}
+
 type SetCalibrationParameterRequest struct {
-	Robot *Robot `protobuf:"bytes,1,opt,name=robot,proto3" json:"robot,omitempty"`
-	Id    string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	Robot   *Robot `protobuf:"bytes,1,opt,name=robot,proto3" json:"robot,omitempty"`
+	Usecase string `protobuf:"bytes,3,opt,name=usecase,proto3" json:"usecase,omitempty"`
+	Id      string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
 	// Types that are valid to be assigned to Details:
 	//	*SetCalibrationParameterRequest_IntValue
 	//	*SetCalibrationParameterRequest_BoolValue
@@ -439,7 +640,7 @@ func (m *SetCalibrationParameterRequest) Reset()         { *m = SetCalibrationPa
 func (m *SetCalibrationParameterRequest) String() string { return proto.CompactTextString(m) }
 func (*SetCalibrationParameterRequest) ProtoMessage()    {}
 func (*SetCalibrationParameterRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_usecase_service_7bd09fc0196cc6af, []int{6}
+	return fileDescriptor_usecase_service_e748407e43fc5bc3, []int{10}
 }
 func (m *SetCalibrationParameterRequest) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_SetCalibrationParameterRequest.Unmarshal(m, b)
@@ -464,6 +665,13 @@ func (m *SetCalibrationParameterRequest) GetRobot() *Robot {
 		return m.Robot
 	}
 	return nil
+}
+
+func (m *SetCalibrationParameterRequest) GetUsecase() string {
+	if m != nil {
+		return m.Usecase
+	}
+	return ""
 }
 
 func (m *SetCalibrationParameterRequest) GetId() string {
@@ -590,7 +798,7 @@ func (m *ResetCalibrationParameterRequest) Reset()         { *m = ResetCalibrati
 func (m *ResetCalibrationParameterRequest) String() string { return proto.CompactTextString(m) }
 func (*ResetCalibrationParameterRequest) ProtoMessage()    {}
 func (*ResetCalibrationParameterRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_usecase_service_7bd09fc0196cc6af, []int{7}
+	return fileDescriptor_usecase_service_e748407e43fc5bc3, []int{11}
 }
 func (m *ResetCalibrationParameterRequest) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ResetCalibrationParameterRequest.Unmarshal(m, b)
@@ -626,11 +834,15 @@ func (m *ResetCalibrationParameterRequest) GetId() string {
 
 func init() {
 	proto.RegisterType((*Robot)(nil), "Robot")
+	proto.RegisterType((*SetUsecaseRequest)(nil), "SetUsecaseRequest")
+	proto.RegisterType((*GetStatusRequest)(nil), "GetStatusRequest")
 	proto.RegisterType((*Status)(nil), "Status")
-	proto.RegisterType((*Action)(nil), "Action")
+	proto.RegisterType((*ToggleRequest)(nil), "ToggleRequest")
+	proto.RegisterType((*RangeRequest)(nil), "RangeRequest")
 	proto.RegisterType((*IntParameter)(nil), "IntParameter")
 	proto.RegisterType((*BoolParameter)(nil), "BoolParameter")
 	proto.RegisterType((*CalibrationParameter)(nil), "CalibrationParameter")
+	proto.RegisterType((*GetCalibrationParametersRequest)(nil), "GetCalibrationParametersRequest")
 	proto.RegisterType((*SetCalibrationParameterRequest)(nil), "SetCalibrationParameterRequest")
 	proto.RegisterType((*ResetCalibrationParameterRequest)(nil), "ResetCalibrationParameterRequest")
 }
@@ -648,13 +860,12 @@ const _ = grpc.SupportPackageIsVersion4
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type UsecaseServerClient interface {
 	// registers the robot with this usecase
-	SetUsecase(ctx context.Context, in *Robot, opts ...grpc.CallOption) (*empty.Empty, error)
-	GetStatus(ctx context.Context, in *Robot, opts ...grpc.CallOption) (*Status, error)
-	SetRobot(ctx context.Context, in *Action, opts ...grpc.CallOption) (*empty.Empty, error)
-	GetCalibrationParameters(ctx context.Context, in *Robot, opts ...grpc.CallOption) (UsecaseServer_GetCalibrationParametersClient, error)
+	SetUsecase(ctx context.Context, in *SetUsecaseRequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	GetStatus(ctx context.Context, in *GetStatusRequest, opts ...grpc.CallOption) (*Status, error)
+	Toggle(ctx context.Context, in *ToggleRequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	Range(ctx context.Context, in *RangeRequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	GetCalibrationParameters(ctx context.Context, in *GetCalibrationParametersRequest, opts ...grpc.CallOption) (UsecaseServer_GetCalibrationParametersClient, error)
 	SetCalibrationParameter(ctx context.Context, in *SetCalibrationParameterRequest, opts ...grpc.CallOption) (*empty.Empty, error)
-	// resets a calibration parameter to its default value
-	ResetCalibrationParameter(ctx context.Context, in *ResetCalibrationParameterRequest, opts ...grpc.CallOption) (*empty.Empty, error)
 }
 
 type usecaseServerClient struct {
@@ -665,7 +876,7 @@ func NewUsecaseServerClient(cc *grpc.ClientConn) UsecaseServerClient {
 	return &usecaseServerClient{cc}
 }
 
-func (c *usecaseServerClient) SetUsecase(ctx context.Context, in *Robot, opts ...grpc.CallOption) (*empty.Empty, error) {
+func (c *usecaseServerClient) SetUsecase(ctx context.Context, in *SetUsecaseRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
 	out := new(empty.Empty)
 	err := c.cc.Invoke(ctx, "/UsecaseServer/SetUsecase", in, out, opts...)
 	if err != nil {
@@ -674,7 +885,7 @@ func (c *usecaseServerClient) SetUsecase(ctx context.Context, in *Robot, opts ..
 	return out, nil
 }
 
-func (c *usecaseServerClient) GetStatus(ctx context.Context, in *Robot, opts ...grpc.CallOption) (*Status, error) {
+func (c *usecaseServerClient) GetStatus(ctx context.Context, in *GetStatusRequest, opts ...grpc.CallOption) (*Status, error) {
 	out := new(Status)
 	err := c.cc.Invoke(ctx, "/UsecaseServer/GetStatus", in, out, opts...)
 	if err != nil {
@@ -683,16 +894,25 @@ func (c *usecaseServerClient) GetStatus(ctx context.Context, in *Robot, opts ...
 	return out, nil
 }
 
-func (c *usecaseServerClient) SetRobot(ctx context.Context, in *Action, opts ...grpc.CallOption) (*empty.Empty, error) {
+func (c *usecaseServerClient) Toggle(ctx context.Context, in *ToggleRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
 	out := new(empty.Empty)
-	err := c.cc.Invoke(ctx, "/UsecaseServer/SetRobot", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/UsecaseServer/Toggle", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *usecaseServerClient) GetCalibrationParameters(ctx context.Context, in *Robot, opts ...grpc.CallOption) (UsecaseServer_GetCalibrationParametersClient, error) {
+func (c *usecaseServerClient) Range(ctx context.Context, in *RangeRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
+	out := new(empty.Empty)
+	err := c.cc.Invoke(ctx, "/UsecaseServer/Range", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *usecaseServerClient) GetCalibrationParameters(ctx context.Context, in *GetCalibrationParametersRequest, opts ...grpc.CallOption) (UsecaseServer_GetCalibrationParametersClient, error) {
 	stream, err := c.cc.NewStream(ctx, &_UsecaseServer_serviceDesc.Streams[0], "/UsecaseServer/GetCalibrationParameters", opts...)
 	if err != nil {
 		return nil, err
@@ -733,25 +953,15 @@ func (c *usecaseServerClient) SetCalibrationParameter(ctx context.Context, in *S
 	return out, nil
 }
 
-func (c *usecaseServerClient) ResetCalibrationParameter(ctx context.Context, in *ResetCalibrationParameterRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
-	out := new(empty.Empty)
-	err := c.cc.Invoke(ctx, "/UsecaseServer/ResetCalibrationParameter", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // UsecaseServerServer is the server API for UsecaseServer service.
 type UsecaseServerServer interface {
 	// registers the robot with this usecase
-	SetUsecase(context.Context, *Robot) (*empty.Empty, error)
-	GetStatus(context.Context, *Robot) (*Status, error)
-	SetRobot(context.Context, *Action) (*empty.Empty, error)
-	GetCalibrationParameters(*Robot, UsecaseServer_GetCalibrationParametersServer) error
+	SetUsecase(context.Context, *SetUsecaseRequest) (*empty.Empty, error)
+	GetStatus(context.Context, *GetStatusRequest) (*Status, error)
+	Toggle(context.Context, *ToggleRequest) (*empty.Empty, error)
+	Range(context.Context, *RangeRequest) (*empty.Empty, error)
+	GetCalibrationParameters(*GetCalibrationParametersRequest, UsecaseServer_GetCalibrationParametersServer) error
 	SetCalibrationParameter(context.Context, *SetCalibrationParameterRequest) (*empty.Empty, error)
-	// resets a calibration parameter to its default value
-	ResetCalibrationParameter(context.Context, *ResetCalibrationParameterRequest) (*empty.Empty, error)
 }
 
 func RegisterUsecaseServerServer(s *grpc.Server, srv UsecaseServerServer) {
@@ -759,7 +969,7 @@ func RegisterUsecaseServerServer(s *grpc.Server, srv UsecaseServerServer) {
 }
 
 func _UsecaseServer_SetUsecase_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Robot)
+	in := new(SetUsecaseRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -771,13 +981,13 @@ func _UsecaseServer_SetUsecase_Handler(srv interface{}, ctx context.Context, dec
 		FullMethod: "/UsecaseServer/SetUsecase",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UsecaseServerServer).SetUsecase(ctx, req.(*Robot))
+		return srv.(UsecaseServerServer).SetUsecase(ctx, req.(*SetUsecaseRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _UsecaseServer_GetStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Robot)
+	in := new(GetStatusRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -789,31 +999,49 @@ func _UsecaseServer_GetStatus_Handler(srv interface{}, ctx context.Context, dec 
 		FullMethod: "/UsecaseServer/GetStatus",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UsecaseServerServer).GetStatus(ctx, req.(*Robot))
+		return srv.(UsecaseServerServer).GetStatus(ctx, req.(*GetStatusRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _UsecaseServer_SetRobot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Action)
+func _UsecaseServer_Toggle_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ToggleRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(UsecaseServerServer).SetRobot(ctx, in)
+		return srv.(UsecaseServerServer).Toggle(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/UsecaseServer/SetRobot",
+		FullMethod: "/UsecaseServer/Toggle",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UsecaseServerServer).SetRobot(ctx, req.(*Action))
+		return srv.(UsecaseServerServer).Toggle(ctx, req.(*ToggleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UsecaseServer_Range_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RangeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UsecaseServerServer).Range(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/UsecaseServer/Range",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UsecaseServerServer).Range(ctx, req.(*RangeRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _UsecaseServer_GetCalibrationParameters_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(Robot)
+	m := new(GetCalibrationParametersRequest)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
@@ -851,24 +1079,6 @@ func _UsecaseServer_SetCalibrationParameter_Handler(srv interface{}, ctx context
 	return interceptor(ctx, in, info, handler)
 }
 
-func _UsecaseServer_ResetCalibrationParameter_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ResetCalibrationParameterRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(UsecaseServerServer).ResetCalibrationParameter(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/UsecaseServer/ResetCalibrationParameter",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UsecaseServerServer).ResetCalibrationParameter(ctx, req.(*ResetCalibrationParameterRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 var _UsecaseServer_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "UsecaseServer",
 	HandlerType: (*UsecaseServerServer)(nil),
@@ -882,16 +1092,16 @@ var _UsecaseServer_serviceDesc = grpc.ServiceDesc{
 			Handler:    _UsecaseServer_GetStatus_Handler,
 		},
 		{
-			MethodName: "SetRobot",
-			Handler:    _UsecaseServer_SetRobot_Handler,
+			MethodName: "Toggle",
+			Handler:    _UsecaseServer_Toggle_Handler,
+		},
+		{
+			MethodName: "Range",
+			Handler:    _UsecaseServer_Range_Handler,
 		},
 		{
 			MethodName: "SetCalibrationParameter",
 			Handler:    _UsecaseServer_SetCalibrationParameter_Handler,
-		},
-		{
-			MethodName: "ResetCalibrationParameter",
-			Handler:    _UsecaseServer_ResetCalibrationParameter_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
@@ -905,41 +1115,44 @@ var _UsecaseServer_serviceDesc = grpc.ServiceDesc{
 }
 
 func init() {
-	proto.RegisterFile("usecase-service/usecase-service.proto", fileDescriptor_usecase_service_7bd09fc0196cc6af)
+	proto.RegisterFile("usecase-service/usecase-service.proto", fileDescriptor_usecase_service_e748407e43fc5bc3)
 }
 
-var fileDescriptor_usecase_service_7bd09fc0196cc6af = []byte{
-	// 497 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x53, 0x5d, 0x6f, 0xd3, 0x30,
-	0x14, 0x4d, 0xd2, 0xb5, 0x4d, 0xef, 0xd6, 0x09, 0x59, 0x83, 0x85, 0x32, 0x95, 0x11, 0x09, 0x89,
-	0x97, 0xb9, 0xa8, 0x93, 0x78, 0xe3, 0x81, 0x4e, 0x68, 0xe5, 0x6d, 0x72, 0x00, 0xf1, 0xea, 0xb4,
-	0xb7, 0x53, 0xa4, 0x34, 0x2e, 0x8e, 0x53, 0xb6, 0x5f, 0xc2, 0x3f, 0xe2, 0x5f, 0x21, 0x21, 0xdb,
-	0x49, 0x9b, 0x4e, 0xfd, 0x78, 0xe1, 0xcd, 0xf7, 0x1c, 0xfb, 0xf8, 0x9c, 0x7b, 0x75, 0xe1, 0x6d,
-	0x91, 0xe3, 0x84, 0xe7, 0x78, 0x95, 0xa3, 0x5c, 0x26, 0x13, 0x1c, 0x3c, 0xa9, 0xe9, 0x42, 0x0a,
-	0x25, 0x7a, 0xaf, 0xee, 0x85, 0xb8, 0x4f, 0x71, 0x60, 0xaa, 0xb8, 0x98, 0x0d, 0x70, 0xbe, 0x50,
-	0x8f, 0x96, 0x0c, 0xcf, 0xa1, 0xc9, 0x44, 0x2c, 0x14, 0x39, 0x05, 0x2f, 0x99, 0x06, 0xee, 0xa5,
-	0xfb, 0xae, 0xc3, 0xbc, 0x64, 0x1a, 0xf6, 0xa1, 0x15, 0x29, 0xae, 0x8a, 0x9c, 0x9c, 0x41, 0x73,
-	0xc9, 0xd3, 0x02, 0x4b, 0xd2, 0x16, 0xe1, 0x08, 0x5a, 0x9f, 0x26, 0x2a, 0x11, 0x19, 0xb9, 0x80,
-	0xa6, 0xd4, 0x12, 0x86, 0x3f, 0x1e, 0xb6, 0xa8, 0x11, 0x64, 0x16, 0x24, 0x3d, 0xf0, 0x33, 0xfc,
-	0xf5, 0xdd, 0x08, 0x78, 0x46, 0x60, 0x55, 0x87, 0x33, 0x38, 0xf9, 0x92, 0xa9, 0x3b, 0x2e, 0xf9,
-	0x1c, 0x15, 0x4a, 0xf2, 0x0c, 0x1a, 0xf3, 0x24, 0x33, 0x3a, 0x0d, 0xa6, 0x8f, 0x06, 0xe1, 0x0f,
-	0xe6, 0xa1, 0x46, 0xf8, 0x03, 0x09, 0xa0, 0x3d, 0xc5, 0x19, 0x2f, 0x52, 0x15, 0x34, 0x0c, 0x5a,
-	0x95, 0x9a, 0x99, 0x14, 0x52, 0x62, 0xa6, 0x82, 0x23, 0xcb, 0x94, 0x65, 0x78, 0x03, 0xdd, 0x91,
-	0x10, 0xe9, 0xfa, 0xa3, 0x9a, 0x88, 0xfe, 0xcc, 0xdf, 0x2a, 0xe2, 0x59, 0xa6, 0x12, 0xf9, 0xe3,
-	0xc2, 0xd9, 0x0d, 0x4f, 0x93, 0x58, 0x72, 0x1d, 0x7b, 0x2d, 0xf6, 0xa4, 0x73, 0x84, 0xc0, 0x51,
-	0xc6, 0xe7, 0x55, 0x5a, 0x73, 0xd6, 0x98, 0x7a, 0x5c, 0xa0, 0xb1, 0xdc, 0x61, 0xe6, 0x4c, 0xae,
-	0xe1, 0x24, 0xa9, 0xa5, 0x37, 0xa6, 0x8f, 0x87, 0x5d, 0x5a, 0x6f, 0xc9, 0xd8, 0x61, 0x1b, 0x97,
-	0xc8, 0x07, 0xe8, 0xc6, 0xf5, 0x28, 0x41, 0xd3, 0xbc, 0x3a, 0xa5, 0x1b, 0x01, 0xc7, 0x0e, 0xdb,
-	0xbc, 0x36, 0xea, 0xe8, 0xc4, 0x8a, 0x27, 0x69, 0x1e, 0xfe, 0x76, 0xa1, 0x1f, 0xa1, 0xda, 0x96,
-	0x85, 0xe1, 0xcf, 0x02, 0x73, 0x75, 0x60, 0xa4, 0x36, 0xb0, 0xb7, 0x0a, 0x7c, 0x01, 0x7e, 0x92,
-	0x29, 0x3b, 0x62, 0xd3, 0xf9, 0xb1, 0xc3, 0x56, 0x08, 0xe9, 0x43, 0x47, 0x5b, 0xb1, 0xb4, 0x76,
-	0xeb, 0x8f, 0x1d, 0xb6, 0x86, 0xea, 0xce, 0xee, 0xe0, 0x92, 0x61, 0xfe, 0x1f, 0xad, 0x0d, 0xff,
-	0x7a, 0xd0, 0xfd, 0x66, 0xb7, 0x22, 0x42, 0xb9, 0x44, 0x49, 0x28, 0x40, 0x84, 0xaa, 0xc4, 0x48,
-	0xf9, 0xbc, 0xf7, 0x82, 0xda, 0x25, 0xa1, 0xd5, 0x92, 0xd0, 0xcf, 0x7a, 0x49, 0x42, 0x47, 0xdb,
-	0xbf, 0x45, 0x55, 0xae, 0x42, 0x75, 0xbd, 0x4d, 0x2d, 0x10, 0x3a, 0xe4, 0x0a, 0xfc, 0x08, 0x95,
-	0xdd, 0xa1, 0x36, 0xb5, 0x2b, 0xb1, 0x47, 0xee, 0x23, 0x04, 0xb7, 0xdb, 0x03, 0xae, 0xd5, 0x9f,
-	0xd3, 0x6d, 0x7c, 0xe8, 0xbc, 0x77, 0xc9, 0x57, 0x38, 0xdf, 0x31, 0x3a, 0xf2, 0x9a, 0xee, 0x1f,
-	0xea, 0x1e, 0x53, 0x3f, 0xe0, 0xe5, 0xce, 0xbe, 0x93, 0x37, 0xf4, 0xd0, 0x4c, 0x76, 0x2b, 0xc7,
-	0x2d, 0x83, 0x5c, 0xff, 0x0b, 0x00, 0x00, 0xff, 0xff, 0x22, 0x63, 0xad, 0xd5, 0xab, 0x04, 0x00,
-	0x00,
+var fileDescriptor_usecase_service_e748407e43fc5bc3 = []byte{
+	// 560 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x54, 0xcd, 0x6e, 0xd3, 0x40,
+	0x10, 0xb6, 0xe3, 0x26, 0x4d, 0xa6, 0x75, 0xd4, 0x8e, 0x0a, 0xb5, 0x42, 0x95, 0x46, 0x96, 0x90,
+	0xe0, 0xc0, 0xa6, 0x4a, 0x25, 0x0e, 0x1c, 0x5b, 0xa1, 0x06, 0xb8, 0x54, 0x9b, 0x02, 0xe2, 0xb8,
+	0x4e, 0x26, 0x91, 0x25, 0xc7, 0x0e, 0xf6, 0x3a, 0xd0, 0x67, 0xe0, 0x69, 0x78, 0x09, 0x9e, 0x0b,
+	0xed, 0x6e, 0x7e, 0x9c, 0x90, 0x04, 0xa1, 0x70, 0xdb, 0x99, 0xd9, 0xfd, 0xe6, 0x9b, 0xf1, 0xe7,
+	0x0f, 0x9e, 0xe7, 0x19, 0xf5, 0x45, 0x46, 0xaf, 0x32, 0x4a, 0xa7, 0x61, 0x9f, 0xda, 0x6b, 0x31,
+	0x9b, 0xa4, 0x89, 0x4c, 0x1a, 0xcf, 0x46, 0x49, 0x32, 0x8a, 0xa8, 0xad, 0xa3, 0x20, 0x1f, 0xb6,
+	0x69, 0x3c, 0x91, 0x8f, 0xa6, 0xe8, 0x9f, 0x43, 0x99, 0x27, 0x41, 0x22, 0xb1, 0x0e, 0xa5, 0x70,
+	0xe0, 0xd9, 0x2d, 0xfb, 0x45, 0x8d, 0x97, 0xc2, 0x81, 0xff, 0x01, 0x4e, 0x7b, 0x24, 0x3f, 0x1a,
+	0x44, 0x4e, 0x5f, 0x73, 0xca, 0x24, 0x5e, 0x40, 0x39, 0x55, 0xb7, 0xf5, 0xbd, 0xa3, 0x4e, 0x85,
+	0xe9, 0xb7, 0xdc, 0x24, 0xd1, 0x83, 0xc3, 0x19, 0x03, 0xaf, 0xa4, 0x71, 0xe6, 0xa1, 0xff, 0x1e,
+	0x4e, 0xee, 0x48, 0xf6, 0xa4, 0x90, 0x79, 0xb6, 0x2f, 0x56, 0x13, 0x2a, 0x06, 0x08, 0xcf, 0xa0,
+	0x3c, 0x15, 0x51, 0x4e, 0x33, 0xd6, 0x26, 0xf0, 0xfb, 0xe0, 0x3e, 0x24, 0xa3, 0x51, 0xf4, 0xef,
+	0xa4, 0x9d, 0x95, 0x46, 0xd8, 0x80, 0x6a, 0x4c, 0xdf, 0x3e, 0xe9, 0x0e, 0x8a, 0x43, 0x95, 0x2f,
+	0x62, 0x3f, 0x80, 0x63, 0x2e, 0xe2, 0xd1, 0x7f, 0xef, 0xe1, 0x14, 0x7a, 0x0c, 0xe1, 0xf8, 0x5d,
+	0x2c, 0xef, 0x45, 0x2a, 0xc6, 0x24, 0x29, 0xc5, 0x13, 0x70, 0xc6, 0x61, 0xac, 0x3b, 0x38, 0x5c,
+	0x1d, 0x75, 0x46, 0x7c, 0x9f, 0x3d, 0x54, 0x47, 0xd5, 0x69, 0x40, 0x43, 0x91, 0x47, 0x52, 0x77,
+	0x72, 0xf8, 0x3c, 0x54, 0x95, 0x7e, 0x9e, 0xa6, 0x14, 0x4b, 0xef, 0xc0, 0x54, 0x66, 0xa1, 0x7f,
+	0x0b, 0xee, 0x4d, 0x92, 0x44, 0xcb, 0x46, 0x05, 0x10, 0x5b, 0xcf, 0xbd, 0x09, 0xc4, 0x6c, 0x64,
+	0x01, 0xf2, 0xcb, 0x86, 0xb3, 0x5b, 0x11, 0x85, 0x41, 0x2a, 0x64, 0x98, 0xc4, 0x4b, 0xb0, 0x35,
+	0x5d, 0x21, 0xc2, 0x41, 0x2c, 0xc6, 0xf3, 0xaf, 0xaa, 0xcf, 0x2a, 0x27, 0x1f, 0x27, 0xf3, 0xe5,
+	0xe8, 0x33, 0x5e, 0xc3, 0x71, 0x58, 0x98, 0x5e, 0x93, 0x3e, 0xea, 0xb8, 0xac, 0xb8, 0x92, 0xae,
+	0xc5, 0x57, 0x2e, 0xe1, 0x6b, 0x70, 0x83, 0xe2, 0x28, 0x5e, 0x59, 0xbf, 0xaa, 0xb3, 0x95, 0x01,
+	0xbb, 0x16, 0x5f, 0xbd, 0x76, 0x53, 0x53, 0x13, 0x4b, 0x11, 0x46, 0x99, 0xff, 0x05, 0x2e, 0xef,
+	0x48, 0x6e, 0x1a, 0x65, 0x6f, 0xe5, 0xfe, 0xb4, 0xa1, 0xd9, 0xdb, 0x8c, 0xbd, 0xaf, 0x8e, 0xcc,
+	0x96, 0x4b, 0x8b, 0x2d, 0x5f, 0x40, 0x35, 0x8c, 0xa5, 0xd1, 0x95, 0xfe, 0xdc, 0x5d, 0x8b, 0x2f,
+	0x32, 0xd8, 0x84, 0x9a, 0x9a, 0xdf, 0x94, 0xd5, 0x8a, 0xaa, 0x5d, 0x8b, 0x2f, 0x53, 0xc5, 0x75,
+	0xdc, 0x43, 0x8b, 0x53, 0xb6, 0x0f, 0xe9, 0x35, 0x6a, 0x9d, 0x1f, 0x0e, 0xb8, 0x33, 0x5b, 0xe9,
+	0x51, 0x3a, 0xa5, 0x14, 0xdf, 0x00, 0x2c, 0xad, 0x06, 0x91, 0xfd, 0xe1, 0x3b, 0x8d, 0xa7, 0xcc,
+	0x78, 0x18, 0x9b, 0x7b, 0x18, 0x7b, 0xab, 0x3c, 0xcc, 0xb7, 0xf0, 0x25, 0xd4, 0x16, 0xce, 0x82,
+	0xa7, 0x6c, 0xdd, 0x65, 0x1a, 0x87, 0xcc, 0xc4, 0xbe, 0x85, 0x1d, 0xa8, 0x18, 0x63, 0xc0, 0x3a,
+	0x5b, 0x71, 0x88, 0x1d, 0xf0, 0x57, 0x50, 0xd6, 0xff, 0x39, 0xba, 0xac, 0xf8, 0xbf, 0xef, 0x78,
+	0xf1, 0x19, 0xbc, 0x6d, 0xfa, 0xc1, 0x16, 0xfb, 0x8b, 0xb4, 0x1a, 0x4f, 0xd8, 0xa6, 0xb2, 0x6f,
+	0x5d, 0xd9, 0xf8, 0x00, 0xe7, 0x5b, 0xc4, 0x83, 0x97, 0x6c, 0xb7, 0xac, 0xb6, 0xd3, 0x0d, 0x2a,
+	0x3a, 0x73, 0xfd, 0x3b, 0x00, 0x00, 0xff, 0xff, 0x01, 0x1c, 0x1b, 0x7a, 0x4c, 0x06, 0x00, 0x00,
 }

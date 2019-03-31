@@ -4,31 +4,47 @@ import "google/protobuf/empty.proto";
 
 service UsecaseServer {
     // registers the robot with this usecase
-    rpc SetUsecase(Robot) returns (google.protobuf.Empty) {}
+    rpc SetUsecase(SetUsecaseRequest) returns (google.protobuf.Empty) {}
 
-    rpc GetStatus(Robot) returns (Status) {}
+    rpc GetStatus(GetStatusRequest) returns (Status) {}
     
-    rpc SetRobot(Action) returns (google.protobuf.Empty) {}
+    rpc Toggle(ToggleRequest) returns (google.protobuf.Empty) {}
     
-    rpc GetCalibrationParameters(Robot) returns (stream CalibrationParameter) {}
+    rpc Range (RangeRequest) returns (google.protobuf.Empty) {}
+
+    rpc GetCalibrationParameters(GetCalibrationParametersRequest) returns (stream CalibrationParameter) {}
 
     rpc SetCalibrationParameter(SetCalibrationParameterRequest) returns (google.protobuf.Empty) {}
-
-    // resets a calibration parameter to its default value
-    rpc ResetCalibrationParameter(ResetCalibrationParameterRequest) returns (google.protobuf.Empty) {}
 }
 
 message Robot {
     string id = 1;
 }
 
+message SetUsecaseRequest {
+    Robot robot = 1;
+    string usecase = 2;
+}
+
+message GetStatusRequest {
+    Robot robot = 1;
+    string usecase = 2;
+}
+
 message Status {
     string value = 1;
 }
 
-message Action {
+message ToggleRequest {
     Robot robot = 1;
-    string newValue = 2;
+    string usecase = 3;
+    bool newValue = 2;
+}
+
+message RangeRequest {
+    Robot robot = 1;
+    string usecase = 3;
+    int64 newValue = 2;
 }
 
 message IntParameter {
@@ -53,8 +69,14 @@ message CalibrationParameter {
     }
 }
 
+message GetCalibrationParametersRequest {
+    Robot robot = 1;
+    string usecase = 2;
+}
+
 message SetCalibrationParameterRequest {
     Robot robot = 1;
+    string usecase = 3;
     string id = 2;
     oneof details {
         int64 intValue = 4; 
