@@ -208,7 +208,7 @@ func deleteRobotHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Pa
 	id := ps.ByName("id")
 	log.Printf("Deleting robot with id %s", id)
 
-	userID := r.Context().Value("userId").(string)
+	userID := r.Context().Value(userIDKey).(string)
 	_, err := infoserverClient.DeleteRobot(
 		context.Background(),
 		&infoserver.RobotQuery{
@@ -243,7 +243,7 @@ func patchUsecaseHandler(w http.ResponseWriter, r *http.Request, ps httprouter.P
 		HTTPError(w, errors.New("invalid JSON"))
 		return
 	}
-	userID := r.Context().Value("userId").(string)
+	userID := r.Context().Value(userIDKey).(string)
 	_, err = infoserverClient.ReconfigureUsecase(
 		context.Background(),
 		&infoserver.ReconfigureRobotQuery{
@@ -269,7 +269,7 @@ func patchNameHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Para
 	id := ps.ByName("id")
 	log.Printf("patching name of robot with id %s", id)
 
-	userID := r.Context().Value("userId").(string)
+	userID := r.Context().Value(userIDKey).(string)
 
 	var renameParameters RenameParameters
 	err := json.NewDecoder(r.Body).Decode(&renameParameters)
