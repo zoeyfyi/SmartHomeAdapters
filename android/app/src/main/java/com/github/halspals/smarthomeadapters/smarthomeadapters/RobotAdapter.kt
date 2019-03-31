@@ -9,7 +9,7 @@ import android.widget.BaseAdapter
 import android.widget.ImageView
 import android.widget.TextView
 import com.github.halspals.smarthomeadapters.smarthomeadapters.model.Robot
-import kotlinx.android.synthetic.main.fragment_robots.*
+import kotlinx.android.synthetic.main.activity_main.*
 import net.openid.appauth.AuthorizationException
 import okhttp3.ResponseBody
 import org.jetbrains.anko.design.snackbar
