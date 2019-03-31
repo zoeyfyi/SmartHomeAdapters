@@ -6,6 +6,7 @@ import android.support.v4.app.Fragment
 import android.support.v4.app.FragmentManager
 import android.util.Log
 import com.github.halspals.smarthomeadapters.smarthomeadapters.model.Robot
+import net.openid.appauth.AuthState
 import net.openid.appauth.AuthorizationService
 
 /**
@@ -68,5 +69,11 @@ class MainActivity : AppCompatActivity() {
         }
 
         Log.d(tag, "[startFragment] Committed transaction to fragment")
+    }
+
+    internal fun signOut() {
+        Log.v(tag, "[signOut] Invoked")
+        writeAuthState(this, AuthState())
+        finish()
     }
 }

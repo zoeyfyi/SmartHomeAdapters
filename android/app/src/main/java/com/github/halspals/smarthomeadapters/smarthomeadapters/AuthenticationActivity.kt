@@ -35,9 +35,7 @@ class AuthenticationActivity : AppCompatActivity() {
         AuthorizationService(this)
     }
 
-    private val authState: AuthState by lazy {
-        readAuthState(this)
-    }
+    private lateinit var authState: AuthState
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,6 +49,7 @@ class AuthenticationActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
 
+        authState = readAuthState(this)
         // Check if there is already an active auth session
         if (authState.isAuthorized) {
             startActivity<MainActivity>()

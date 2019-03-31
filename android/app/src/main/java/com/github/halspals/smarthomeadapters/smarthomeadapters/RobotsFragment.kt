@@ -7,6 +7,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.GridView
+import android.widget.PopupMenu
 import com.github.halspals.smarthomeadapters.smarthomeadapters.model.Robot
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.fragment_robots.*
@@ -59,6 +60,28 @@ class RobotsFragment : Fragment() {
             edit_mode_image_view.visibility = View.VISIBLE
             more_options_image_view.visibility = View.VISIBLE
             finish_edit_image_view.visibility = View.INVISIBLE
+        }
+
+        more_options_image_view.setOnClickListener { _ ->
+            Log.v(fTag, "Inflating settings_menu")
+            PopupMenu(more_options_image_view.context, more_options_image_view).run {
+                menuInflater.inflate(R.menu.settings_menu, menu)
+                setOnMenuItemClickListener { menuItem ->
+                    when (menuItem.itemId) {
+                        R.id.log_out_item -> {
+                            Log.v(fTag, "Logging out the user")
+                            parent.signOut()
+                            true
+                        }
+                        else -> {
+                            Log.e(fTag, "Unexpected menu click on item " +
+                                    "with ID ${menuItem.itemId}")
+                            false
+                        }
+                    }
+                }
+                show()
+            }
         }
     }
 
