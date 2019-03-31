@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+service SwitchServer {
+    // registers the robot with this usecase
+    rpc SetUsecase(Robot) returns (google.protobuf.Empty) {}
+
+    rpc GetStatus(Robot) returns (Status) {}
+    
+    rpc SetRobot(Action) returns (google.protobuf.Empty) {}
+    
+    rpc GetCalibrationParameters(Robot) returns (stream CalibrationParameter) {}
+
+    rpc SetCalibrationParameter(CalibrationParameter) returns (google.protobuf.Empty) {}
+
+    // resets a calibration parameter to its default value
+    rpc ResetCalibrationParameter(CalibrationParameter) returns (google.protobuf.Empty) {}
+}
+
+message Robot {
+    string id = 1;
+}
+
+message Status {
+    string value = 1;
+}
+
+message Action {
+    string id = 1;
+    string newValue = 2;
+}
+
+message IntParameter {
+    int64 min = 1;
+    int64 max = 2;
+    int64 default = 3;
+    int64 current = 4;
+}
+
+message BoolParameter {
+    bool default = 1;
+    bool current = 2;
+}
+
+message CalibrationParameter {
+    string id = 1;
+    string name = 2;
+    string type = 3;
+    oneof details {
+        IntParameter intParameter = 4; 
+        BoolParameter boolParameter = 5;
+    }
+}
