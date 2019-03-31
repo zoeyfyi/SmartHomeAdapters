@@ -13,8 +13,8 @@ import (
 	"strconv"
 
 	"github.com/julienschmidt/httprouter"
-	"github.com/mrbenshef/SmartHomeAdapters/services/microservice/infoserver"
-	"github.com/mrbenshef/SmartHomeAdapters/services/microservice/userserver"
+	"github.com/mrbenshef/SmartHomeAdapters/microservice/infoserver"
+	"github.com/mrbenshef/SmartHomeAdapters/microservice/userserver"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -252,7 +252,6 @@ func patchUsecaseHandler(w http.ResponseWriter, r *http.Request, ps httprouter.P
 type RenameParameters struct {
 	Nickname string `json:"name"`
 }
-
 
 func patchNameHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
