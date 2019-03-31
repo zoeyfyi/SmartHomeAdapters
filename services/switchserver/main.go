@@ -13,7 +13,6 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/golang/protobuf/ptypes/empty"
-	"github.com/lib/pq"
 	_ "github.com/lib/pq"
 	"github.com/mrbenshef/SmartHomeAdapters/microservice"
 	"github.com/mrbenshef/SmartHomeAdapters/microservice/robotserver"
@@ -25,53 +24,6 @@ var robotserverClient robotserver.RobotServerClient
 
 type server struct {
 	DB *sql.DB
-}
-
-func (s *server) AddSwitch(ctx context.Context, request *switchserver.AddSwitchRequest) (*switchserver.Switch, error) {
-	switchRobot := switchserver.Switch{
-		Id:   request.Id,
-		IsOn: request.IsOn,
-	}
-
-	// insert into database
-	_, err := s.DB.Exec(
-		"INSERT INTO switches(serial, isOn, onAngle, offAngle, restAngle, isCalibrated) VALUES($1, $2, $3, $4, $5, $6)",
-		switchRobot.Id,
-		switchRobot.IsOn,
-		switchRobot.OnAngle,
-		switchRobot.OffAngle,
-		switchRobot.RestAngle,
-		switchRobot.IsCalibrated,
-	)
-	if err != nil {
-		if err, ok := err.(*pq.Error); ok && err.Code.Name() == "unique_violation" {
-			// robot is already registered
-			return nil, status.Newf(codes.AlreadyExists, "Robot \"%s\" is already a registered switch", switchRobot.Id).Err()
-		}
-
-		log.Printf("Failed to insert user into database: %v", err)
-		return nil, status.Newf(codes.Internal, "Could not register robot \"%s\" as a switch", switchRobot.Id).Err()
-	}
-
-	return &switchRobot, nil
-}
-
-func (s *server) RemoveSwitch(ctx context.Context, request *switchserver.RemoveSwitchRequest) (*empty.Empty, error) {
-	result, err := s.DB.Exec("DELETE FROM switches WHERE serial = $1", request.Id)
-	if err != nil {
-		return nil, status.Newf(codes.Internal, "Failed to unregister switch \"%s\"", request.Id).Err()
-	}
-
-	count, err := result.RowsAffected()
-	if err != nil {
-		return nil, status.New(codes.Internal, "Internal error").Err()
-	}
-
-	if count == 0 {
-		return nil, status.Newf(codes.InvalidArgument, "Robot \"%s\" is not a switch", request.Id).Err()
-	}
-
-	return &empty.Empty{}, nil
 }
 
 func (s *server) GetSwitch(ctx context.Context, request *switchserver.SwitchQuery) (*switchserver.Switch, error) {

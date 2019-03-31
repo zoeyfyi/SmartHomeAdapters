@@ -6,7 +6,6 @@ import (
 	"log"
 	"net"
 	"os"
-	"reflect"
 	"testing"
 
 	"google.golang.org/grpc/test/bufconn"
@@ -57,122 +56,6 @@ func TestMain(m *testing.M) {
 
 func bufDialer(context.Context, string) (net.Conn, error) {
 	return lis.Dial()
-}
-
-func TestSuccessfullyAddingSwitch(t *testing.T) {
-	clearDatabase(t)
-
-	ctx := context.Background()
-	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
-	if err != nil {
-		t.Fatalf("Failed to dial bufnet: %v", err)
-	}
-	defer conn.Close()
-
-	client := switchserver.NewSwitchServerClient(conn)
-	switchRobot, err := client.AddSwitch(ctx, &switchserver.AddSwitchRequest{
-		Id:   "123",
-		IsOn: false,
-	})
-
-	if err != nil {
-		t.Errorf("Expected nil error, got: %v", err)
-	}
-
-	expectedSwitch := &switchserver.Switch{
-		Id:   "123",
-		IsOn: false,
-	}
-
-	if !reflect.DeepEqual(switchRobot, expectedSwitch) {
-		t.Errorf("Robots differ. Expected: %+v, Got: %+v", expectedSwitch, switchRobot)
-	}
-}
-
-func TestAddSwitchAlreadyAdded(t *testing.T) {
-	clearDatabase(t)
-
-	ctx := context.Background()
-	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
-	if err != nil {
-		t.Fatalf("Failed to dial bufnet: %v", err)
-	}
-	defer conn.Close()
-
-	client := switchserver.NewSwitchServerClient(conn)
-
-	_, err = client.AddSwitch(ctx, &switchserver.AddSwitchRequest{
-		Id:   "321",
-		IsOn: false,
-	})
-	if err != nil {
-		t.Errorf("Expected nil error, got: %v", err)
-	}
-
-	switchRobot, err := client.AddSwitch(ctx, &switchserver.AddSwitchRequest{
-		Id:   "321",
-		IsOn: false,
-	})
-
-	if switchRobot != nil {
-		t.Errorf("Expected nil switch to be returned, got: %+v", switchRobot)
-	}
-
-	expectedError := "rpc error: code = AlreadyExists desc = Robot \"321\" is already a registered switch"
-	if err.Error() != expectedError {
-		t.Errorf("Expected error: %s, got error: %s", expectedError, err.Error())
-	}
-}
-
-func TestSuccessfullyRemovingSwitch(t *testing.T) {
-	clearDatabase(t)
-
-	ctx := context.Background()
-	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
-	if err != nil {
-		t.Fatalf("Failed to dial bufnet: %v", err)
-	}
-	defer conn.Close()
-
-	client := switchserver.NewSwitchServerClient(conn)
-
-	_, err = client.AddSwitch(ctx, &switchserver.AddSwitchRequest{
-		Id:   "123",
-		IsOn: false,
-	})
-	if err != nil {
-		t.Errorf("Expected nil error, got: %v", err)
-	}
-
-	_, err = client.RemoveSwitch(ctx, &switchserver.RemoveSwitchRequest{
-		Id: "123",
-	})
-
-	if err != nil {
-		t.Errorf("Expected nil error, got: %v", err)
-	}
-}
-
-func TestRemoveSwitchDoesntExist(t *testing.T) {
-	clearDatabase(t)
-
-	ctx := context.Background()
-	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
-	if err != nil {
-		t.Fatalf("Failed to dial bufnet: %v", err)
-	}
-	defer conn.Close()
-
-	client := switchserver.NewSwitchServerClient(conn)
-
-	_, err = client.RemoveSwitch(ctx, &switchserver.RemoveSwitchRequest{
-		Id: "doesntexist",
-	})
-
-	expectedError := "rpc error: code = InvalidArgument desc = Robot \"doesntexist\" is not a switch"
-	if err.Error() != expectedError {
-		t.Errorf("Expected error: %s, got error: %s", expectedError, err.Error())
-	}
 }
 
 // TODO: re-add on/off tests once we have calibration routes

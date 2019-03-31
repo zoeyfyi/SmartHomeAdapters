@@ -61,22 +61,6 @@ func (c mockSwitchClient) GetSwitch(
 	return nil, status.New(codes.NotFound, "Switch does not exist").Err()
 }
 
-func (c mockSwitchClient) AddSwitch(
-	_ context.Context,
-	_ *switchserver.AddSwitchRequest,
-	_ ...grpc.CallOption,
-) (*switchserver.Switch, error) {
-	return nil, nil
-}
-
-func (c mockSwitchClient) RemoveSwitch(
-	_ context.Context,
-	_ *switchserver.RemoveSwitchRequest,
-	_ ...grpc.CallOption,
-) (*empty.Empty, error) {
-	return nil, nil
-}
-
 func (c mockSwitchClient) SetSwitch(
 	_ context.Context,
 	_ *switchserver.SetSwitchRequest,
