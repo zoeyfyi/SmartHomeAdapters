@@ -35,7 +35,7 @@ func (m *Robot) Reset()         { *m = Robot{} }
 func (m *Robot) String() string { return proto.CompactTextString(m) }
 func (*Robot) ProtoMessage()    {}
 func (*Robot) Descriptor() ([]byte, []int) {
-	return fileDescriptor_usecase_service_38790134dca44328, []int{0}
+	return fileDescriptor_usecase_service_7bd09fc0196cc6af, []int{0}
 }
 func (m *Robot) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Robot.Unmarshal(m, b)
@@ -73,7 +73,7 @@ func (m *Status) Reset()         { *m = Status{} }
 func (m *Status) String() string { return proto.CompactTextString(m) }
 func (*Status) ProtoMessage()    {}
 func (*Status) Descriptor() ([]byte, []int) {
-	return fileDescriptor_usecase_service_38790134dca44328, []int{1}
+	return fileDescriptor_usecase_service_7bd09fc0196cc6af, []int{1}
 }
 func (m *Status) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Status.Unmarshal(m, b)
@@ -101,7 +101,7 @@ func (m *Status) GetValue() string {
 }
 
 type Action struct {
-	Id                   string   `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Robot                *Robot   `protobuf:"bytes,1,opt,name=robot,proto3" json:"robot,omitempty"`
 	NewValue             string   `protobuf:"bytes,2,opt,name=newValue,proto3" json:"newValue,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -112,7 +112,7 @@ func (m *Action) Reset()         { *m = Action{} }
 func (m *Action) String() string { return proto.CompactTextString(m) }
 func (*Action) ProtoMessage()    {}
 func (*Action) Descriptor() ([]byte, []int) {
-	return fileDescriptor_usecase_service_38790134dca44328, []int{2}
+	return fileDescriptor_usecase_service_7bd09fc0196cc6af, []int{2}
 }
 func (m *Action) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Action.Unmarshal(m, b)
@@ -132,11 +132,11 @@ func (m *Action) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_Action proto.InternalMessageInfo
 
-func (m *Action) GetId() string {
+func (m *Action) GetRobot() *Robot {
 	if m != nil {
-		return m.Id
+		return m.Robot
 	}
-	return ""
+	return nil
 }
 
 func (m *Action) GetNewValue() string {
@@ -160,7 +160,7 @@ func (m *IntParameter) Reset()         { *m = IntParameter{} }
 func (m *IntParameter) String() string { return proto.CompactTextString(m) }
 func (*IntParameter) ProtoMessage()    {}
 func (*IntParameter) Descriptor() ([]byte, []int) {
-	return fileDescriptor_usecase_service_38790134dca44328, []int{3}
+	return fileDescriptor_usecase_service_7bd09fc0196cc6af, []int{3}
 }
 func (m *IntParameter) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_IntParameter.Unmarshal(m, b)
@@ -220,7 +220,7 @@ func (m *BoolParameter) Reset()         { *m = BoolParameter{} }
 func (m *BoolParameter) String() string { return proto.CompactTextString(m) }
 func (*BoolParameter) ProtoMessage()    {}
 func (*BoolParameter) Descriptor() ([]byte, []int) {
-	return fileDescriptor_usecase_service_38790134dca44328, []int{4}
+	return fileDescriptor_usecase_service_7bd09fc0196cc6af, []int{4}
 }
 func (m *BoolParameter) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_BoolParameter.Unmarshal(m, b)
@@ -271,7 +271,7 @@ func (m *CalibrationParameter) Reset()         { *m = CalibrationParameter{} }
 func (m *CalibrationParameter) String() string { return proto.CompactTextString(m) }
 func (*CalibrationParameter) ProtoMessage()    {}
 func (*CalibrationParameter) Descriptor() ([]byte, []int) {
-	return fileDescriptor_usecase_service_38790134dca44328, []int{5}
+	return fileDescriptor_usecase_service_7bd09fc0196cc6af, []int{5}
 }
 func (m *CalibrationParameter) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CalibrationParameter.Unmarshal(m, b)
@@ -423,6 +423,207 @@ func _CalibrationParameter_OneofSizer(msg proto.Message) (n int) {
 	return n
 }
 
+type SetCalibrationParameterRequest struct {
+	Robot *Robot `protobuf:"bytes,1,opt,name=robot,proto3" json:"robot,omitempty"`
+	Id    string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	// Types that are valid to be assigned to Details:
+	//	*SetCalibrationParameterRequest_IntValue
+	//	*SetCalibrationParameterRequest_BoolValue
+	Details              isSetCalibrationParameterRequest_Details `protobuf_oneof:"details"`
+	XXX_NoUnkeyedLiteral struct{}                                 `json:"-"`
+	XXX_unrecognized     []byte                                   `json:"-"`
+	XXX_sizecache        int32                                    `json:"-"`
+}
+
+func (m *SetCalibrationParameterRequest) Reset()         { *m = SetCalibrationParameterRequest{} }
+func (m *SetCalibrationParameterRequest) String() string { return proto.CompactTextString(m) }
+func (*SetCalibrationParameterRequest) ProtoMessage()    {}
+func (*SetCalibrationParameterRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_usecase_service_7bd09fc0196cc6af, []int{6}
+}
+func (m *SetCalibrationParameterRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SetCalibrationParameterRequest.Unmarshal(m, b)
+}
+func (m *SetCalibrationParameterRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SetCalibrationParameterRequest.Marshal(b, m, deterministic)
+}
+func (dst *SetCalibrationParameterRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SetCalibrationParameterRequest.Merge(dst, src)
+}
+func (m *SetCalibrationParameterRequest) XXX_Size() int {
+	return xxx_messageInfo_SetCalibrationParameterRequest.Size(m)
+}
+func (m *SetCalibrationParameterRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_SetCalibrationParameterRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SetCalibrationParameterRequest proto.InternalMessageInfo
+
+func (m *SetCalibrationParameterRequest) GetRobot() *Robot {
+	if m != nil {
+		return m.Robot
+	}
+	return nil
+}
+
+func (m *SetCalibrationParameterRequest) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
+type isSetCalibrationParameterRequest_Details interface {
+	isSetCalibrationParameterRequest_Details()
+}
+
+type SetCalibrationParameterRequest_IntValue struct {
+	IntValue int64 `protobuf:"varint,4,opt,name=intValue,proto3,oneof"`
+}
+
+type SetCalibrationParameterRequest_BoolValue struct {
+	BoolValue bool `protobuf:"varint,5,opt,name=boolValue,proto3,oneof"`
+}
+
+func (*SetCalibrationParameterRequest_IntValue) isSetCalibrationParameterRequest_Details() {}
+
+func (*SetCalibrationParameterRequest_BoolValue) isSetCalibrationParameterRequest_Details() {}
+
+func (m *SetCalibrationParameterRequest) GetDetails() isSetCalibrationParameterRequest_Details {
+	if m != nil {
+		return m.Details
+	}
+	return nil
+}
+
+func (m *SetCalibrationParameterRequest) GetIntValue() int64 {
+	if x, ok := m.GetDetails().(*SetCalibrationParameterRequest_IntValue); ok {
+		return x.IntValue
+	}
+	return 0
+}
+
+func (m *SetCalibrationParameterRequest) GetBoolValue() bool {
+	if x, ok := m.GetDetails().(*SetCalibrationParameterRequest_BoolValue); ok {
+		return x.BoolValue
+	}
+	return false
+}
+
+// XXX_OneofFuncs is for the internal use of the proto package.
+func (*SetCalibrationParameterRequest) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
+	return _SetCalibrationParameterRequest_OneofMarshaler, _SetCalibrationParameterRequest_OneofUnmarshaler, _SetCalibrationParameterRequest_OneofSizer, []interface{}{
+		(*SetCalibrationParameterRequest_IntValue)(nil),
+		(*SetCalibrationParameterRequest_BoolValue)(nil),
+	}
+}
+
+func _SetCalibrationParameterRequest_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
+	m := msg.(*SetCalibrationParameterRequest)
+	// details
+	switch x := m.Details.(type) {
+	case *SetCalibrationParameterRequest_IntValue:
+		b.EncodeVarint(4<<3 | proto.WireVarint)
+		b.EncodeVarint(uint64(x.IntValue))
+	case *SetCalibrationParameterRequest_BoolValue:
+		t := uint64(0)
+		if x.BoolValue {
+			t = 1
+		}
+		b.EncodeVarint(5<<3 | proto.WireVarint)
+		b.EncodeVarint(t)
+	case nil:
+	default:
+		return fmt.Errorf("SetCalibrationParameterRequest.Details has unexpected type %T", x)
+	}
+	return nil
+}
+
+func _SetCalibrationParameterRequest_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error) {
+	m := msg.(*SetCalibrationParameterRequest)
+	switch tag {
+	case 4: // details.intValue
+		if wire != proto.WireVarint {
+			return true, proto.ErrInternalBadWireType
+		}
+		x, err := b.DecodeVarint()
+		m.Details = &SetCalibrationParameterRequest_IntValue{int64(x)}
+		return true, err
+	case 5: // details.boolValue
+		if wire != proto.WireVarint {
+			return true, proto.ErrInternalBadWireType
+		}
+		x, err := b.DecodeVarint()
+		m.Details = &SetCalibrationParameterRequest_BoolValue{x != 0}
+		return true, err
+	default:
+		return false, nil
+	}
+}
+
+func _SetCalibrationParameterRequest_OneofSizer(msg proto.Message) (n int) {
+	m := msg.(*SetCalibrationParameterRequest)
+	// details
+	switch x := m.Details.(type) {
+	case *SetCalibrationParameterRequest_IntValue:
+		n += 1 // tag and wire
+		n += proto.SizeVarint(uint64(x.IntValue))
+	case *SetCalibrationParameterRequest_BoolValue:
+		n += 1 // tag and wire
+		n += 1
+	case nil:
+	default:
+		panic(fmt.Sprintf("proto: unexpected type %T in oneof", x))
+	}
+	return n
+}
+
+type ResetCalibrationParameterRequest struct {
+	Robot                *Robot   `protobuf:"bytes,1,opt,name=robot,proto3" json:"robot,omitempty"`
+	Id                   string   `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *ResetCalibrationParameterRequest) Reset()         { *m = ResetCalibrationParameterRequest{} }
+func (m *ResetCalibrationParameterRequest) String() string { return proto.CompactTextString(m) }
+func (*ResetCalibrationParameterRequest) ProtoMessage()    {}
+func (*ResetCalibrationParameterRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_usecase_service_7bd09fc0196cc6af, []int{7}
+}
+func (m *ResetCalibrationParameterRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ResetCalibrationParameterRequest.Unmarshal(m, b)
+}
+func (m *ResetCalibrationParameterRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ResetCalibrationParameterRequest.Marshal(b, m, deterministic)
+}
+func (dst *ResetCalibrationParameterRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ResetCalibrationParameterRequest.Merge(dst, src)
+}
+func (m *ResetCalibrationParameterRequest) XXX_Size() int {
+	return xxx_messageInfo_ResetCalibrationParameterRequest.Size(m)
+}
+func (m *ResetCalibrationParameterRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_ResetCalibrationParameterRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ResetCalibrationParameterRequest proto.InternalMessageInfo
+
+func (m *ResetCalibrationParameterRequest) GetRobot() *Robot {
+	if m != nil {
+		return m.Robot
+	}
+	return nil
+}
+
+func (m *ResetCalibrationParameterRequest) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
 func init() {
 	proto.RegisterType((*Robot)(nil), "Robot")
 	proto.RegisterType((*Status)(nil), "Status")
@@ -430,6 +631,8 @@ func init() {
 	proto.RegisterType((*IntParameter)(nil), "IntParameter")
 	proto.RegisterType((*BoolParameter)(nil), "BoolParameter")
 	proto.RegisterType((*CalibrationParameter)(nil), "CalibrationParameter")
+	proto.RegisterType((*SetCalibrationParameterRequest)(nil), "SetCalibrationParameterRequest")
+	proto.RegisterType((*ResetCalibrationParameterRequest)(nil), "ResetCalibrationParameterRequest")
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -440,61 +643,61 @@ var _ grpc.ClientConn
 // is compatible with the grpc package it is being compiled against.
 const _ = grpc.SupportPackageIsVersion4
 
-// SwitchServerClient is the client API for SwitchServer service.
+// UsecaseServerClient is the client API for UsecaseServer service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
-type SwitchServerClient interface {
+type UsecaseServerClient interface {
 	// registers the robot with this usecase
 	SetUsecase(ctx context.Context, in *Robot, opts ...grpc.CallOption) (*empty.Empty, error)
 	GetStatus(ctx context.Context, in *Robot, opts ...grpc.CallOption) (*Status, error)
 	SetRobot(ctx context.Context, in *Action, opts ...grpc.CallOption) (*empty.Empty, error)
-	GetCalibrationParameters(ctx context.Context, in *Robot, opts ...grpc.CallOption) (SwitchServer_GetCalibrationParametersClient, error)
-	SetCalibrationParameter(ctx context.Context, in *CalibrationParameter, opts ...grpc.CallOption) (*empty.Empty, error)
+	GetCalibrationParameters(ctx context.Context, in *Robot, opts ...grpc.CallOption) (UsecaseServer_GetCalibrationParametersClient, error)
+	SetCalibrationParameter(ctx context.Context, in *SetCalibrationParameterRequest, opts ...grpc.CallOption) (*empty.Empty, error)
 	// resets a calibration parameter to its default value
-	ResetCalibrationParameter(ctx context.Context, in *CalibrationParameter, opts ...grpc.CallOption) (*empty.Empty, error)
+	ResetCalibrationParameter(ctx context.Context, in *ResetCalibrationParameterRequest, opts ...grpc.CallOption) (*empty.Empty, error)
 }
 
-type switchServerClient struct {
+type usecaseServerClient struct {
 	cc *grpc.ClientConn
 }
 
-func NewSwitchServerClient(cc *grpc.ClientConn) SwitchServerClient {
-	return &switchServerClient{cc}
+func NewUsecaseServerClient(cc *grpc.ClientConn) UsecaseServerClient {
+	return &usecaseServerClient{cc}
 }
 
-func (c *switchServerClient) SetUsecase(ctx context.Context, in *Robot, opts ...grpc.CallOption) (*empty.Empty, error) {
+func (c *usecaseServerClient) SetUsecase(ctx context.Context, in *Robot, opts ...grpc.CallOption) (*empty.Empty, error) {
 	out := new(empty.Empty)
-	err := c.cc.Invoke(ctx, "/SwitchServer/SetUsecase", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/UsecaseServer/SetUsecase", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *switchServerClient) GetStatus(ctx context.Context, in *Robot, opts ...grpc.CallOption) (*Status, error) {
+func (c *usecaseServerClient) GetStatus(ctx context.Context, in *Robot, opts ...grpc.CallOption) (*Status, error) {
 	out := new(Status)
-	err := c.cc.Invoke(ctx, "/SwitchServer/GetStatus", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/UsecaseServer/GetStatus", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *switchServerClient) SetRobot(ctx context.Context, in *Action, opts ...grpc.CallOption) (*empty.Empty, error) {
+func (c *usecaseServerClient) SetRobot(ctx context.Context, in *Action, opts ...grpc.CallOption) (*empty.Empty, error) {
 	out := new(empty.Empty)
-	err := c.cc.Invoke(ctx, "/SwitchServer/SetRobot", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/UsecaseServer/SetRobot", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *switchServerClient) GetCalibrationParameters(ctx context.Context, in *Robot, opts ...grpc.CallOption) (SwitchServer_GetCalibrationParametersClient, error) {
-	stream, err := c.cc.NewStream(ctx, &_SwitchServer_serviceDesc.Streams[0], "/SwitchServer/GetCalibrationParameters", opts...)
+func (c *usecaseServerClient) GetCalibrationParameters(ctx context.Context, in *Robot, opts ...grpc.CallOption) (UsecaseServer_GetCalibrationParametersClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_UsecaseServer_serviceDesc.Streams[0], "/UsecaseServer/GetCalibrationParameters", opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &switchServerGetCalibrationParametersClient{stream}
+	x := &usecaseServerGetCalibrationParametersClient{stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -504,16 +707,16 @@ func (c *switchServerClient) GetCalibrationParameters(ctx context.Context, in *R
 	return x, nil
 }
 
-type SwitchServer_GetCalibrationParametersClient interface {
+type UsecaseServer_GetCalibrationParametersClient interface {
 	Recv() (*CalibrationParameter, error)
 	grpc.ClientStream
 }
 
-type switchServerGetCalibrationParametersClient struct {
+type usecaseServerGetCalibrationParametersClient struct {
 	grpc.ClientStream
 }
 
-func (x *switchServerGetCalibrationParametersClient) Recv() (*CalibrationParameter, error) {
+func (x *usecaseServerGetCalibrationParametersClient) Recv() (*CalibrationParameter, error) {
 	m := new(CalibrationParameter)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
@@ -521,180 +724,180 @@ func (x *switchServerGetCalibrationParametersClient) Recv() (*CalibrationParamet
 	return m, nil
 }
 
-func (c *switchServerClient) SetCalibrationParameter(ctx context.Context, in *CalibrationParameter, opts ...grpc.CallOption) (*empty.Empty, error) {
+func (c *usecaseServerClient) SetCalibrationParameter(ctx context.Context, in *SetCalibrationParameterRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
 	out := new(empty.Empty)
-	err := c.cc.Invoke(ctx, "/SwitchServer/SetCalibrationParameter", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/UsecaseServer/SetCalibrationParameter", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *switchServerClient) ResetCalibrationParameter(ctx context.Context, in *CalibrationParameter, opts ...grpc.CallOption) (*empty.Empty, error) {
+func (c *usecaseServerClient) ResetCalibrationParameter(ctx context.Context, in *ResetCalibrationParameterRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
 	out := new(empty.Empty)
-	err := c.cc.Invoke(ctx, "/SwitchServer/ResetCalibrationParameter", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/UsecaseServer/ResetCalibrationParameter", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// SwitchServerServer is the server API for SwitchServer service.
-type SwitchServerServer interface {
+// UsecaseServerServer is the server API for UsecaseServer service.
+type UsecaseServerServer interface {
 	// registers the robot with this usecase
 	SetUsecase(context.Context, *Robot) (*empty.Empty, error)
 	GetStatus(context.Context, *Robot) (*Status, error)
 	SetRobot(context.Context, *Action) (*empty.Empty, error)
-	GetCalibrationParameters(*Robot, SwitchServer_GetCalibrationParametersServer) error
-	SetCalibrationParameter(context.Context, *CalibrationParameter) (*empty.Empty, error)
+	GetCalibrationParameters(*Robot, UsecaseServer_GetCalibrationParametersServer) error
+	SetCalibrationParameter(context.Context, *SetCalibrationParameterRequest) (*empty.Empty, error)
 	// resets a calibration parameter to its default value
-	ResetCalibrationParameter(context.Context, *CalibrationParameter) (*empty.Empty, error)
+	ResetCalibrationParameter(context.Context, *ResetCalibrationParameterRequest) (*empty.Empty, error)
 }
 
-func RegisterSwitchServerServer(s *grpc.Server, srv SwitchServerServer) {
-	s.RegisterService(&_SwitchServer_serviceDesc, srv)
+func RegisterUsecaseServerServer(s *grpc.Server, srv UsecaseServerServer) {
+	s.RegisterService(&_UsecaseServer_serviceDesc, srv)
 }
 
-func _SwitchServer_SetUsecase_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _UsecaseServer_SetUsecase_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Robot)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SwitchServerServer).SetUsecase(ctx, in)
+		return srv.(UsecaseServerServer).SetUsecase(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/SwitchServer/SetUsecase",
+		FullMethod: "/UsecaseServer/SetUsecase",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SwitchServerServer).SetUsecase(ctx, req.(*Robot))
+		return srv.(UsecaseServerServer).SetUsecase(ctx, req.(*Robot))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _SwitchServer_GetStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _UsecaseServer_GetStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Robot)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SwitchServerServer).GetStatus(ctx, in)
+		return srv.(UsecaseServerServer).GetStatus(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/SwitchServer/GetStatus",
+		FullMethod: "/UsecaseServer/GetStatus",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SwitchServerServer).GetStatus(ctx, req.(*Robot))
+		return srv.(UsecaseServerServer).GetStatus(ctx, req.(*Robot))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _SwitchServer_SetRobot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _UsecaseServer_SetRobot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Action)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SwitchServerServer).SetRobot(ctx, in)
+		return srv.(UsecaseServerServer).SetRobot(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/SwitchServer/SetRobot",
+		FullMethod: "/UsecaseServer/SetRobot",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SwitchServerServer).SetRobot(ctx, req.(*Action))
+		return srv.(UsecaseServerServer).SetRobot(ctx, req.(*Action))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _SwitchServer_GetCalibrationParameters_Handler(srv interface{}, stream grpc.ServerStream) error {
+func _UsecaseServer_GetCalibrationParameters_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(Robot)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(SwitchServerServer).GetCalibrationParameters(m, &switchServerGetCalibrationParametersServer{stream})
+	return srv.(UsecaseServerServer).GetCalibrationParameters(m, &usecaseServerGetCalibrationParametersServer{stream})
 }
 
-type SwitchServer_GetCalibrationParametersServer interface {
+type UsecaseServer_GetCalibrationParametersServer interface {
 	Send(*CalibrationParameter) error
 	grpc.ServerStream
 }
 
-type switchServerGetCalibrationParametersServer struct {
+type usecaseServerGetCalibrationParametersServer struct {
 	grpc.ServerStream
 }
 
-func (x *switchServerGetCalibrationParametersServer) Send(m *CalibrationParameter) error {
+func (x *usecaseServerGetCalibrationParametersServer) Send(m *CalibrationParameter) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func _SwitchServer_SetCalibrationParameter_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CalibrationParameter)
+func _UsecaseServer_SetCalibrationParameter_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetCalibrationParameterRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SwitchServerServer).SetCalibrationParameter(ctx, in)
+		return srv.(UsecaseServerServer).SetCalibrationParameter(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/SwitchServer/SetCalibrationParameter",
+		FullMethod: "/UsecaseServer/SetCalibrationParameter",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SwitchServerServer).SetCalibrationParameter(ctx, req.(*CalibrationParameter))
+		return srv.(UsecaseServerServer).SetCalibrationParameter(ctx, req.(*SetCalibrationParameterRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _SwitchServer_ResetCalibrationParameter_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CalibrationParameter)
+func _UsecaseServer_ResetCalibrationParameter_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ResetCalibrationParameterRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SwitchServerServer).ResetCalibrationParameter(ctx, in)
+		return srv.(UsecaseServerServer).ResetCalibrationParameter(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/SwitchServer/ResetCalibrationParameter",
+		FullMethod: "/UsecaseServer/ResetCalibrationParameter",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SwitchServerServer).ResetCalibrationParameter(ctx, req.(*CalibrationParameter))
+		return srv.(UsecaseServerServer).ResetCalibrationParameter(ctx, req.(*ResetCalibrationParameterRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-var _SwitchServer_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "SwitchServer",
-	HandlerType: (*SwitchServerServer)(nil),
+var _UsecaseServer_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "UsecaseServer",
+	HandlerType: (*UsecaseServerServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "SetUsecase",
-			Handler:    _SwitchServer_SetUsecase_Handler,
+			Handler:    _UsecaseServer_SetUsecase_Handler,
 		},
 		{
 			MethodName: "GetStatus",
-			Handler:    _SwitchServer_GetStatus_Handler,
+			Handler:    _UsecaseServer_GetStatus_Handler,
 		},
 		{
 			MethodName: "SetRobot",
-			Handler:    _SwitchServer_SetRobot_Handler,
+			Handler:    _UsecaseServer_SetRobot_Handler,
 		},
 		{
 			MethodName: "SetCalibrationParameter",
-			Handler:    _SwitchServer_SetCalibrationParameter_Handler,
+			Handler:    _UsecaseServer_SetCalibrationParameter_Handler,
 		},
 		{
 			MethodName: "ResetCalibrationParameter",
-			Handler:    _SwitchServer_ResetCalibrationParameter_Handler,
+			Handler:    _UsecaseServer_ResetCalibrationParameter_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "GetCalibrationParameters",
-			Handler:       _SwitchServer_GetCalibrationParameters_Handler,
+			Handler:       _UsecaseServer_GetCalibrationParameters_Handler,
 			ServerStreams: true,
 		},
 	},
@@ -702,36 +905,41 @@ var _SwitchServer_serviceDesc = grpc.ServiceDesc{
 }
 
 func init() {
-	proto.RegisterFile("usecase-service/usecase-service.proto", fileDescriptor_usecase_service_38790134dca44328)
+	proto.RegisterFile("usecase-service/usecase-service.proto", fileDescriptor_usecase_service_7bd09fc0196cc6af)
 }
 
-var fileDescriptor_usecase_service_38790134dca44328 = []byte{
-	// 426 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x52, 0x5d, 0x6f, 0xd3, 0x30,
-	0x14, 0x4d, 0xd3, 0xf5, 0xeb, 0xd2, 0x4e, 0xc8, 0x1a, 0x2c, 0x14, 0x69, 0x42, 0x96, 0x90, 0x78,
-	0x99, 0x8b, 0x36, 0xc4, 0x1b, 0x0f, 0x6c, 0x42, 0x1b, 0x88, 0x07, 0x94, 0x08, 0xde, 0x9d, 0xf4,
-	0x76, 0x58, 0x4a, 0xe3, 0xca, 0xb9, 0xe9, 0xb6, 0x3f, 0xc8, 0x4f, 0xe1, 0x77, 0x20, 0xdb, 0x0d,
-	0x4d, 0xab, 0xa8, 0x4f, 0x7b, 0xf3, 0x3d, 0xc7, 0xe7, 0xf8, 0x1e, 0xeb, 0xc0, 0xdb, 0xaa, 0xc4,
-	0x4c, 0x96, 0x78, 0x5e, 0xa2, 0x59, 0xab, 0x0c, 0x67, 0x7b, 0xb3, 0x58, 0x19, 0x4d, 0x7a, 0xfa,
-	0xfa, 0x4e, 0xeb, 0xbb, 0x1c, 0x67, 0x6e, 0x4a, 0xab, 0xc5, 0x0c, 0x97, 0x2b, 0x7a, 0xf4, 0x24,
-	0x3f, 0x85, 0x5e, 0xac, 0x53, 0x4d, 0xec, 0x18, 0x42, 0x35, 0x8f, 0x3a, 0x6f, 0x3a, 0xef, 0x46,
-	0x71, 0xa8, 0xe6, 0xfc, 0x0c, 0xfa, 0x09, 0x49, 0xaa, 0x4a, 0x76, 0x02, 0xbd, 0xb5, 0xcc, 0x2b,
-	0xdc, 0x90, 0x7e, 0xe0, 0x1f, 0xa0, 0xff, 0x39, 0x23, 0xa5, 0x8b, 0x7d, 0x25, 0x9b, 0xc2, 0xb0,
-	0xc0, 0xfb, 0x5f, 0x4e, 0x12, 0x3a, 0xf4, 0xff, 0xcc, 0x17, 0x30, 0xfe, 0x5a, 0xd0, 0x0f, 0x69,
-	0xe4, 0x12, 0x09, 0x0d, 0x7b, 0x0e, 0xdd, 0xa5, 0x2a, 0x9c, 0xb8, 0x1b, 0xdb, 0xa3, 0x43, 0xe4,
-	0x83, 0x13, 0x5a, 0x44, 0x3e, 0xb0, 0x08, 0x06, 0x73, 0x5c, 0xc8, 0x2a, 0xa7, 0xa8, 0xeb, 0xd0,
-	0x7a, 0xb4, 0x4c, 0x56, 0x19, 0x83, 0x05, 0x45, 0x47, 0x9e, 0xd9, 0x8c, 0xfc, 0x1a, 0x26, 0x57,
-	0x5a, 0xe7, 0xdb, 0x87, 0x1a, 0x26, 0xf6, 0xb1, 0x61, 0xab, 0x49, 0xe8, 0x99, 0xda, 0xe4, 0x4f,
-	0x07, 0x4e, 0xae, 0x65, 0xae, 0x52, 0x23, 0x6d, 0xd0, 0xad, 0xd9, 0x7e, 0x62, 0x06, 0x47, 0x85,
-	0x5c, 0xd6, 0x69, 0xdd, 0xd9, 0x62, 0xf4, 0xb8, 0x42, 0xb7, 0xf2, 0x28, 0x76, 0x67, 0x76, 0x09,
-	0x63, 0xd5, 0x48, 0xef, 0x96, 0x7e, 0x76, 0x31, 0x11, 0xcd, 0x2f, 0xb9, 0x0d, 0xe2, 0x9d, 0x4b,
-	0xec, 0x23, 0x4c, 0xd2, 0x66, 0x94, 0xa8, 0xe7, 0x54, 0xc7, 0x62, 0x27, 0xe0, 0x6d, 0x10, 0xef,
-	0x5e, 0xbb, 0x1a, 0xd9, 0xc4, 0x24, 0x55, 0x5e, 0x5e, 0xfc, 0x0d, 0x61, 0x9c, 0xdc, 0x2b, 0xca,
-	0x7e, 0x27, 0x68, 0xd6, 0x68, 0x98, 0x00, 0x48, 0x90, 0x7e, 0xfa, 0xba, 0xb0, 0xbe, 0x70, 0x15,
-	0x98, 0xbe, 0x14, 0xbe, 0x29, 0xa2, 0x6e, 0x8a, 0xf8, 0x62, 0x9b, 0xc2, 0x03, 0x76, 0x06, 0xa3,
-	0x1b, 0xa4, 0x4d, 0x1f, 0xea, 0xeb, 0x03, 0xe1, 0x01, 0x1e, 0xb0, 0x73, 0x18, 0x26, 0x48, 0xbe,
-	0x48, 0x03, 0xe1, 0x7b, 0x71, 0xc0, 0xee, 0x13, 0x44, 0x37, 0x48, 0x6d, 0x5f, 0xbb, 0x75, 0x7f,
-	0x21, 0xda, 0x78, 0x1e, 0xbc, 0xef, 0xb0, 0x6f, 0x70, 0x9a, 0xb4, 0xcb, 0x59, 0xbb, 0xea, 0xc0,
-	0x2a, 0xdf, 0xe1, 0x55, 0x8c, 0xe5, 0x13, 0xb9, 0xa5, 0x7d, 0x87, 0x5c, 0xfe, 0x0b, 0x00, 0x00,
-	0xff, 0xff, 0x05, 0x3c, 0x6b, 0x5e, 0x9a, 0x03, 0x00, 0x00,
+var fileDescriptor_usecase_service_7bd09fc0196cc6af = []byte{
+	// 497 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x53, 0x5d, 0x6f, 0xd3, 0x30,
+	0x14, 0x4d, 0xd2, 0xb5, 0x4d, 0xef, 0xd6, 0x09, 0x59, 0x83, 0x85, 0x32, 0x95, 0x11, 0x09, 0x89,
+	0x97, 0xb9, 0xa8, 0x93, 0x78, 0xe3, 0x81, 0x4e, 0x68, 0xe5, 0x6d, 0x72, 0x00, 0xf1, 0xea, 0xb4,
+	0xb7, 0x53, 0xa4, 0x34, 0x2e, 0x8e, 0x53, 0xb6, 0x5f, 0xc2, 0x3f, 0xe2, 0x5f, 0x21, 0x21, 0xdb,
+	0x49, 0x9b, 0x4e, 0xfd, 0x78, 0xe1, 0xcd, 0xf7, 0x1c, 0xfb, 0xf8, 0x9c, 0x7b, 0x75, 0xe1, 0x6d,
+	0x91, 0xe3, 0x84, 0xe7, 0x78, 0x95, 0xa3, 0x5c, 0x26, 0x13, 0x1c, 0x3c, 0xa9, 0xe9, 0x42, 0x0a,
+	0x25, 0x7a, 0xaf, 0xee, 0x85, 0xb8, 0x4f, 0x71, 0x60, 0xaa, 0xb8, 0x98, 0x0d, 0x70, 0xbe, 0x50,
+	0x8f, 0x96, 0x0c, 0xcf, 0xa1, 0xc9, 0x44, 0x2c, 0x14, 0x39, 0x05, 0x2f, 0x99, 0x06, 0xee, 0xa5,
+	0xfb, 0xae, 0xc3, 0xbc, 0x64, 0x1a, 0xf6, 0xa1, 0x15, 0x29, 0xae, 0x8a, 0x9c, 0x9c, 0x41, 0x73,
+	0xc9, 0xd3, 0x02, 0x4b, 0xd2, 0x16, 0xe1, 0x08, 0x5a, 0x9f, 0x26, 0x2a, 0x11, 0x19, 0xb9, 0x80,
+	0xa6, 0xd4, 0x12, 0x86, 0x3f, 0x1e, 0xb6, 0xa8, 0x11, 0x64, 0x16, 0x24, 0x3d, 0xf0, 0x33, 0xfc,
+	0xf5, 0xdd, 0x08, 0x78, 0x46, 0x60, 0x55, 0x87, 0x33, 0x38, 0xf9, 0x92, 0xa9, 0x3b, 0x2e, 0xf9,
+	0x1c, 0x15, 0x4a, 0xf2, 0x0c, 0x1a, 0xf3, 0x24, 0x33, 0x3a, 0x0d, 0xa6, 0x8f, 0x06, 0xe1, 0x0f,
+	0xe6, 0xa1, 0x46, 0xf8, 0x03, 0x09, 0xa0, 0x3d, 0xc5, 0x19, 0x2f, 0x52, 0x15, 0x34, 0x0c, 0x5a,
+	0x95, 0x9a, 0x99, 0x14, 0x52, 0x62, 0xa6, 0x82, 0x23, 0xcb, 0x94, 0x65, 0x78, 0x03, 0xdd, 0x91,
+	0x10, 0xe9, 0xfa, 0xa3, 0x9a, 0x88, 0xfe, 0xcc, 0xdf, 0x2a, 0xe2, 0x59, 0xa6, 0x12, 0xf9, 0xe3,
+	0xc2, 0xd9, 0x0d, 0x4f, 0x93, 0x58, 0x72, 0x1d, 0x7b, 0x2d, 0xf6, 0xa4, 0x73, 0x84, 0xc0, 0x51,
+	0xc6, 0xe7, 0x55, 0x5a, 0x73, 0xd6, 0x98, 0x7a, 0x5c, 0xa0, 0xb1, 0xdc, 0x61, 0xe6, 0x4c, 0xae,
+	0xe1, 0x24, 0xa9, 0xa5, 0x37, 0xa6, 0x8f, 0x87, 0x5d, 0x5a, 0x6f, 0xc9, 0xd8, 0x61, 0x1b, 0x97,
+	0xc8, 0x07, 0xe8, 0xc6, 0xf5, 0x28, 0x41, 0xd3, 0xbc, 0x3a, 0xa5, 0x1b, 0x01, 0xc7, 0x0e, 0xdb,
+	0xbc, 0x36, 0xea, 0xe8, 0xc4, 0x8a, 0x27, 0x69, 0x1e, 0xfe, 0x76, 0xa1, 0x1f, 0xa1, 0xda, 0x96,
+	0x85, 0xe1, 0xcf, 0x02, 0x73, 0x75, 0x60, 0xa4, 0x36, 0xb0, 0xb7, 0x0a, 0x7c, 0x01, 0x7e, 0x92,
+	0x29, 0x3b, 0x62, 0xd3, 0xf9, 0xb1, 0xc3, 0x56, 0x08, 0xe9, 0x43, 0x47, 0x5b, 0xb1, 0xb4, 0x76,
+	0xeb, 0x8f, 0x1d, 0xb6, 0x86, 0xea, 0xce, 0xee, 0xe0, 0x92, 0x61, 0xfe, 0x1f, 0xad, 0x0d, 0xff,
+	0x7a, 0xd0, 0xfd, 0x66, 0xb7, 0x22, 0x42, 0xb9, 0x44, 0x49, 0x28, 0x40, 0x84, 0xaa, 0xc4, 0x48,
+	0xf9, 0xbc, 0xf7, 0x82, 0xda, 0x25, 0xa1, 0xd5, 0x92, 0xd0, 0xcf, 0x7a, 0x49, 0x42, 0x47, 0xdb,
+	0xbf, 0x45, 0x55, 0xae, 0x42, 0x75, 0xbd, 0x4d, 0x2d, 0x10, 0x3a, 0xe4, 0x0a, 0xfc, 0x08, 0x95,
+	0xdd, 0xa1, 0x36, 0xb5, 0x2b, 0xb1, 0x47, 0xee, 0x23, 0x04, 0xb7, 0xdb, 0x03, 0xae, 0xd5, 0x9f,
+	0xd3, 0x6d, 0x7c, 0xe8, 0xbc, 0x77, 0xc9, 0x57, 0x38, 0xdf, 0x31, 0x3a, 0xf2, 0x9a, 0xee, 0x1f,
+	0xea, 0x1e, 0x53, 0x3f, 0xe0, 0xe5, 0xce, 0xbe, 0x93, 0x37, 0xf4, 0xd0, 0x4c, 0x76, 0x2b, 0xc7,
+	0x2d, 0x83, 0x5c, 0xff, 0x0b, 0x00, 0x00, 0xff, 0xff, 0x22, 0x63, 0xad, 0xd5, 0xab, 0x04, 0x00,
+	0x00,
 }
