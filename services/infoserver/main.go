@@ -11,10 +11,10 @@ import (
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/golang/protobuf/ptypes/wrappers"
 	_ "github.com/lib/pq"
-	"github.com/mrbenshef/SmartHomeAdapters/services/microservice"
-	"github.com/mrbenshef/SmartHomeAdapters/services/microservice/infoserver"
-	"github.com/mrbenshef/SmartHomeAdapters/services/microservice/switchserver"
-	"github.com/mrbenshef/SmartHomeAdapters/services/microservice/thermostatserver"
+	"github.com/mrbenshef/SmartHomeAdapters/microservice"
+	"github.com/mrbenshef/SmartHomeAdapters/microservice/infoserver"
+	"github.com/mrbenshef/SmartHomeAdapters/microservice/switchserver"
+	"github.com/mrbenshef/SmartHomeAdapters/microservice/thermostatserver"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -31,44 +31,57 @@ type server struct {
 	ThermostatClient thermostatserver.ThermostatServerClient
 }
 
-func (s *server) ReconfigureUsecase(ctx context.Context, query *infoserver.ReconfigureRobotQuery) error {
-
+func (s *server) ReconfigureUsecase(ctx context.Context, query *infoserver.ReconfigureRobotQuery) (*empty.Empty, error) {
 	log.Printf("reconfiguring usecase for robot with id: %s (user id: %s)", query.Id, query.UserId)
 
-	_, err := s.DB.Exec("UPDATE robots SET robotType = $1 WHERE serial = $2 AND registeredUserId = $3", query.Usecase, query.Id, query.UserId)
-
-	if err != nil {
-		log.Printf("Failed to rename robot %s: %v", query.Id, err)
+	if query.Usecase != robotTypeSwitch && query.Usecase != robotTypeThermostat {
+		log.Printf("unrecognized usecase: %s", query.Usecase)
+		return nil, status.Newf(codes.Internal, "unrecognized usecase: %s", query.Usecase).Err()
 	}
 
-	return err
+	_, err := s.DB.Exec("UPDATE robots SET robotType = $1 WHERE serial = $2 AND registeredUserId = $3", query.Usecase, query.Id, query.UserId)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, status.Newf(codes.NotFound, "robot \"%s\" does not exist", query.Id).Err()
+		} else if err != nil {
+			log.Printf("failed to reconfigure robot %s: %v", query.Id, err)
+			return nil, status.New(codes.Internal, "internal error").Err()
+		}
+	}
 
+	return &empty.Empty{}, nil
 }
 
-func (s *server) RenameRobot(ctx context.Context, query *infoserver.RenameRobotQuery) error {
-
+func (s *server) RenameRobot(ctx context.Context, query *infoserver.RenameRobotQuery) (*empty.Empty, error) {
 	log.Printf("renaming robot with id: %s (user id: %s) to nickname %s", query.Id, query.UserId, query.Nickname)
 	_, err := s.DB.Exec("UPDATE robots SET nickname = $1 WHERE serial = $2 AND registeredUserId = $3", query.Nickname, query.Id, query.UserId)
 
 	if err != nil {
-		log.Printf("Failed to rename robot %s: %v", query.Id, err)
+		if err == sql.ErrNoRows {
+			return nil, status.Newf(codes.NotFound, "robot \"%s\" does not exist", query.Id).Err()
+		} else if err != nil {
+			log.Printf("failed to rename robot %s: %v", query.Id, err)
+			return nil, status.New(codes.Internal, "internal error").Err()
+		}
 	}
 
-	return err
-
+	return nil, err
 }
-func (s *server) DeleteRobot(ctx context.Context, query *infoserver.RobotQuery) error {
 
+func (s *server) DeleteRobot(ctx context.Context, query *infoserver.RobotQuery) (*empty.Empty, error) {
 	log.Printf("deleting robot with id: %s (user id: %s)", query.Id, query.UserId)
 
 	_, err := s.DB.Exec("DELETE FROM robots WHERE serial = $1 AND registeredUserId = $2", query.Id, query.UserId)
-
 	if err != nil {
-		log.Printf("Failed to delete robot %s: %v", query.Id, err)
+		if err == sql.ErrNoRows {
+			return nil, status.Newf(codes.NotFound, "robot \"%s\" does not exist", query.Id).Err()
+		} else if err != nil {
+			log.Printf("failed to delete robot %s: %v", query.Id, err)
+			return nil, status.New(codes.Internal, "internal error").Err()
+		}
 	}
 
-	return err
-
+	return &empty.Empty{}, nil
 }
 
 func (s *server) GetRobot(ctx context.Context, query *infoserver.RobotQuery) (*infoserver.Robot, error) {
@@ -232,7 +245,6 @@ func (s *server) RegisterRobot(ctx context.Context, query *infoserver.RegisterRo
 		query.RobotType,
 		query.UserId,
 	)
-
 	if err != nil {
 		return nil, err
 	}
