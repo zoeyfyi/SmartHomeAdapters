@@ -122,15 +122,13 @@ class RobotAdapter (
     private fun updateRobotDisplay(robot: Robot, robotCircle: ImageView, robotIcon: ImageView) {
         when (robot.robotInterfaceType) {
             Robot.INTERFACE_TYPE_TOGGLE -> {
-                /*
                 robotCircle.setColorFilter(
-
                         if (robot.robotStatus.value) {
                             parent.getColor(R.color.colorToggleOn)
                         } else {
                             parent.getColor(R.color.colorToggleOff)
                         }
-                )*/
+                )
             }
 
             Robot.INTERFACE_TYPE_RANGE -> {/* TODO */}
@@ -143,7 +141,13 @@ class RobotAdapter (
                 TODO set different icons depending on the state etc
              */
             Robot.ROBOT_TYPE_SWITCH -> {
-                robotIcon.setImageResource(R.drawable.ic_light_off)
+                robotIcon.setImageResource(
+                        if (robot.robotStatus.value) {
+                            R.drawable.ic_light_on
+                        } else {
+                            R.drawable.ic_light_off
+                        }
+                )
             }
 
             Robot.ROBOT_TYPE_THERMOSTAT -> {
