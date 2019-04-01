@@ -3,6 +3,8 @@ syntax = "proto3";
 import "google/protobuf/empty.proto";
 
 service UsecaseServer {
+    rpc GetUsecases(google.protobuf.Empty) returns (stream Usecase) {}
+    
     // registers the robot with this usecase
     rpc SetUsecase(SetUsecaseRequest) returns (google.protobuf.Empty) {}
 
@@ -15,6 +17,12 @@ service UsecaseServer {
     rpc GetCalibrationParameters(GetCalibrationParametersRequest) returns (stream CalibrationParameter) {}
 
     rpc SetCalibrationParameter(SetCalibrationParameterRequest) returns (google.protobuf.Empty) {}
+}
+
+message Usecase {
+    string id = 1;
+    string name = 2;
+    string description = 3;
 }
 
 message Robot {

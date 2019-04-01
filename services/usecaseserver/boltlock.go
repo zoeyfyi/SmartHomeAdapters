@@ -27,6 +27,10 @@ func (s *Boltlock) Name() string {
 	return "Boltlock"
 }
 
+func (s *Boltlock) Description() string {
+	return "TODO: boltlock description"
+}
+
 func (s *Boltlock) Type() UsecaseType {
 	return ToggleUsecaseType
 }

@@ -27,6 +27,10 @@ func (s *Switch) Name() string {
 	return "switch"
 }
 
+func (s *Switch) Description() string {
+	return "TODO: switch description"
+}
+
 func (s *Switch) Type() UsecaseType {
 	return ToggleUsecaseType
 }
