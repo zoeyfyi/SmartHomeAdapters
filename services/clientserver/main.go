@@ -187,11 +187,29 @@ func robotsHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 			return
 		}
 
+		// convert robot status
+		var status robotStatus
+		switch robotStatus := rbt.RobotStatus.(type) {
+		case *infoserver.Robot_ToggleStatus:
+			status = toggleStatus{
+				Value: robotStatus.ToggleStatus.Value,
+			}
+		case *infoserver.Robot_RangeStatus:
+			status = rangeStatus{
+				Min:     int(robotStatus.RangeStatus.Min),
+				Max:     int(robotStatus.RangeStatus.Max),
+				Current: int(robotStatus.RangeStatus.Current),
+			}
+		default:
+			panic(fmt.Sprintf("%T is not a valid robot status", robotStatus))
+		}
+
 		robots = append(robots, robot{
 			ID:            rbt.Id,
 			Nickname:      rbt.Nickname,
 			RobotType:     rbt.RobotType,
 			InterfaceType: rbt.InterfaceType,
+			Status:        status,
 		})
 	}
 
