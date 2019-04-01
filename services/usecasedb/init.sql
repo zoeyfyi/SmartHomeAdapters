@@ -3,7 +3,7 @@ CREATE TABLE boolparameter (
     serial text not null unique,
     -- robot ID
     robotId text not null,    
-    value boolean not null,
+    value boolean not null
 );
 
 CREATE TABLE intparameter (
@@ -11,15 +11,15 @@ CREATE TABLE intparameter (
     serial text not null unique,
     -- robot ID
     robotId text not null,    
-    value int not null,
+    value int not null
 );
 
 CREATE TABLE togglestatus (
     robotId text not null unique,
-    value boolean not null,
-)
+    value boolean not null
+);
 
 CREATE TABLE rangestatus (
     robotId text not null unique,
-    value int not null,
-)
+    value int not null
+);
