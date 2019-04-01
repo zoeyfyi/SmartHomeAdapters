@@ -1,0 +1,103 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+service UsecaseServer {
+    // registers the robot with this usecase
+    rpc SetUsecase(SetUsecaseRequest) returns (google.protobuf.Empty) {}
+
+    rpc GetStatus(GetStatusRequest) returns (Status) {}
+    
+    rpc Toggle(ToggleRequest) returns (google.protobuf.Empty) {}
+    
+    rpc Range (RangeRequest) returns (google.protobuf.Empty) {}
+
+    rpc GetCalibrationParameters(GetCalibrationParametersRequest) returns (stream CalibrationParameter) {}
+
+    rpc SetCalibrationParameter(SetCalibrationParameterRequest) returns (google.protobuf.Empty) {}
+}
+
+message Robot {
+    string id = 1;
+}
+
+message SetUsecaseRequest {
+    Robot robot = 1;
+    string usecase = 2;
+}
+
+message GetStatusRequest {
+    Robot robot = 1;
+    string usecase = 2;
+}
+
+message Status {
+    oneof status {
+        ToggleStatus toggleStatus = 1; 
+        RangeStatus rangeStatus = 2;
+    }
+}
+
+message ToggleStatus {
+    bool value = 1;
+}
+
+message RangeStatus {
+    int64 min = 1;
+    int64 max = 2;
+    int64 value = 3;
+}
+
+message ToggleRequest {
+    Robot robot = 1;
+    string usecase = 3;
+    bool newValue = 2;
+}
+
+message RangeRequest {
+    Robot robot = 1;
+    string usecase = 3;
+    int64 newValue = 2;
+}
+
+message IntParameter {
+    int64 min = 1;
+    int64 max = 2;
+    int64 default = 3;
+    int64 current = 4;
+}
+
+message BoolParameter {
+    bool default = 1;
+    bool current = 2;
+}
+
+message CalibrationParameter {
+    string id = 1;
+    string name = 2;
+    string type = 3;
+    oneof details {
+        IntParameter intParameter = 4; 
+        BoolParameter boolParameter = 5;
+    }
+}
+
+message GetCalibrationParametersRequest {
+    Robot robot = 1;
+    string usecase = 2;
+}
+
+message SetCalibrationParameterRequest {
+    Robot robot = 1;
+    string usecase = 3;
+    string id = 2;
+    oneof details {
+        int64 intValue = 4; 
+        bool boolValue = 5;
+    }
+}
+
+message ResetCalibrationParameterRequest {
+    Robot robot = 1;
+    string id = 2;
+}

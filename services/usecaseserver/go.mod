@@ -1,4 +1,4 @@
-module github.com/mrbenshef/SmartHomeAdapters/switchserver
+module github.com/mrbenshef/SmartHomeAdapters/usecaseserver
 
 require (
 	github.com/golang/protobuf v1.3.1

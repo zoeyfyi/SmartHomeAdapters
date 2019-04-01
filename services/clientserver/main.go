@@ -442,8 +442,10 @@ func usecaseHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params
 }
 
 type parameter struct {
-	Name  string `json:"name"`
-	Value string `json:"value"`
+	ID    string  `json:"id"`
+	Name  *string `json:"name"`
+	Type  string  `json:"type"`
+	Value string  `json:"value"`
 }
 
 func setCalibrationHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -463,11 +465,50 @@ func setCalibrationHandler(w http.ResponseWriter, r *http.Request, ps httprouter
 		Id:     id,
 		UserId: r.Context().Value(userIDKey).(string),
 	}
+
+	// parse parameters
 	for _, param := range parameters {
-		request.Parameters = append(request.Parameters, &infoserver.CalibrationParameter{
-			Name:  param.Name,
-			Value: param.Value,
-		})
+		infoParam := &infoserver.CalibrationParameter{
+			Id: param.ID,
+		}
+
+		switch param.Type {
+		case "bool":
+			// parse value as bool
+			value, err := strconv.ParseBool(param.Value)
+			if err != nil {
+				HTTPError(
+					w,
+					status.Newf(
+						codes.InvalidArgument,
+						"\"%s\" is not a bool, should be \"true\" or \"false\"",
+						param.Type,
+					).Err(),
+				)
+				return
+			}
+
+			infoParam.Value = &infoserver.CalibrationParameter_BoolValue{
+				BoolValue: value,
+			}
+		case "int":
+			// parse value as int
+			value, err := strconv.ParseInt(param.Value, 10, 64)
+			if err != nil {
+				HTTPError(w, status.Newf(codes.InvalidArgument, "\"%s\" is not an integer", param.Type).Err())
+				return
+			}
+
+			infoParam.Value = &infoserver.CalibrationParameter_IntValue{
+				IntValue: value,
+			}
+
+		default:
+			HTTPError(w, status.Newf(codes.InvalidArgument, "\"%s\" is not a recognized parameter type", param.Type).Err())
+			return
+		}
+
+		request.Parameters = append(request.Parameters)
 	}
 
 	// send request
@@ -523,10 +564,19 @@ func getCalibrationHandler(w http.ResponseWriter, r *http.Request, ps httprouter
 	var parameters []parameter
 
 	for _, p := range params.Parameters {
-		parameters = append(parameters, parameter{
-			Name:  p.Name,
-			Value: p.Value,
-		})
+		param := parameter{
+			ID:   p.Id,
+			Name: &p.Name,
+		}
+
+		switch value := p.Value.(type) {
+		case *infoserver.CalibrationParameter_BoolValue:
+			param.Value = fmt.Sprintf("%t", value.BoolValue)
+		case *infoserver.CalibrationParameter_IntValue:
+			param.Value = fmt.Sprintf("%d", value.IntValue)
+		}
+
+		parameters = append(parameters, param)
 	}
 
 	w.WriteHeader(http.StatusOK)
@@ -615,6 +665,7 @@ func auth(h httprouter.Handle) httprouter.Handle {
 		}
 
 		log.Printf("User ID is: %s", introspect.Subject)
+
 		h(w, r.WithContext(context.WithValue(context.TODO(), userIDKey, introspect.Subject)), ps)
 	}
 }

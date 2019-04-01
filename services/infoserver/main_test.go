@@ -11,16 +11,12 @@ import (
 	"reflect"
 	"testing"
 
-	"google.golang.org/grpc/codes"
-
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/test/bufconn"
 
-	"github.com/golang/protobuf/ptypes/empty"
 	_ "github.com/lib/pq"
 	"github.com/mrbenshef/SmartHomeAdapters/microservice"
 	"github.com/mrbenshef/SmartHomeAdapters/microservice/infoserver"
-	"github.com/mrbenshef/SmartHomeAdapters/microservice/switchserver"
 	"google.golang.org/grpc"
 )
 
@@ -44,55 +40,6 @@ func resetDatabase(t *testing.T) {
 	}
 }
 
-type mockSwitchClient struct{}
-
-func (c mockSwitchClient) GetSwitch(
-	ctx context.Context,
-	query *switchserver.SwitchQuery,
-	_ ...grpc.CallOption,
-) (*switchserver.Switch, error) {
-	if query.Id == "123abc" {
-		return &switchserver.Switch{
-			Id:   "123abc",
-			IsOn: true,
-		}, nil
-	}
-
-	return nil, status.New(codes.NotFound, "Switch does not exist").Err()
-}
-
-func (c mockSwitchClient) AddSwitch(
-	_ context.Context,
-	_ *switchserver.AddSwitchRequest,
-	_ ...grpc.CallOption,
-) (*switchserver.Switch, error) {
-	return nil, nil
-}
-
-func (c mockSwitchClient) RemoveSwitch(
-	_ context.Context,
-	_ *switchserver.RemoveSwitchRequest,
-	_ ...grpc.CallOption,
-) (*empty.Empty, error) {
-	return nil, nil
-}
-
-func (c mockSwitchClient) SetSwitch(
-	_ context.Context,
-	_ *switchserver.SetSwitchRequest,
-	_ ...grpc.CallOption,
-) (switchserver.SwitchServer_SetSwitchClient, error) {
-	return nil, nil
-}
-
-func (c mockSwitchClient) CalibrateSwitch(
-	_ context.Context,
-	_ *switchserver.SwitchCalibrationParameters,
-	_ ...grpc.CallOption,
-) (*empty.Empty, error) {
-	return nil, nil
-}
-
 func TestMain(m *testing.M) {
 	username := os.Getenv("DB_USERNAME")
 	if username != "temp" {
@@ -110,8 +57,7 @@ func TestMain(m *testing.M) {
 	s := grpc.NewServer()
 
 	infoserver.RegisterInfoServerServer(s, &server{
-		DB:           db,
-		SwitchClient: mockSwitchClient{},
+		DB: db,
 	})
 	go func() {
 		if err := s.Serve(lis); err != nil {
@@ -126,6 +72,61 @@ func TestMain(m *testing.M) {
 
 func bufDialer(context.Context, string) (net.Conn, error) {
 	return lis.Dial()
+}
+
+func TestRegisterValidRobot(t *testing.T) {
+	resetDatabase(t)
+
+	cases := []*infoserver.RegisterRobotQuery{
+		{
+			Id:     "qwerty",
+			UserId: "foobar",
+		},
+		{
+			Id:     "123abc",
+			UserId: "foobar",
+		},
+	}
+
+	ctx := context.Background()
+	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
+	if err != nil {
+		t.Fatalf("failed to dial bufnet: %v", err)
+	}
+	defer conn.Close()
+	client := infoserver.NewInfoServerClient(conn)
+
+	for _, c := range cases {
+		_, err := client.RegisterRobot(ctx, c)
+
+		if err != nil {
+			t.Errorf("expected nil error, got: %v", err)
+		}
+	}
+}
+
+func TestRegisterInvalidRobot(t *testing.T) {
+	resetDatabase(t)
+
+	query := &infoserver.RegisterRobotQuery{
+		Id:     "this ID does not exist",
+		UserId: "foobar",
+	}
+
+	ctx := context.Background()
+	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
+	if err != nil {
+		t.Fatalf("failed to dial bufnet: %v", err)
+	}
+	defer conn.Close()
+	client := infoserver.NewInfoServerClient(conn)
+
+	_, err = client.RegisterRobot(ctx, query)
+
+	expectedError := "rpc error: code = NotFound desc = robot \"this ID does not exist\" does not exist"
+	if err.Error() != expectedError {
+		t.Errorf("expected error: %s, got: %v", expectedError, err)
+	}
 }
 
 func TestGetRobots(t *testing.T) {
@@ -154,7 +155,30 @@ func TestGetRobots(t *testing.T) {
 	defer conn.Close()
 
 	client := infoserver.NewInfoServerClient(conn)
-	stream, err := client.GetRobots(context.Background(), &infoserver.RobotsQuery{UserId: "1"})
+
+	_, err = client.RegisterRobot(ctx, &infoserver.RegisterRobotQuery{
+		Id:        "123abc",
+		Nickname:  "testLightbot",
+		RobotType: "switch",
+		UserId:    "foobar",
+	})
+	if err != nil {
+		t.Fatalf("error registering robot: %v", err)
+	}
+
+	_, err = client.RegisterRobot(ctx, &infoserver.RegisterRobotQuery{
+		Id:        "qwerty",
+		Nickname:  "testThermoBot",
+		RobotType: "thermostat",
+		UserId:    "foobar",
+	})
+	if err != nil {
+		t.Fatalf("error registering robot: %v", err)
+	}
+
+	stream, err := client.GetRobots(context.Background(), &infoserver.RobotsQuery{
+		UserId: "foobar",
+	})
 	if err != nil {
 		t.Fatalf("Could not get robots: %v", err)
 	}
@@ -209,7 +233,31 @@ func TestGetRobotWithValidID(t *testing.T) {
 		defer conn.Close()
 
 		client := infoserver.NewInfoServerClient(conn)
-		robot, err := client.GetRobot(context.Background(), &infoserver.RobotQuery{Id: c.id, UserId: "1"})
+
+		_, err = client.RegisterRobot(ctx, &infoserver.RegisterRobotQuery{
+			Id:        "123abc",
+			Nickname:  "testLightbot",
+			RobotType: "switch",
+			UserId:    "foobar",
+		})
+		if err != nil {
+			t.Fatalf("error registering robot: %v", err)
+		}
+
+		_, err = client.RegisterRobot(ctx, &infoserver.RegisterRobotQuery{
+			Id:        "qwerty",
+			Nickname:  "testThermoBot",
+			RobotType: "thermostat",
+			UserId:    "foobar",
+		})
+		if err != nil {
+			t.Fatalf("error registering robot: %v", err)
+		}
+
+		robot, err := client.GetRobot(context.Background(), &infoserver.RobotQuery{
+			Id:     c.id,
+			UserId: "foobar",
+		})
 
 		if err != nil {
 			t.Fatalf("Could not get robot: %v", err)
@@ -267,7 +315,7 @@ func TestSetRobotUsecase(t *testing.T) {
 		Usecase: "switch",
 	})
 
-	expectedError := "rpc error: code = NotFound desc = Switch does not exist"
+	expectedError := "rpc error: code = NotFound desc = Robot \"qwerty\" does not exist"
 	if err.Error() != expectedError {
 		t.Fatalf("Expected error: %s, got error: %v", expectedError, err)
 	}

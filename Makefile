@@ -27,7 +27,6 @@ build-android:
 # DOCKER
 #
 
-
 docker:
 	@(cd services/microservice && docker build -t smarthomeadapters/microservice .)
 	@docker-compose build
@@ -41,18 +40,10 @@ docker-push:
 	@docker push smarthomeadapters/infoserver:latest
 	@docker tag smarthomeadapters/robotserver smarthomeadapters/robotserver:latest
 	@docker push smarthomeadapters/robotserver:latest
-	@docker tag smarthomeadapters/switchdb smarthomeadapters/switchdb:latest
-	@docker push smarthomeadapters/switchdb:latest
-	@docker tag smarthomeadapters/switchserver smarthomeadapters/switchserver:latest
-	@docker push smarthomeadapters/switchserver:latest
 	@docker tag smarthomeadapters/userdb smarthomeadapters/userdb:latest
 	@docker push smarthomeadapters/userdb:latest
 	@docker tag smarthomeadapters/userserver smarthomeadapters/userserver:latest
 	@docker push smarthomeadapters/userserver:latest
-	@docker tag smarthomeadapters/thermodb smarthomeadapters/thermodb:latest
-	@docker push smarthomeadapters/thermodb:latest
-	@docker tag smarthomeadapters/thermostatserver smarthomeadapters/thermostatserver:latest
-	@docker push smarthomeadapters/thermostatserver:latest
 
 docker-push-test:
 	@docker tag smarthomeadapters/clientserver smarthomeadapters/clientserver:test
@@ -63,18 +54,10 @@ docker-push-test:
 	@docker push smarthomeadapters/infoserver:test
 	@docker tag smarthomeadapters/robotserver smarthomeadapters/robotserver:test
 	@docker push smarthomeadapters/robotserver:test
-	@docker tag smarthomeadapters/switchdb smarthomeadapters/switchdb:test
-	@docker push smarthomeadapters/switchdb:test
-	@docker tag smarthomeadapters/switchserver smarthomeadapters/switchserver:test
-	@docker push smarthomeadapters/switchserver:test
 	@docker tag smarthomeadapters/userdb smarthomeadapters/userdb:test
 	@docker push smarthomeadapters/userdb:test
 	@docker tag smarthomeadapters/userserver smarthomeadapters/userserver:test
 	@docker push smarthomeadapters/userserver:test
-	@docker tag smarthomeadapters/thermodb smarthomeadapters/thermodb:test
-	@docker push smarthomeadapters/thermodb:test
-	@docker tag smarthomeadapters/thermostatserver smarthomeadapters/thermostatserver:test
-	@docker push smarthomeadapters/thermostatserver:test
 	@docker tag smarthomeadapters/account-app smarthomeadapters/account-app:test
 	@docker push smarthomeadapters/account-app:test
 
@@ -99,16 +82,10 @@ lint-microservice:
 lint-robotserver:
 	@(cd services/robotserver && $(GOLINT))
 
-lint-switchserver:
-	@(cd services/switchserver && $(GOLINT))
-
 lint-userserver:
 	@(cd services/userserver && $(GOLINT))
 
-lint-thermostatserver:
-	@(cd services/thermostatserver && $(GOLINT))
-
-lint-services: lint-account-app lint-clientserver lint-infoserver lint-microservice lint-robotserver lint-switchserver lint-thermostatserver lint-userserver
+lint-services: lint-account-app lint-clientserver lint-infoserver lint-microservice lint-robotserver lint-userserver
 
 lint-android:
 	@(cd android && ./gradlew lint)
@@ -124,14 +101,10 @@ lint: lint-services lint-android lint-docker-compose
 
 db-up:
 	@docker run --rm -d --name test_infodb -p 5001:5432 -e POSTGRES_USER=temp -e POSTGRES_PASSWORD=password smarthomeadapters/infodb
-	@docker run --rm -d --name test_switchdb -p 5002:5432 -e POSTGRES_USER=temp -e POSTGRES_PASSWORD=password smarthomeadapters/switchdb
-	@docker run --rm -d --name test_thermodb -p 5003:5432 -e POSTGRES_USER=temp -e POSTGRES_PASSWORD=password smarthomeadapters/thermodb
 	@docker run --rm -d --name test_userdb -p 5004:5432 -e POSTGRES_USER=temp -e POSTGRES_PASSWORD=password smarthomeadapters/userdb
 
 db-down:
 	@docker stop test_infodb
-	@docker stop test_switchdb
-	@docker stop test_thermodb
 	@docker stop test_userdb
 
 #
@@ -156,16 +129,10 @@ test-microservice:
 test-robotserver:
 	@(cd services/robotserver && go test)
 
-test-switchserver:
-	@(cd services/switchserver && DB_URL=localhost:5002 DB_USERNAME=temp DB_PASSWORD=password DB_DATABASE=temp go test)
-
-test-thermostatserver:
-	@(cd services/thermostatserver && DB_URL=localhost:5003 DB_USERNAME=temp DB_PASSWORD=password DB_DATABASE=temp go test)
-
 test-userserver:
 	@(cd services/userserver && DB_URL=localhost:5004 DB_USERNAME=temp DB_PASSWORD=password DB_DATABASE=temp go test)
 
-test-services: test-account-app test-clientserver test-infoserver test-microservice test-robotserver test-switchserver test-thermostatserver test-userserver
+test-services: test-account-app test-clientserver test-infoserver test-microservice test-robotserver test-userserver
 
 test: test-services test-android
 
