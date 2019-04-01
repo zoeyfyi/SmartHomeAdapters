@@ -24,7 +24,7 @@
     <!-- Strings related to NicknameFragment -->
     <string name="nf_title_text">Name Your Device</string>
     <string name="device_name_placeholder">Device name</string>
-    <string name="next_button_text" translatable="false">CONTINUE</string>
+    <string name="next_button_text">CONTINUE</string>
     <string name="update_name_button_text" translatable="false">RENAME</string>
 
     <!-- Strings related to QRFragment -->
@@ -37,7 +37,7 @@
     <string name="register_button_text">Register</string>
 
     <!-- Strings related to RobotsFragment -->
-    <string name="welcome_text" translatable="false">Welcome Home, &lt;NAME&gt;</string>
+    <string name="welcome_text">Welcome Home, &lt;NAME&gt;</string>
 
     <!-- Strings related to settings_menu -->
     <string name="log_out_text" translatable="false">Log out</string>
