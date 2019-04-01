@@ -140,6 +140,32 @@ func registerHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params
 	}
 }
 
+type userResponce struct {
+	Name string `json:"name"`
+}
+
+func userHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	userID := r.Context().Value(userIDKey).(string)
+	log.Printf("getting user with id %s", userID)
+
+	user, err := userserverClient.GetUserByID(context.Background(), &userserver.UserId{
+		Id: userID,
+	})
+	if err != nil {
+		HTTPError(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	err = json.NewEncoder(w).Encode(userResponce{
+		Name: user.Name,
+	})
+	if err != nil {
+		log.Printf("failed to encode error responce: %v", err)
+		HTTPError(w, errFailedEncode)
+	}
+}
+
 type robot struct {
 	ID            string      `json:"id"`
 	Nickname      string      `json:"nickname"`
@@ -646,6 +672,7 @@ func createRouter() *httprouter.Router {
 	// register routes
 	router.GET("/ping", pingHandler)
 	router.POST("/register", registerHandler)
+	router.GET("/user", userHandler)
 	router.GET("/robots", auth(robotsHandler))
 	router.GET("/robot/:id", auth(robotHandler))
 	router.POST("/robot/:id", auth(registerRobotHandler))
