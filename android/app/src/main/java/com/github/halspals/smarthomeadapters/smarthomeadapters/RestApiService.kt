@@ -96,12 +96,6 @@ interface RestApiService {
             @Body nameMap: Map<String, String>
     ): Call<ResponseBody>
 
-    @PATCH("robot/{id}/reconfigure")
-    fun patchUseCase(
-            @Path("id") id:  String,
-            @Body useCaseMap: Map<String, String>
-    ): Call<ResponseBody>
-
     @GET("user")
     fun getUserName(@Header("token") token: String): Call<User>
 }
