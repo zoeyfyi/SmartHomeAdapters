@@ -11,16 +11,12 @@ import (
 	"reflect"
 	"testing"
 
-	"google.golang.org/grpc/codes"
-
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/test/bufconn"
 
-	"github.com/golang/protobuf/ptypes/empty"
 	_ "github.com/lib/pq"
 	"github.com/mrbenshef/SmartHomeAdapters/microservice"
 	"github.com/mrbenshef/SmartHomeAdapters/microservice/infoserver"
-	"github.com/mrbenshef/SmartHomeAdapters/microservice/switchserver"
 	"google.golang.org/grpc"
 )
 
@@ -44,55 +40,6 @@ func resetDatabase(t *testing.T) {
 	}
 }
 
-type mockSwitchClient struct{}
-
-func (c mockSwitchClient) GetSwitch(
-	ctx context.Context,
-	query *switchserver.SwitchQuery,
-	_ ...grpc.CallOption,
-) (*switchserver.Switch, error) {
-	if query.Id == "123abc" {
-		return &switchserver.Switch{
-			Id:   "123abc",
-			IsOn: true,
-		}, nil
-	}
-
-	return nil, status.New(codes.NotFound, "Switch does not exist").Err()
-}
-
-func (c mockSwitchClient) AddSwitch(
-	_ context.Context,
-	_ *switchserver.AddSwitchRequest,
-	_ ...grpc.CallOption,
-) (*switchserver.Switch, error) {
-	return nil, nil
-}
-
-func (c mockSwitchClient) RemoveSwitch(
-	_ context.Context,
-	_ *switchserver.RemoveSwitchRequest,
-	_ ...grpc.CallOption,
-) (*empty.Empty, error) {
-	return nil, nil
-}
-
-func (c mockSwitchClient) SetSwitch(
-	_ context.Context,
-	_ *switchserver.SetSwitchRequest,
-	_ ...grpc.CallOption,
-) (switchserver.SwitchServer_SetSwitchClient, error) {
-	return nil, nil
-}
-
-func (c mockSwitchClient) CalibrateSwitch(
-	_ context.Context,
-	_ *switchserver.SwitchCalibrationParameters,
-	_ ...grpc.CallOption,
-) (*empty.Empty, error) {
-	return nil, nil
-}
-
 func TestMain(m *testing.M) {
 	username := os.Getenv("DB_USERNAME")
 	if username != "temp" {
@@ -110,8 +57,7 @@ func TestMain(m *testing.M) {
 	s := grpc.NewServer()
 
 	infoserver.RegisterInfoServerServer(s, &server{
-		DB:           db,
-		SwitchClient: mockSwitchClient{},
+		DB: db,
 	})
 	go func() {
 		if err := s.Serve(lis); err != nil {
