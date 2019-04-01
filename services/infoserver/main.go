@@ -161,12 +161,21 @@ func (s *server) RegisterRobot(ctx context.Context, query *infoserver.RegisterRo
 func (s *server) ToggleRobot(ctx context.Context, request *infoserver.ToggleRequest) (*empty.Empty, error) {
 	log.Printf("toggling robot %s\n", request.Id)
 
+	robot, err := s.GetRobot(ctx, &infoserver.RobotQuery{
+		Id:     request.Id,
+		UserId: request.UserId,
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	// set toggle request
-	_, err := s.UsecaseClient.Toggle(ctx, &usecaseserver.ToggleRequest{
+	_, err = s.UsecaseClient.Toggle(ctx, &usecaseserver.ToggleRequest{
 		NewValue: request.Value,
 		Robot: &usecaseserver.Robot{
 			Id: request.Id,
 		},
+		Usecase: robot.RobotType,
 	})
 	if err != nil {
 		return nil, err
@@ -178,12 +187,21 @@ func (s *server) ToggleRobot(ctx context.Context, request *infoserver.ToggleRequ
 func (s *server) RangeRobot(ctx context.Context, request *infoserver.RangeRequest) (*empty.Empty, error) {
 	log.Printf("setting range robot %s\n", request.Id)
 
+	robot, err := s.GetRobot(ctx, &infoserver.RobotQuery{
+		Id:     request.Id,
+		UserId: request.UserId,
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	// send range request
-	_, err := s.UsecaseClient.Range(ctx, &usecaseserver.RangeRequest{
+	_, err = s.UsecaseClient.Range(ctx, &usecaseserver.RangeRequest{
 		NewValue: request.Value,
 		Robot: &usecaseserver.Robot{
 			Id: request.Id,
 		},
+		Usecase: robot.RobotType,
 	})
 	if err != nil {
 		return nil, err
