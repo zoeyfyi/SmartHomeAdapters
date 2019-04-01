@@ -6,7 +6,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import com.google.zxing.integration.android.IntentIntegrator
+import com.journeyapps.barcodescanner.CaptureManager
 import kotlinx.android.synthetic.main.fragment_qr.*
 import org.jetbrains.anko.clearTask
 import org.jetbrains.anko.intentFor
@@ -21,6 +21,8 @@ class QRFragment : Fragment() {
 
     private val parent by lazy { activity as RegisterRobotActivity }
 
+    private val captureManager by lazy { CaptureManager(parent, barcode_view) }
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View? {
@@ -32,16 +34,6 @@ class QRFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-
-        camera_button.setOnClickListener { _ ->
-            // Start a QR scan from the parent using ZXING
-            IntentIntegrator(activity)
-                .setDesiredBarcodeFormats(IntentIntegrator.QR_CODE)
-                .setPrompt("Scan robot QR code")
-                .initiateScan()
-
-        }
-
         manual_entry_button.setOnClickListener { _ ->
             parent.startFragment(ManualEntryFragment())
         }
@@ -50,5 +42,27 @@ class QRFragment : Fragment() {
             parent.startActivity(parent.intentFor<MainActivity>().clearTask())
         }
 
+        captureManager.initializeFromIntent(parent.intent, savedInstanceState)
+        captureManager.decode()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        captureManager.onResume()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        captureManager.onPause()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        captureManager.onDestroy()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        captureManager.onSaveInstanceState(outState)
     }
 }

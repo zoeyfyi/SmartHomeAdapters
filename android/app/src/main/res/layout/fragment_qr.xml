@@ -7,7 +7,6 @@
         android:layout_height="match_parent"
         tools:context=".QRFragment">
 
-
     <TextView
         android:id="@+id/textView"
         android:layout_width="wrap_content"
@@ -21,20 +20,18 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <Button
-        android:id="@+id/camera_button"
+    <com.journeyapps.barcodescanner.DecoratedBarcodeView
+        android:id="@+id/barcode_view"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginStart="32dp"
         android:layout_marginTop="16dp"
         android:layout_marginEnd="32dp"
         android:layout_marginBottom="32dp"
-        android:background="@drawable/start_camera_button_shape"
-        android:text="@string/camera_button_text"
         app:layout_constraintBottom_toTopOf="@+id/manual_entry_button"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView" />
+        app:layout_constraintTop_toBottomOf="@+id/textView"/>
 
     <Button
         android:id="@+id/manual_entry_button"
