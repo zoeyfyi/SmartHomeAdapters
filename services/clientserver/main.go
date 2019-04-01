@@ -477,7 +477,14 @@ func setCalibrationHandler(w http.ResponseWriter, r *http.Request, ps httprouter
 			// parse value as bool
 			value, err := strconv.ParseBool(param.Value)
 			if err != nil {
-				HTTPError(w, status.Newf(codes.InvalidArgument, "\"%s\" is not a bool, should be \"true\" or \"false\"", param.Type).Err())
+				HTTPError(
+					w,
+					status.Newf(
+						codes.InvalidArgument,
+						"\"%s\" is not a bool, should be \"true\" or \"false\"",
+						param.Type,
+					).Err(),
+				)
 				return
 			}
 
@@ -658,6 +665,7 @@ func auth(h httprouter.Handle) httprouter.Handle {
 		}
 
 		log.Printf("User ID is: %s", introspect.Subject)
+
 		h(w, r.WithContext(context.WithValue(context.TODO(), userIDKey, introspect.Subject)), ps)
 	}
 }
