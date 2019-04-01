@@ -672,7 +672,7 @@ func createRouter() *httprouter.Router {
 	// register routes
 	router.GET("/ping", pingHandler)
 	router.POST("/register", registerHandler)
-	router.GET("/user", userHandler)
+	router.GET("/user", auth(userHandler))
 	router.GET("/robots", auth(robotsHandler))
 	router.GET("/robot/:id", auth(robotHandler))
 	router.POST("/robot/:id", auth(registerRobotHandler))
