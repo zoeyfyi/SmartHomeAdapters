@@ -11,6 +11,7 @@ service InfoServer {
     rpc GetCalibration(RobotQuery) returns (CalibrationParameters) {}
     rpc SetUsecase(SetUsecaseRequest) returns (Robot) {}
     rpc RangeRobot(RangeRequest) returns (google.protobuf.Empty) {}
+    rpc RenameRobot(RenameRobotRequest) returns (google.protobuf.Empty) {}
 }
 
 message RobotsQuery {
@@ -87,4 +88,10 @@ message SetUsecaseRequest {
     string id = 1;
     string userId = 3;
     string usecase = 2;
+}
+
+message RenameRobotRequest {
+    string id = 1;
+    string userId = 2;
+    string newNickname = 3;
 }

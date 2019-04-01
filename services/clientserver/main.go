@@ -628,6 +628,37 @@ func rangeHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 	}
 }
 
+type renameRequest struct {
+	Nickname string `json:"nickname"`
+}
+
+func renameHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	id := ps.ByName("id")
+
+	log.Printf("renaming robot \"%s\"", id)
+
+	// decode json request
+	var request renameRequest
+	err := json.NewDecoder(r.Body).Decode(&request)
+	if err != nil {
+		log.Printf("Invalid rename request JSON: %v", err)
+		HTTPError(w, errInvalidJSON)
+		return
+	}
+
+	log.Printf("renaming robot \"%s\" to \"%s\"", id, request.Nickname)
+
+	_, err = infoserverClient.RenameRobot(context.Background(), &infoserver.RenameRobotRequest{
+		Id:          id,
+		UserId:      r.Context().Value(userIDKey).(string),
+		NewNickname: request.Nickname,
+	})
+	if err != nil {
+		HTTPError(w, err)
+		return
+	}
+}
+
 type hydraIntrospect struct {
 	Subject   string `json:"sub"`
 	Active    bool   `json:"active"`
@@ -699,6 +730,7 @@ func createRouter() *httprouter.Router {
 	router.GET("/robot/:id", auth(robotHandler))
 	router.PATCH("/robot/:id/toggle/:value", auth(toggleHandler))
 	router.PATCH("/robot/:id/range/:value", auth(rangeHandler))
+	router.PATCH("/robot/:id/nickname", auth(renameHandler))
 	router.GET("/usecases", auth(usecasesHandler))
 	router.GET("/usecase/:id", auth(usecaseHandler))
 	router.GET("/robot/:id/calibration", auth(getCalibrationHandler))

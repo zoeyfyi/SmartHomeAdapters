@@ -387,6 +387,27 @@ func (s *server) SetUsecase(ctx context.Context, request *infoserver.SetUsecaseR
 	})
 }
 
+func (s *server) RenameRobot(ctx context.Context, request *infoserver.RenameRobotRequest) (*empty.Empty, error) {
+	res, err := s.DB.Exec("UPDATE robots SET nickname = $1 WHERE serial = $2", request.NewNickname, request.Id)
+	if err != nil {
+		log.Printf("Failed to update database: %v", err)
+		return nil, status.Newf(codes.Internal, "Failed to update nickname of robot \"%s\"", request.Id).Err()
+	}
+
+	// check 1 row was updated
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		log.Printf("Failed to get the amount of rows affected: %v", err)
+		return nil, status.Newf(codes.Internal, "Internal error").Err()
+	}
+	if rowsAffected != 1 {
+		log.Printf("Expected to update exactly 1 row, rows updated: %d\n", rowsAffected)
+		return nil, status.Newf(codes.Internal, "Internal error").Err()
+	}
+
+	return &empty.Empty{}, nil
+}
+
 func main() {
 	db, err := microservice.ConnectToDB()
 	if err != nil {
