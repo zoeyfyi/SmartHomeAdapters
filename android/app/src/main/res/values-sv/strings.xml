@@ -20,4 +20,6 @@
     <string name="register_button_text">Registrera</string>
     <string name="welcome_text">Välkommen Hem, &lt;NAME&gt;</string>
     <string name="next_button_text">FORTSÄTT</string>
+    <string name="update_name_button_text">DÖP OM</string>
+    <string name="log_out_text">Logga ut</string>
 </resources>

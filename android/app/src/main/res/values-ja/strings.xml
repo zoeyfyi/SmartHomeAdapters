@@ -20,4 +20,6 @@
     <string name="register_button_text">登録</string>
     <string name="next_button_text">続ける</string>
     <string name="welcome_text">ようこそ，&lt;NAME&gt;</string>
+    <string name="update_name_button_text">リネーム</string>
+    <string name="log_out_text">ログアウト</string>
 </resources>

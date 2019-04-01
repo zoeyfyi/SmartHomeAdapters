@@ -20,4 +20,6 @@
     <string name="register_button_text">注册</string>
     <string name="next_button_text">继续</string>
     <string name="welcome_text">欢迎，&lt;NAME&gt;</string>
+    <string name="update_name_button_text">重命名</string>
+    <string name="log_out_text">登出</string>
 </resources>
