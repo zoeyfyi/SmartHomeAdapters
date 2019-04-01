@@ -3,18 +3,15 @@ package main
 import (
 	"context"
 	"database/sql"
-	"fmt"
+	"io"
 	"log"
 	"net"
-	"strconv"
 
 	"github.com/golang/protobuf/ptypes/empty"
-	"github.com/golang/protobuf/ptypes/wrappers"
 	_ "github.com/lib/pq"
 	"github.com/mrbenshef/SmartHomeAdapters/microservice"
 	"github.com/mrbenshef/SmartHomeAdapters/microservice/infoserver"
-	"github.com/mrbenshef/SmartHomeAdapters/microservice/switchserver"
-	"github.com/mrbenshef/SmartHomeAdapters/microservice/thermostatserver"
+	"github.com/mrbenshef/SmartHomeAdapters/microservice/usecaseserver"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -26,9 +23,8 @@ const (
 )
 
 type server struct {
-	DB               *sql.DB
-	SwitchClient     switchserver.SwitchServerClient
-	ThermostatClient thermostatserver.ThermostatServerClient
+	DB            *sql.DB
+	UsecaseClient usecaseserver.UsecaseServerClient
 }
 
 func (s *server) GetRobot(ctx context.Context, query *infoserver.RobotQuery) (*infoserver.Robot, error) {
@@ -55,53 +51,44 @@ func (s *server) GetRobot(ctx context.Context, query *infoserver.RobotQuery) (*i
 		return nil, err
 	}
 
-	// get the status of the robot
-	switch robotType {
-	case robotTypeSwitch:
-		switchRobot, err := s.SwitchClient.GetSwitch(context.Background(), &switchserver.SwitchQuery{
-			Id: serial,
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		// return robot with status infomation
-		return &infoserver.Robot{
-			Id:            serial,
-			Nickname:      nickname,
-			RobotType:     robotType,
-			InterfaceType: "toggle",
-			RobotStatus: &infoserver.Robot_ToggleStatus{
-				ToggleStatus: &infoserver.ToggleStatus{
-					Value: switchRobot.IsOn,
-				},
-			},
-		}, nil
-	case robotTypeThermostat:
-		thermostat, err := s.ThermostatClient.GetThermostat(context.Background(), &thermostatserver.ThermostatQuery{
-			Id: serial,
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		// return robot with status infomation
-		return &infoserver.Robot{
-			Id:            serial,
-			Nickname:      nickname,
-			RobotType:     robotType,
-			InterfaceType: "range",
-			RobotStatus: &infoserver.Robot_RangeStatus{
-				RangeStatus: &infoserver.RangeStatus{
-					Min:     thermostat.MinTempreture,
-					Max:     thermostat.MaxTempreture,
-					Current: thermostat.Tempreture,
-				},
-			},
-		}, nil
-	default:
-		return nil, status.Newf(codes.InvalidArgument, "Invalid robot type \"%s\"", robotType).Err()
+	robot := &infoserver.Robot{
+		Id:        serial,
+		Nickname:  nickname,
+		RobotType: robotType,
 	}
+
+	// get the status of the robot
+	status, err := s.UsecaseClient.GetStatus(ctx, &usecaseserver.GetStatusRequest{
+		Robot: &usecaseserver.Robot{
+			Id: serial,
+		},
+		Usecase: robotType,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// set the robot interface type and status
+	switch status := status.Status.(type) {
+	case *usecaseserver.Status_ToggleStatus:
+		robot.InterfaceType = "toggle"
+		robot.RobotStatus = &infoserver.Robot_ToggleStatus{
+			ToggleStatus: &infoserver.ToggleStatus{
+				Value: status.ToggleStatus.Value,
+			},
+		}
+	case *usecaseserver.Status_RangeStatus:
+		robot.InterfaceType = "range"
+		robot.RobotStatus = &infoserver.Robot_RangeStatus{
+			RangeStatus: &infoserver.RangeStatus{
+				Min:     status.RangeStatus.Min,
+				Max:     status.RangeStatus.Max,
+				Current: status.RangeStatus.Value,
+			},
+		}
+	}
+
+	return robot, nil
 }
 
 func (s *server) GetRobots(query *infoserver.RobotsQuery, stream infoserver.InfoServer_GetRobotsServer) error {
@@ -174,46 +161,15 @@ func (s *server) RegisterRobot(ctx context.Context, query *infoserver.RegisterRo
 func (s *server) ToggleRobot(ctx context.Context, request *infoserver.ToggleRequest) (*empty.Empty, error) {
 	log.Printf("toggling robot %s\n", request.Id)
 
-	// get robot type
-	robot, err := s.GetRobot(ctx, &infoserver.RobotQuery{
-		Id:     request.Id,
-		UserId: request.UserId,
+	// set toggle request
+	_, err := s.UsecaseClient.Toggle(ctx, &usecaseserver.ToggleRequest{
+		NewValue: request.Value,
+		Robot: &usecaseserver.Robot{
+			Id: request.Id,
+		},
 	})
 	if err != nil {
 		return nil, err
-	}
-
-	// forward request to relevent service
-	switch robot.RobotType {
-	case robotTypeSwitch:
-		stream, err := s.SwitchClient.SetSwitch(context.Background(), &switchserver.SetSwitchRequest{
-			Id:    request.Id,
-			On:    request.Value,
-			Force: request.Force,
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		for {
-			status, err := stream.Recv()
-			if err != nil {
-				return nil, err
-			}
-
-			if status.Status == switchserver.SetSwitchStatus_DONE {
-				break
-			}
-		}
-
-	default:
-		log.Printf("robot type \"%s\" is not toggelable", robot.RobotType)
-		return nil, status.Newf(
-			codes.InvalidArgument,
-			"Robot \"%s\" of type \"%s\" cannot be toggled",
-			request.Id,
-			robot.RobotType,
-		).Err()
 	}
 
 	return &empty.Empty{}, nil
@@ -222,46 +178,15 @@ func (s *server) ToggleRobot(ctx context.Context, request *infoserver.ToggleRequ
 func (s *server) RangeRobot(ctx context.Context, request *infoserver.RangeRequest) (*empty.Empty, error) {
 	log.Printf("setting range robot %s\n", request.Id)
 
-	// get robot type
-	robot, err := s.GetRobot(ctx, &infoserver.RobotQuery{
-		Id:     request.Id,
-		UserId: request.UserId,
+	// send range request
+	_, err := s.UsecaseClient.Range(ctx, &usecaseserver.RangeRequest{
+		NewValue: request.Value,
+		Robot: &usecaseserver.Robot{
+			Id: request.Id,
+		},
 	})
 	if err != nil {
 		return nil, err
-	}
-
-	// forward request to relevent service
-	switch robot.RobotType {
-	case robotTypeThermostat:
-		stream, err := s.ThermostatClient.SetThermostat(context.Background(), &thermostatserver.SetThermostatRequest{
-			Id:         request.Id,
-			Tempreture: request.Value,
-			Unit:       "celsius",
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		for {
-			status, err := stream.Recv()
-			if err != nil {
-				return nil, err
-			}
-
-			if status.Status == thermostatserver.SetThermostatStatus_DONE {
-				break
-			}
-		}
-
-	default:
-		log.Printf("robot type \"%s\" is not a range robot", robot.RobotType)
-		return nil, status.Newf(
-			codes.InvalidArgument,
-			"Robot \"%s\" of type \"%s\" is not a range robot",
-			request.Id,
-			robot.RobotType,
-		).Err()
 	}
 
 	return &empty.Empty{}, nil
@@ -279,55 +204,30 @@ func (s *server) CalibrateRobot(
 		return nil, err
 	}
 
-	switch robot.RobotType {
-	case robotTypeSwitch:
-		parameters := &switchserver.SwitchCalibrationParameters{
-			Id: request.Id,
+	for _, param := range request.Parameters {
+		// basic parameter infomation
+		request := &usecaseserver.SetCalibrationParameterRequest{
+			Robot: &usecaseserver.Robot{
+				Id: robot.Id,
+			},
+			Id:      param.Id,
+			Usecase: robot.RobotType,
 		}
 
-		// parse parameters
-		for _, param := range request.Parameters {
-			switch param.Name {
-			case "OnAngle":
-				angle, err := strconv.ParseInt(param.Value, 10, 64)
-				if err != nil {
-					log.Printf("Failed to parse OnAngle parameter value: %v", err)
-					return nil, status.Errorf(codes.InvalidArgument, "Expected integer for field OnAngle")
-				}
-				parameters.OnAngle = &wrappers.Int64Value{Value: angle}
-			case "OffAngle":
-				angle, err := strconv.ParseInt(param.Value, 10, 64)
-				if err != nil {
-					log.Printf("Failed to parse OffAngle parameter value: %v", err)
-					return nil, status.Errorf(codes.InvalidArgument, "Expected integer for field OffAngle")
-				}
-				parameters.OffAngle = &wrappers.Int64Value{Value: angle}
-			case "RestAngle":
-				angle, err := strconv.ParseInt(param.Value, 10, 64)
-				if err != nil {
-					log.Printf("Failed to parse RestAngle parameter value: %v", err)
-					return nil, status.Errorf(codes.InvalidArgument, "Expected integer for field RestAngle")
-				}
-				parameters.RestAngle = &wrappers.Int64Value{Value: angle}
-			case "IsCalibrated":
-				isCalibrated, err := strconv.ParseBool(param.Value)
-				if err != nil {
-					log.Printf("Failed to parse IsCalibrated parameter value: %v", err)
-					return nil, status.Errorf(codes.InvalidArgument, "Expected boolean for field IsCalibrated")
-				}
-				parameters.IsCalibrated = &wrappers.BoolValue{Value: isCalibrated}
-			default:
-				return nil, status.Errorf(codes.InvalidArgument, "\"%s\" is not a parameter", param.Name)
+		// set the value of the parameter
+		switch value := param.Value.(type) {
+		case *infoserver.CalibrationParameter_BoolValue:
+			request.Details = &usecaseserver.SetCalibrationParameterRequest_BoolValue{
+				BoolValue: value.BoolValue,
+			}
+		case *infoserver.CalibrationParameter_IntValue:
+			request.Details = &usecaseserver.SetCalibrationParameterRequest_IntValue{
+				IntValue: value.IntValue,
 			}
 		}
 
-		// send calibration request
-		_, err := s.SwitchClient.CalibrateSwitch(ctx, parameters)
-		if err != nil {
-			return nil, err
-		}
-	default:
-		return nil, status.Errorf(codes.FailedPrecondition, "Robot type \"%s\" is not recognized", robot.RobotType)
+		// submit request
+		s.UsecaseClient.SetCalibrationParameter(ctx, request)
 	}
 
 	return s.GetRobot(ctx, &infoserver.RobotQuery{
@@ -348,35 +248,44 @@ func (s *server) GetCalibration(
 		return nil, err
 	}
 
+	stream, err := s.UsecaseClient.GetCalibrationParameters(ctx, &usecaseserver.GetCalibrationParametersRequest{
+		Robot: &usecaseserver.Robot{
+			Id: robot.Id,
+		},
+		Usecase: robot.RobotType,
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	parameters := &infoserver.CalibrationParameters{}
 
-	switch robot.RobotType {
-	case robotTypeSwitch:
-		switchRobot, err := s.SwitchClient.GetSwitch(context.Background(), &switchserver.SwitchQuery{
-			Id: robot.Id,
-		})
+	for {
+		param, err := stream.Recv()
+		if err == io.EOF {
+			break
+		}
 		if err != nil {
 			return nil, err
 		}
 
-		parameters.Parameters = append(parameters.Parameters, &infoserver.CalibrationParameter{
-			Name:  "OnAngle",
-			Value: fmt.Sprintf("%d", switchRobot.OnAngle),
-		})
-		parameters.Parameters = append(parameters.Parameters, &infoserver.CalibrationParameter{
-			Name:  "OffAngle",
-			Value: fmt.Sprintf("%d", switchRobot.OffAngle),
-		})
-		parameters.Parameters = append(parameters.Parameters, &infoserver.CalibrationParameter{
-			Name:  "RestAngle",
-			Value: fmt.Sprintf("%d", switchRobot.RestAngle),
-		})
-		parameters.Parameters = append(parameters.Parameters, &infoserver.CalibrationParameter{
-			Name:  "IsCalibrated",
-			Value: fmt.Sprintf("%t", switchRobot.IsCalibrated),
-		})
-	default:
-		return nil, status.Errorf(codes.FailedPrecondition, "Robot type \"%s\" is not recognized", robot.RobotType)
+		infoParam := &infoserver.CalibrationParameter{
+			Id:   param.Id,
+			Name: param.Name,
+		}
+
+		switch details := param.Details.(type) {
+		case *usecaseserver.CalibrationParameter_BoolParameter:
+			infoParam.Value = &infoserver.CalibrationParameter_BoolValue{
+				BoolValue: details.BoolParameter.Current,
+			}
+		case *usecaseserver.CalibrationParameter_IntParameter:
+			infoParam.Value = &infoserver.CalibrationParameter_IntValue{
+				IntValue: details.IntParameter.Current,
+			}
+		}
+
+		parameters.Parameters = append(parameters.Parameters, infoParam)
 	}
 
 	return parameters, nil
@@ -421,28 +330,19 @@ func main() {
 
 	log.Printf("Connected to database: %+v\n", db.Stats())
 
-	// connect to switchserver
-	switchserverConn, err := grpc.Dial("switchserver:80", grpc.WithInsecure())
+	// connect to usecaseserver
+	usecaseserverConn, err := grpc.Dial("usecaseserver:80", grpc.WithInsecure())
 	if err != nil {
 		panic(err)
 	}
-	defer switchserverConn.Close()
-	switchClient := switchserver.NewSwitchServerClient(switchserverConn)
-
-	// connect to thermostatserver
-	thermostatserverConn, err := grpc.Dial("thermostatserver:80", grpc.WithInsecure())
-	if err != nil {
-		panic(err)
-	}
-	defer thermostatserverConn.Close()
-	thermostatClient := thermostatserver.NewThermostatServerClient(thermostatserverConn)
+	defer usecaseserverConn.Close()
+	usecaseClient := usecaseserver.NewUsecaseServerClient(usecaseserverConn)
 
 	// start grpc server
 	grpcServer := grpc.NewServer()
 	infoServer := &server{
-		DB:               db,
-		SwitchClient:     switchClient,
-		ThermostatClient: thermostatClient,
+		DB:            db,
+		UsecaseClient: usecaseClient,
 	}
 	infoserver.RegisterInfoServerServer(grpcServer, infoServer)
 	lis, err := net.Listen("tcp", "infoserver:80")

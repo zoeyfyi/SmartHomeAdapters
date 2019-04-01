@@ -11,7 +11,7 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/mrbenshef/SmartHomeAdapters/microservice"
 	"github.com/mrbenshef/SmartHomeAdapters/microservice/robotserver"
-	usecase_service "github.com/mrbenshef/SmartHomeAdapters/microservice/usecase-service"
+	usercaseserver "github.com/mrbenshef/SmartHomeAdapters/microservice/usecaseserver"
 	"google.golang.org/grpc"
 
 	"google.golang.org/grpc/codes"
@@ -117,7 +117,7 @@ func Serve(url string, usecases map[string]Usecase) error {
 	// start grpc server
 	grpcServer := grpc.NewServer()
 	usecaseServer := &UsecaseServer{db, usecases, robotClient}
-	usecase_service.RegisterUsecaseServerServer(grpcServer, usecaseServer)
+	usercaseserver.RegisterUsecaseServerServer(grpcServer, usecaseServer)
 
 	lis, err := net.Listen("tcp", url)
 	if err != nil {
@@ -133,7 +133,7 @@ func Serve(url string, usecases map[string]Usecase) error {
 }
 
 // SetUsecase is called when a robot has been set to this usecase
-func (s *UsecaseServer) SetUsecase(ctx context.Context, request *usecase_service.SetUsecaseRequest) (*empty.Empty, error) {
+func (s *UsecaseServer) SetUsecase(ctx context.Context, request *usercaseserver.SetUsecaseRequest) (*empty.Empty, error) {
 	// remove old details
 	// not fatal if we can't remove them
 	_, err := s.db.Exec("DELETE FROM boolparameter WHERE robotId = $1", request.Robot.Id)
@@ -209,7 +209,7 @@ func (s *UsecaseServer) SetUsecase(ctx context.Context, request *usecase_service
 	return &empty.Empty{}, nil
 }
 
-func (s *UsecaseServer) GetStatus(ctx context.Context, request *usecase_service.GetStatusRequest) (*usecase_service.Status, error) {
+func (s *UsecaseServer) GetStatus(ctx context.Context, request *usercaseserver.GetStatusRequest) (*usercaseserver.Status, error) {
 	usecase, ok := s.usecases[request.Usecase]
 	if !ok {
 		return nil, fmt.Errorf("usecase \"%s\" is unrecognized", request.Usecase)
@@ -228,8 +228,12 @@ func (s *UsecaseServer) GetStatus(ctx context.Context, request *usecase_service.
 			return nil, errInternal
 		}
 
-		return &usecase_service.Status{
-			Value: fmt.Sprintf("%t", value),
+		return &usercaseserver.Status{
+			Status: &usercaseserver.Status_ToggleStatus{
+				ToggleStatus: &usercaseserver.ToggleStatus{
+					Value: value,
+				},
+			},
 		}, nil
 
 	case RangeUsecaseType:
@@ -244,8 +248,12 @@ func (s *UsecaseServer) GetStatus(ctx context.Context, request *usecase_service.
 			return nil, errInternal
 		}
 
-		return &usecase_service.Status{
-			Value: fmt.Sprintf("%d", value),
+		return &usercaseserver.Status{
+			Status: &usercaseserver.Status_RangeStatus{
+				RangeStatus: &usercaseserver.RangeStatus{
+					Value: int64(value),
+				},
+			},
 		}, nil
 	}
 
@@ -253,7 +261,7 @@ func (s *UsecaseServer) GetStatus(ctx context.Context, request *usecase_service.
 	return nil, nil
 }
 
-func (s *UsecaseServer) Toggle(ctx context.Context, action *usecase_service.ToggleRequest) (*empty.Empty, error) {
+func (s *UsecaseServer) Toggle(ctx context.Context, action *usercaseserver.ToggleRequest) (*empty.Empty, error) {
 	usecase, ok := s.usecases[action.Usecase]
 	if !ok {
 		return nil, fmt.Errorf("usecase \"%s\" is unrecognized", action.Usecase)
@@ -287,7 +295,7 @@ func (s *UsecaseServer) Toggle(ctx context.Context, action *usecase_service.Togg
 	return &empty.Empty{}, nil
 }
 
-func (s *UsecaseServer) Range(ctx context.Context, action *usecase_service.RangeRequest) (*empty.Empty, error) {
+func (s *UsecaseServer) Range(ctx context.Context, action *usercaseserver.RangeRequest) (*empty.Empty, error) {
 	usecase, ok := s.usecases[action.Usecase]
 	if !ok {
 		return nil, fmt.Errorf("usecase \"%s\" is unrecognized", action.Usecase)
@@ -362,7 +370,7 @@ func (s *UsecaseServer) getCalibrationParameters(usecase Usecase, robotID string
 	return params, nil
 }
 
-func (s *UsecaseServer) GetCalibrationParameters(request *usecase_service.GetCalibrationParametersRequest, stream usecase_service.UsecaseServer_GetCalibrationParametersServer) error {
+func (s *UsecaseServer) GetCalibrationParameters(request *usercaseserver.GetCalibrationParametersRequest, stream usercaseserver.UsecaseServer_GetCalibrationParametersServer) error {
 	usecase, ok := s.usecases[request.Usecase]
 	if !ok {
 		return fmt.Errorf("usecase \"%s\" is unrecognized", request.Usecase)
@@ -375,22 +383,22 @@ func (s *UsecaseServer) GetCalibrationParameters(request *usecase_service.GetCal
 	for _, p := range params {
 		switch p := p.(type) {
 		case BoolParameter:
-			stream.Send(&usecase_service.CalibrationParameter{
+			stream.Send(&usercaseserver.CalibrationParameter{
 				Id:   p.ID,
 				Name: p.Name,
-				Details: &usecase_service.CalibrationParameter_BoolParameter{
-					BoolParameter: &usecase_service.BoolParameter{
+				Details: &usercaseserver.CalibrationParameter_BoolParameter{
+					BoolParameter: &usercaseserver.BoolParameter{
 						Default: p.Default,
 						Current: p.Current,
 					},
 				},
 			})
 		case IntParameter:
-			stream.Send(&usecase_service.CalibrationParameter{
+			stream.Send(&usercaseserver.CalibrationParameter{
 				Id:   p.ID,
 				Name: p.Name,
-				Details: &usecase_service.CalibrationParameter_IntParameter{
-					IntParameter: &usecase_service.IntParameter{
+				Details: &usercaseserver.CalibrationParameter_IntParameter{
+					IntParameter: &usercaseserver.IntParameter{
 						Min:     p.Min,
 						Max:     p.Max,
 						Default: p.Default,
@@ -404,7 +412,7 @@ func (s *UsecaseServer) GetCalibrationParameters(request *usecase_service.GetCal
 	return nil
 }
 
-func (s *UsecaseServer) SetCalibrationParameter(ctx context.Context, request *usecase_service.SetCalibrationParameterRequest) (*empty.Empty, error) {
+func (s *UsecaseServer) SetCalibrationParameter(ctx context.Context, request *usercaseserver.SetCalibrationParameterRequest) (*empty.Empty, error) {
 	usecase, ok := s.usecases[request.Usecase]
 	if !ok {
 		return nil, fmt.Errorf("usecase \"%s\" is unrecognized", request.Usecase)

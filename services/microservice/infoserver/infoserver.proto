@@ -71,8 +71,12 @@ message CalibrationRequest {
 }
 
 message CalibrationParameter {
-    string name = 1;
-    string value = 2;
+    string id = 1;
+    string name = 4;
+    oneof value {
+        bool boolValue = 2;
+        int64 intValue = 3;
+    }
 }
 
 message CalibrationParameters {
