@@ -69,6 +69,12 @@ interface RestApiService {
             @Body params: List<ConfigResult>
     ): Call<ResponseBody>
 
+    @GET("robot/{robotId}/calibration")
+    fun getConfigParameters(
+            @Path("robotId") robotId: String,
+            @Header("token") token: String
+    ): Call<List<ConfigParameter>>
+
     @PATCH("robot/{id}/range/{current}")
     fun robotRange(
             @Path("id") id: String,
@@ -77,20 +83,20 @@ interface RestApiService {
             @Body map: Map<String, Boolean>
     ): Call<ResponseBody>
 
-    @DELETE("/robot/{id]/delete")
+    @DELETE("robot/{id}")
     fun deleteRobot(
             @Path("id") id: String,
             @Header("token") token: String
     ): Call<ResponseBody>
 
-    @PATCH("/robot/{id}/rename")
+    @PATCH("robot/{id}/nickname")
     fun renameRobot(
             @Path("id") id:  String,
             @Header("token") token: String,
             @Body nameMap: Map<String, String>
     ): Call<ResponseBody>
 
-    @PATCH("/robot/{id}/reconfigure")
+    @PATCH("robot/{id}/reconfigure")
     fun patchUseCase(
             @Path("id") id:  String,
             @Body useCaseMap: Map<String, String>

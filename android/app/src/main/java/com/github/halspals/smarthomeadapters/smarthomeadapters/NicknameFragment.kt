@@ -80,7 +80,7 @@ class NicknameFragment : Fragment() {
                 update_name_button.isEnabled = false
 
                 parent.restApiService
-                        .renameRobot(parent.robotId, accessToken, mapOf("name" to newName))
+                        .renameRobot(parent.robotId, accessToken, mapOf("nickname" to newName))
                         .enqueue(object : Callback<ResponseBody> {
 
                     override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
@@ -94,7 +94,7 @@ class NicknameFragment : Fragment() {
                             parent.finish()
                         } else {
                             val error = RestApiService.extractErrorFromResponse(response)
-                            Log.e(fTag, "[setConfigParameters] got unsuccessful "
+                            Log.e(fTag, "[renameRobot] got unsuccessful "
                                     + "response, error: $error")
                             if (error != null) {
                                 parent.snackbar_layout.snackbar(error)
