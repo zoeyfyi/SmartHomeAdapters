@@ -125,6 +125,7 @@ func (s *server) GetRobots(query *infoserver.RobotsQuery, stream infoserver.Info
 		if err != nil {
 			return err
 		}
+		log.Printf("robot status: %v", status)
 
 		// set the robot interface type and status
 		switch status := status.Status.(type) {
@@ -162,9 +163,9 @@ func (s *server) RegisterRobot(ctx context.Context, query *infoserver.RegisterRo
 	// get robot
 	var (
 		serial           string
-		nickname         string
-		robotType        string
-		registeredUserID string
+		nickname         *string
+		robotType        *string
+		registeredUserID *string
 	)
 	err := row.Scan(&serial, &nickname, &robotType, &registeredUserID)
 	if err != nil {
@@ -176,8 +177,8 @@ func (s *server) RegisterRobot(ctx context.Context, query *infoserver.RegisterRo
 	}
 
 	// check robot is not registerd
-	if registeredUserID != "" {
-		log.Printf("robot already registered to: %s", registeredUserID)
+	if registeredUserID != nil {
+		log.Printf("robot already registered to: %s", *registeredUserID)
 		return nil, status.Newf(codes.FailedPrecondition, "robot \"%s\" has already been registered", query.Id).Err()
 	}
 
