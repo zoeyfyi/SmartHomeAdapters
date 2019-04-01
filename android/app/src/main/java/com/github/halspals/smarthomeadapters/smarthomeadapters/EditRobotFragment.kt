@@ -122,7 +122,7 @@ class EditRobotFragment : Fragment() {
                                 if (response.isSuccessful) {
                                     Log.v(fTag, "[deleteRobot] Success")
                                     parent.toast("Deleted robot")
-                                    parent.finish()
+                                    parent.startFragment(RobotsFragment())
                                 } else {
                                     val error = RestApiService.extractErrorFromResponse(response)
                                     Log.e(fTag, "[deleteRobot] got unsuccessful "
