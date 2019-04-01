@@ -87,15 +87,15 @@ jobs:
           name: Test clientserver
           command: go test
           working_directory: services/clientserver
-      - run:
-          name: Test infoserver
-          environment:
-            DB_USERNAME: temp 
-            DB_DATABASE: infodb
-            DB_PASSWORD: password 
-            DB_URL: infodb
-          command:  go test
-          working_directory: services/infoserver
+      # - run:
+      #     name: Test infoserver
+      #     environment:
+      #       DB_USERNAME: temp 
+      #       DB_DATABASE: infodb
+      #       DB_PASSWORD: password 
+      #       DB_URL: infodb
+      #     command:  go test
+      #     working_directory: services/infoserver
       - run:
           name: Test robotserver
           command: go test
