@@ -456,5 +456,6 @@ func (s *UsecaseServer) SetCalibrationParameter(ctx context.Context, request *us
 func main() {
 	Serve("usecaseserver:80", map[string]Usecase{
 		"switch": &Switch{},
+		"boltlock": &Boltlock{},
 	})
 }
