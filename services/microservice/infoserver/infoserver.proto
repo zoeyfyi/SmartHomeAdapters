@@ -12,6 +12,7 @@ service InfoServer {
     rpc SetUsecase(SetUsecaseRequest) returns (Robot) {}
     rpc RangeRobot(RangeRequest) returns (google.protobuf.Empty) {}
     rpc RenameRobot(RenameRobotRequest) returns (google.protobuf.Empty) {}
+    rpc GetUsecases(google.protobuf.Empty) returns (stream Usecase) {} 
 }
 
 message RobotsQuery {
@@ -94,4 +95,10 @@ message RenameRobotRequest {
     string id = 1;
     string userId = 2;
     string newNickname = 3;
+}
+
+message Usecase {
+    string id = 1;
+    string name = 2;
+    string description = 3;
 }

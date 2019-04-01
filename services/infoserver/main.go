@@ -408,6 +408,34 @@ func (s *server) RenameRobot(ctx context.Context, request *infoserver.RenameRobo
 	return &empty.Empty{}, nil
 }
 
+func (s *server) GetUsecases(_ *empty.Empty, stream infoserver.InfoServer_GetUsecasesServer) error {
+	inStream, err := s.UsecaseClient.GetUsecases(context.Background(), &empty.Empty{})
+	if err != nil {
+		return err
+	}
+
+	for {
+		usecase, err := inStream.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return err
+		}
+
+		err = stream.Send(&infoserver.Usecase{
+			Id:          usecase.Id,
+			Name:        usecase.Name,
+			Description: usecase.Description,
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func main() {
 	db, err := microservice.ConnectToDB()
 	if err != nil {
