@@ -97,10 +97,9 @@ func (s *server) GetRobots(query *infoserver.RobotsQuery, stream infoserver.Info
 	}
 
 	var (
-		serial        string
-		nickname      string
-		robotType     string
-		interfaceType string
+		serial    string
+		nickname  string
+		robotType string
 	)
 
 	for rows.Next() {
