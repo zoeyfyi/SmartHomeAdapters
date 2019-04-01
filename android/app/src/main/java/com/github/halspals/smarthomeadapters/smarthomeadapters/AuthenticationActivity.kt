@@ -105,7 +105,7 @@ class AuthenticationActivity : AppCompatActivity() {
             writeAuthState(this, authState)
             if (tokenResponse != null) {
                 Log.d(tag, "[exchangeCodeForTokens] Exchange successful, moving to main")
-                startActivity<MainActivity>()
+                startActivity(intentFor<MainActivity>().newTask())
             } else {
                 Log.e(tag, "[exchangeCodeForTokens] Failed, exception $ex")
                 // TODO make the user try again etc
