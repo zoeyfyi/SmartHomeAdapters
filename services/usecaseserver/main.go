@@ -389,7 +389,6 @@ func (s *UsecaseServer) getCalibrationParameters(usecase Usecase, robotID string
 			log.Printf("Error: parameter is not IntParameter or BoolParameter")
 			return nil, nil
 		}
-		}
 	}
 
 	return params, nil
