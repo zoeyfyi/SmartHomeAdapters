@@ -95,7 +95,7 @@ class RobotsFragment : Fragment() {
 
                     override fun onFailure(call: Call<List<Robot>>, t: Throwable) {
                         val errorMsg = t.message
-                        Log.e(fTag, "getRobots FAILED, got error: $errorMsg")
+                        Log.e(fTag, "[getRobots] FAILED, got error: $errorMsg")
                         if (errorMsg != null) {
                             parent.snackbar_layout.snackbar(errorMsg)
                         }
@@ -109,10 +109,11 @@ class RobotsFragment : Fragment() {
 
                         val robots = response.body()
                         val robotsToList = if (response.isSuccessful && robots != null) {
+                            Log.v(fTag, "[getRobots] got robots: $robots")
                             robots
                         } else {
                             val error = RestApiService.extractErrorFromResponse(response)
-                            Log.e(fTag, "getRobots got unsuccessful response, error: $error")
+                            Log.e(fTag, "[getRobots] got unsuccessful response, error: $error")
                             if (error != null) {
                                 parent.snackbar_layout.snackbar(error)
                             }
