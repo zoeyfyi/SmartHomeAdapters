@@ -17,11 +17,6 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-const (
-	robotTypeSwitch     = "switch"
-	robotTypeThermostat = "thermostat"
-)
-
 type server struct {
 	DB            *sql.DB
 	UsecaseClient usecaseserver.UsecaseServerClient
@@ -115,7 +110,8 @@ func (s *server) GetRobots(query *infoserver.RobotsQuery, stream infoserver.Info
 			return err
 		}
 
-		if robotType == robotTypeSwitch {
+		// TODO: get from somewhere else
+		if robotType == "switch" {
 			interfaceType = "toggle"
 		} else {
 			interfaceType = "range"
@@ -274,7 +270,10 @@ func (s *server) CalibrateRobot(
 		}
 
 		// submit request
-		s.UsecaseClient.SetCalibrationParameter(ctx, request)
+		_, err := s.UsecaseClient.SetCalibrationParameter(ctx, request)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return s.GetRobot(ctx, &infoserver.RobotQuery{
