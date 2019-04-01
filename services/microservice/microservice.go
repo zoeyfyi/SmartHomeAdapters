@@ -2,10 +2,8 @@ package microservice
 
 //go:generate protoc --go_out=plugins=grpc:. ./infoserver/infoserver.proto
 //go:generate protoc --go_out=plugins=grpc:. ./robotserver/robotserver.proto
-//go:generate protoc --go_out=plugins=grpc:. ./switchserver/switchserver.proto
-//go:generate protoc --go_out=plugins=grpc:. ./thermostatserver/thermostatserver.proto
 //go:generate protoc --go_out=plugins=grpc:. ./userserver/userserver.proto
-//go:generate protoc --go_out=plugins=grpc:. ./usecase-service/usecase-service.proto
+//go:generate protoc --go_out=plugins=grpc:. ./usecaseserver/usecaseserver.proto
 
 import (
 	"database/sql"
