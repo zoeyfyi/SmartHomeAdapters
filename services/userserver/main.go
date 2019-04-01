@@ -136,7 +136,7 @@ func (s *server) GetUserByID(ctx context.Context, userID *userserver.UserId) (*u
 	var (
 		name string
 	)
-	row := s.DB.QueryRow("SELECT name FROM users WHERE od = $1", userID.Id)
+	row := s.DB.QueryRow("SELECT username FROM users WHERE id = $1", userID.Id)
 	err := row.Scan(&name)
 	if err != nil {
 		if err == sql.ErrNoRows {
