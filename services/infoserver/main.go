@@ -141,9 +141,9 @@ func (s *server) RegisterRobot(ctx context.Context, query *infoserver.RegisterRo
 	// get robot
 	var (
 		serial           string
-		nickname         *string
-		robotType        *string
-		registeredUserID *string
+		nickname         string
+		robotType        string
+		registeredUserID string
 	)
 	err := row.Scan(&serial, &nickname, &robotType, &registeredUserID)
 	if err != nil {
@@ -155,8 +155,20 @@ func (s *server) RegisterRobot(ctx context.Context, query *infoserver.RegisterRo
 	}
 
 	// check robot is not registerd
-	if registeredUserID != nil {
-		return nil, status.New(codes.FailedPrecondition, "robot \"%s\" has already been registered").Err()
+	if registeredUserID != "" {
+		log.Printf("robot already registered to: %s", registeredUserID)
+		return nil, status.Newf(codes.FailedPrecondition, "robot \"%s\" has already been registered", query.Id).Err()
+	}
+
+	// set the usecase
+	_, err = s.UsecaseClient.SetUsecase(ctx, &usecaseserver.SetUsecaseRequest{
+		Robot: &usecaseserver.Robot{
+			Id: query.Id,
+		},
+		Usecase: query.RobotType,
+	})
+	if err != nil {
+		return nil, err
 	}
 
 	// update robot
