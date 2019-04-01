@@ -1,11 +1,13 @@
 package com.github.halspals.smarthomeadapters.smarthomeadapters
 
+import android.content.Context
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import com.github.halspals.smarthomeadapters.smarthomeadapters.model.ConfigParameter
 import kotlinx.android.synthetic.main.activity_register_robot.*
 import kotlinx.android.synthetic.main.fragment_configure_robot.*
 import net.openid.appauth.AuthorizationException
@@ -38,10 +40,68 @@ class ConfigureRobotFragment : Fragment() {
 
         finish_button.setOnClickListener { _ -> setConfigParametersAndFinish() }
 
-        // Set up the grid's adapter to display the configuration parameters requested
-        parameter_grid.adapter = ParameterAdapter(
-            view.context,
-            parent.chosenUseCase.parameters)
+        getConfigParameters(view.context)
+    }
+
+
+    /**
+     * Gets the configuration parameters for the robot and updates the [parameter_grid].
+     *
+     * @param context the [Context] to pass to the [parameter_grid]'s adapter
+     */
+    private fun getConfigParameters(context: Context) {
+
+        progress_bar.visibility = View.VISIBLE
+        finish_button.isEnabled = false
+
+        parent.authState.performActionWithFreshTokens(parent.authService)
+        { accessToken, _, ex ->
+            if (accessToken == null) {
+                Log.e(fTag, "[getConfigParameters] got null access token, ex: $ex")
+            } else {
+                parent.restApiService
+                        .getConfigParameters(parent.robotId, accessToken)
+                        .enqueue(object: Callback<List<ConfigParameter>> {
+
+                            override fun onResponse(
+                                    call: Call<List<ConfigParameter>>,
+                                    response: Response<List<ConfigParameter>>) {
+
+                                progress_bar.visibility = View.GONE
+                                finish_button.isEnabled = true
+
+                                val params = response.body()
+
+                                if (response.isSuccessful && params != null) {
+                                    Log.v(fTag, "[getConfigParameters] Got params $params")
+                                    // Set up the grid's adapter to display the configuration
+                                    // parameters requested
+                                    parameter_grid.adapter = ParameterAdapter(context, params)
+                                } else {
+                                    val error = RestApiService.extractErrorFromResponse(response)
+                                    Log.e(fTag, "[setConfigParameters] got unsuccessful "
+                                            + "response or null body; body $params, error: $error")
+                                    if (error != null) {
+                                        parent.snackbar_layout.snackbar(error)
+                                    }
+                                }
+
+                            }
+
+                            override fun onFailure(call: Call<List<ConfigParameter>>, t: Throwable) {
+
+                                progress_bar.visibility = View.GONE
+                                finish_button.isEnabled = true
+
+                                val error = t.message
+                                Log.e(fTag, "[getConfigParameters] FAILED, error: $error")
+                                if (error != null) {
+                                    parent.snackbar_layout.snackbar(error)
+                                }
+                            }
+                        })
+            }
+        }
     }
 
     /**
@@ -58,7 +118,6 @@ class ConfigureRobotFragment : Fragment() {
 
         parent.authState.performActionWithFreshTokens(parent.authService)
         { accessToken: String?, _: String?, ex: AuthorizationException? ->
-            // TODO am I supposed to use the accessToken or idToken (aka _)
             if (accessToken == null) {
                 Log.e(fTag, "[setConfigParametersAndFinish] got null access token, ex: $ex")
             } else {

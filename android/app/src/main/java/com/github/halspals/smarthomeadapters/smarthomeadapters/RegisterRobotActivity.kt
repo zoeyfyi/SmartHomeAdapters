@@ -24,8 +24,6 @@ class RegisterRobotActivity : AppCompatActivity() {
     // Keep track of the id of the robot once it has been scanned/entered
     internal lateinit var robotId: String
     internal lateinit var robotNickname: String
-    // Record the chosen use case so that its parameters can be set up
-    internal lateinit var chosenUseCase: UseCase
 
     internal val restApiService by lazy {
         RestApiService.new()
