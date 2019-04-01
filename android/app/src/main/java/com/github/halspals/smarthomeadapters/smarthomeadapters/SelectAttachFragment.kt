@@ -1,16 +1,11 @@
 package com.github.halspals.smarthomeadapters.smarthomeadapters
 
-import android.content.Context
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ArrayAdapter
-import android.widget.BaseAdapter
-import android.widget.CheckedTextView
-import android.widget.TextView
 import com.github.halspals.smarthomeadapters.smarthomeadapters.model.RobotRegistrationBody
 import com.github.halspals.smarthomeadapters.smarthomeadapters.model.UseCase
 import kotlinx.android.synthetic.main.activity_register_robot.*
@@ -62,12 +57,12 @@ class SelectAttachFragment : Fragment() {
         // Set up the selection listener for the use case spinner
         attachment_list_view.setOnItemClickListener { adapterView, _, pos, _ ->
 
-            attachment_list_view.setItemChecked(pos, true)
-
             val useCase = adapterView?.getItemAtPosition(pos) as? UseCase
 
             selectedUseCase = if (useCase != null) {
                 Log.v(fTag, "[onItemSelected] User selected use case $useCase")
+                (attachment_list_view.adapter as UseCaseAdapter).selectedUseCasePos = pos
+                (attachment_list_view.adapter as UseCaseAdapter).notifyDataSetChanged()
                 useCase
             } else {
                 Log.e(fTag, "[onItemSelected] User indicated position $pos but adapter or"
@@ -102,8 +97,7 @@ class SelectAttachFragment : Fragment() {
                 // Extract the use cases from the response, if it was successful
                 val useCases: List<UseCase>? = response.body()
                 if (response.isSuccessful && useCases != null) {
-                    Log.v(fTag, "[getAllUseCases] Successfully got list of ${useCases.size} "
-                            + "use cases")
+                    Log.v(fTag, "[fetchUseCases] Successfully got use cases: $useCases")
 
                     // Set up the listView with the downloaded use cases
                     attachment_list_view.adapter = UseCaseAdapter(view.context, useCases)
@@ -111,7 +105,7 @@ class SelectAttachFragment : Fragment() {
 
                 } else {
                     val error = RestApiService.extractErrorFromResponse(response)
-                    Log.e(fTag, "[getAllUseCases] response was unsuccessful or body was null;"
+                    Log.e(fTag, "[fetchUseCases] response was unsuccessful or body was null;"
                             + " error: $error")
                     if (error != null) {
                         parent.snackbar_layout.snackbar(error)
@@ -121,7 +115,7 @@ class SelectAttachFragment : Fragment() {
 
             override fun onFailure(call: Call<List<UseCase>>, t: Throwable) {
                 val errorMsg = t.message
-                Log.e(fTag, "[getAllUseCases] FAILED, got error: $errorMsg")
+                Log.e(fTag, "[fetchUseCases] FAILED, got error: $errorMsg")
                 if (errorMsg != null) {
                     parent.snackbar_layout.snackbar(errorMsg)
                 }
@@ -147,7 +141,6 @@ class SelectAttachFragment : Fragment() {
         use_case_registration_progress_bar.visibility = View.VISIBLE
         register_button.isEnabled = false
         cancel_button.isEnabled = false
-        parent.chosenUseCase = useCase
 
         parent.authState.performActionWithFreshTokens(parent.authService)
         { accessToken: String?, _: String?, ex: AuthorizationException? ->
@@ -159,7 +152,7 @@ class SelectAttachFragment : Fragment() {
                         .registerRobot(
                                 parent.robotId,
                                 accessToken,
-                                RobotRegistrationBody(parent.robotNickname, useCase.name.toLowerCase()))
+                                RobotRegistrationBody(parent.robotNickname, useCase.name))
                         .enqueue(object : Callback<ResponseBody> {
 
                             override fun onResponse(

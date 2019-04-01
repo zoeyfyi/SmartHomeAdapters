@@ -51,24 +51,21 @@
         tools:visibility="visible" />
 
     <ListView
-        android:drawSelectorOnTop="false"
-        android:divider="@color/colorPrimary"
-        android:dividerHeight="10.0sp"
-        android:listSelector="@color/colorPrimaryDark"
         android:id="@+id/attachment_list_view"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginStart="32dp"
-        android:layout_marginTop="32dp"
+        android:layout_marginTop="64dp"
         android:layout_marginEnd="32dp"
         android:layout_marginBottom="32dp"
-        android:visibility="invisible"
         android:choiceMode="singleChoice"
+        android:divider="@color/colorPrimary"
+        android:dividerHeight="16.0sp"
+        android:visibility="invisible"
         app:layout_constraintBottom_toTopOf="@id/register_button"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/textView" />
-
 
     <Button
         android:id="@+id/register_button"
