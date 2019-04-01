@@ -330,25 +330,6 @@ type usecase struct {
 	Description string `json:"description"`
 }
 
-type parameterDetails interface {
-	parameterDetails()
-}
-
-type intParameter struct {
-	Min     int `json:"min"`
-	Max     int `json:"max"`
-	Default int `json:"default"`
-}
-
-func (p intParameter) parameterDetails() {}
-
-type calibrationParameter struct {
-	Name        string           `json:"name"`
-	Description string           `json:"description"`
-	Type        string           `json:"type"`
-	Details     parameterDetails `json:"details"`
-}
-
 func usecasesHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	stream, err := infoserverClient.GetUsecases(context.Background(), &empty.Empty{})
 	if err != nil {
