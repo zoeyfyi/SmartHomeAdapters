@@ -53,6 +53,7 @@ func (s *server) Register(ctx context.Context, request *userserver.RegisterReque
 	// hash password
 	hash, err := bcrypt.GenerateFromPassword([]byte(request.Password), bcryptRounds)
 	if err != nil {
+		log.Printf("hash password failed: %v", err)
 		return nil, status.New(codes.Internal, "Internal error").Err()
 	}
 
