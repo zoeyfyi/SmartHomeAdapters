@@ -209,6 +209,26 @@ func (s *server) RegisterRobot(ctx context.Context, query *infoserver.RegisterRo
 	return &empty.Empty{}, nil
 }
 
+func (s *server) UnregisterRobot(ctx context.Context, query *infoserver.UnregisterRobotQuery) (*empty.Empty, error) {
+	log.Printf("unregistering robot \"%s\"", query.Id)
+
+	// update robot
+	_, err := s.DB.Exec(
+		"UPDATE robots SET registeredUserId = NULL WHERE registeredUserId = $1 AND serial = $2",
+		query.UserId,
+		query.Id,
+	)
+	if err != nil {
+		log.Printf("failed to update robots: %v", err)
+		if err == sql.ErrNoRows {
+			return nil, status.Newf(codes.Internal, "robot \"%s\" not registered to your account", query.Id).Err()
+		}
+		return nil, status.New(codes.Internal, "internal error").Err()
+	}
+
+	return &empty.Empty{}, nil
+}
+
 func (s *server) ToggleRobot(ctx context.Context, request *infoserver.ToggleRequest) (*empty.Empty, error) {
 	log.Printf("toggling robot %s\n", request.Id)
 

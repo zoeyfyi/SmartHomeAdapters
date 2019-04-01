@@ -6,6 +6,7 @@ service InfoServer {
     rpc GetRobot (RobotQuery) returns (Robot) {}
     rpc GetRobots (RobotsQuery) returns (stream Robot) {}
     rpc RegisterRobot (RegisterRobotQuery) returns (google.protobuf.Empty) {}
+    rpc UnregisterRobot (UnregisterRobotQuery) returns (google.protobuf.Empty) {}
     rpc ToggleRobot (ToggleRequest) returns (google.protobuf.Empty) {}
     rpc CalibrateRobot (CalibrationRequest) returns (Robot) {}
     rpc GetCalibration(RobotQuery) returns (CalibrationParameters) {}
@@ -29,6 +30,11 @@ message RegisterRobotQuery {
     string userId = 2;
     string nickname = 3;
     string robotType = 4;
+}
+
+message UnregisterRobotQuery {
+    string id = 1;
+    string userId = 2;
 }
 
 message ToggleRequest {
