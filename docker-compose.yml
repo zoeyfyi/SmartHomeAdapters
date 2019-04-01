@@ -111,5 +111,4 @@ volumes:
   userdb_data:
   infodb_data:
   usecasedb_data:
-  switchdb_data:
-  thermodb_data:
+  
