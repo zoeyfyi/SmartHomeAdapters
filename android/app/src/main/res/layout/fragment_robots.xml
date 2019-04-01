@@ -6,6 +6,20 @@
     android:layout_height="match_parent"
     tools:context=".RobotsFragment">
 
+    <TextView
+        android:id="@+id/welcome_text_view"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="32dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="32dp"
+        android:text="@string/welcome_text_no_name"
+        android:textSize="36sp"
+        android:textColor="@color/colorOffBlack"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/edit_mode_image_view" />
+
     <ImageView
         android:id="@+id/more_options_image_view"
         android:layout_width="wrap_content"
@@ -38,20 +52,6 @@
         android:tint="@color/colorOffBlack"
         app:layout_constraintEnd_toStartOf="@+id/more_options_image_view"
         app:layout_constraintTop_toTopOf="parent" />
-
-    <TextView
-        android:id="@+id/welcome_text_view"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="32dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="32dp"
-        android:text="@string/welcome_text"
-        android:textSize="36sp"
-        android:textColor="@color/colorOffBlack"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/edit_mode_image_view" />
 
     <GridView
         android:id="@+id/RobotGrid"

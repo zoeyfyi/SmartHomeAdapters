@@ -37,9 +37,10 @@
     <string name="register_button_text">Register</string>
 
     <!-- Strings related to RobotsFragment -->
-    <string name="welcome_text">Welcome Home, &lt;NAME&gt;</string>
+    <string name="welcome_text">Welcome Home, %s</string>
 
     <!-- Strings related to settings_menu -->
     <string name="log_out_text">Log out</string>
+    <string name="welcome_text_no_name">Welcome Home</string>
 
 </resources>

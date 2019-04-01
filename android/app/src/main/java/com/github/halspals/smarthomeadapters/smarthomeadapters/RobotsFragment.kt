@@ -9,6 +9,7 @@ import android.view.ViewGroup
 import android.widget.GridView
 import android.widget.PopupMenu
 import com.github.halspals.smarthomeadapters.smarthomeadapters.model.Robot
+import com.github.halspals.smarthomeadapters.smarthomeadapters.model.User
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.fragment_robots.*
 import org.jetbrains.anko.design.snackbar
@@ -45,6 +46,7 @@ class RobotsFragment : Fragment() {
                         + "exception: $ex")
             } else {
                 fetchRobots(accessToken, view)
+                getUserName(accessToken)
             }
         }
 
@@ -134,5 +136,33 @@ class RobotsFragment : Fragment() {
         robotGrid.adapter = RobotAdapter(parent, robots.toMutableList())
     }
 
+    private fun getUserName(token: String) {
+        parent.restApiService
+                .getUserName(token)
+                .enqueue(object : Callback<User> {
+                    override fun onResponse(call: Call<User>, response: Response<User>) {
+                        val user = response.body()
+
+                        if (response.isSuccessful && user != null) {
+                            Log.d(fTag, "[getUserName] got User w/ real name ${user.realName}")
+                            welcome_text_view.text = getString(R.string.welcome_text, user.realName)
+                        } else {
+                            val error = RestApiService.extractErrorFromResponse(response)
+                            Log.e(fTag, "[getUserName] unsuccessful response or null user; " +
+                                    "user was $user, error was $error")
+                        }
+
+                    }
+
+                    override fun onFailure(call: Call<User>, t: Throwable) {
+                        val errorMsg = t.message
+                        Log.e(fTag, "[getUserName] FAILED, got error: $errorMsg")
+                        if (errorMsg != null) {
+                            parent.snackbar_layout.snackbar(errorMsg)
+                        }
+                    }
+
+                })
+    }
 
 }
