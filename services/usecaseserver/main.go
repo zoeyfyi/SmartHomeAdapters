@@ -379,11 +379,13 @@ func (s *UsecaseServer) GetCalibrationParameters(request *usercaseserver.GetCali
 	if !ok {
 		return fmt.Errorf("usecase \"%s\" is unrecognized", request.Usecase)
 	}
-
+	log.Printf("getting calibration parameter for usecase: %s and robot with id %s", usecase, request.Robot.Id)
 	params, err := s.getCalibrationParameters(usecase, request.Robot.Id, s.db)
 	if err != nil {
+		log.Printf("Error with getCalibrationParameters %v, %v:", err, errInternal)
 		return errInternal
 	}
+
 	for _, p := range params {
 		switch p := p.(type) {
 		case BoolParameter:
