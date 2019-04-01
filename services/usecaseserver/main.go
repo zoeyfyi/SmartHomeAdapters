@@ -350,7 +350,7 @@ func (s *UsecaseServer) Range(ctx context.Context, action *usercaseserver.RangeR
 func (s *UsecaseServer) getCalibrationParameters(usecase Usecase, robotID string, db *sql.DB) ([]Parameter, error) {
 	defaultParams := usecase.DefaultParameters()
 
-	params := make([]Parameter, len(defaultParams))
+	params := make([]Parameter, 0, len(defaultParams))
 
 	for _, p := range defaultParams {
 		switch p := p.(type) {
@@ -399,12 +399,16 @@ func (s *UsecaseServer) GetCalibrationParameters(request *usercaseserver.GetCali
 	if !ok {
 		return fmt.Errorf("usecase \"%s\" is unrecognized", request.Usecase)
 	}
-	log.Printf("getting calibration parameter for usecase: %s and robot with id %s", usecase, request.Robot.Id)
+
+	log.Printf("getting calibration parameter for usecase: %T and robot with id %s", usecase, request.Robot.Id)
+
 	params, err := s.getCalibrationParameters(usecase, request.Robot.Id, s.db)
 	if err != nil {
 		log.Printf("Error with getCalibrationParameters %v, %v:", err, errInternal)
 		return errInternal
 	}
+
+	log.Printf("params: %v", params)
 
 	for _, p := range params {
 		switch p := p.(type) {
