@@ -1,16 +1,18 @@
 CREATE TABLE boolparameter (
     -- ID of parameter
-    serial text not null unique,
+    serial text not null,
     -- robot ID
-    robotId text not null,    
+    robotId text not null,
+    PRIMARY KEY(serial, robotId),  
     value boolean not null
 );
 
 CREATE TABLE intparameter (
     -- ID of parameter
-    serial text not null unique,
+    serial text not null,
     -- robot ID
-    robotId text not null,    
+    robotId text not null,
+    PRIMARY KEY(serial, robotId),
     value int not null
 );
 
