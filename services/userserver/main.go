@@ -57,7 +57,12 @@ func (s *server) Register(ctx context.Context, request *userserver.RegisterReque
 	}
 
 	// insert user into database
-	_, err = s.DB.Exec("INSERT INTO users(username, email, password) VALUES($1, $2, $3)", request.Name, request.Email, hash)
+	_, err = s.DB.Exec(
+		"INSERT INTO users(username, email, password) VALUES($1, $2, $3)",
+		request.Name,
+		request.Email,
+		hash,
+	)
 	if err != nil {
 		if err, ok := err.(*pq.Error); ok && err.Code.Name() == "unique_violation" {
 			// email already exists
@@ -122,6 +127,28 @@ func (s *server) GetUserID(ctx context.Context, email *userserver.Email) (*users
 
 	return &userserver.User{
 		Id: id,
+	}, nil
+}
+
+func (s *server) GetUserByID(ctx context.Context, userID *userserver.UserId) (*userserver.User, error) {
+	// get email/hash from database
+	var (
+		name string
+	)
+	row := s.DB.QueryRow("SELECT name FROM users WHERE od = $1", userID.Id)
+	err := row.Scan(&name)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, status.Newf(codes.NotFound, "user with id \"%s\" does not exist", userID.Id).Err()
+		}
+
+		log.Printf("error scanning database: %v", err)
+		return nil, status.New(codes.Internal, "internal error").Err()
+	}
+
+	return &userserver.User{
+		Id:   userID.Id,
+		Name: name,
 	}, nil
 }
 
