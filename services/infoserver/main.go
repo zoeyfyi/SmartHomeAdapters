@@ -110,19 +110,45 @@ func (s *server) GetRobots(query *infoserver.RobotsQuery, stream infoserver.Info
 			return err
 		}
 
-		// TODO: get from somewhere else
-		if robotType == "switch" {
-			interfaceType = "toggle"
-		} else {
-			interfaceType = "range"
+		robot := &infoserver.Robot{
+			Id:        serial,
+			Nickname:  nickname,
+			RobotType: robotType,
 		}
 
-		err = stream.Send(&infoserver.Robot{
-			Id:            serial,
-			Nickname:      nickname,
-			RobotType:     robotType,
-			InterfaceType: interfaceType,
+		// get the status of the robot
+		status, err := s.UsecaseClient.GetStatus(context.Background(), &usecaseserver.GetStatusRequest{
+			Robot: &usecaseserver.Robot{
+				Id: serial,
+			},
+			Usecase: robotType,
 		})
+		if err != nil {
+			return err
+		}
+
+		// set the robot interface type and status
+		switch status := status.Status.(type) {
+		case *usecaseserver.Status_ToggleStatus:
+			robot.InterfaceType = "toggle"
+			robot.RobotStatus = &infoserver.Robot_ToggleStatus{
+				ToggleStatus: &infoserver.ToggleStatus{
+					Value: status.ToggleStatus.Value,
+				},
+			}
+		case *usecaseserver.Status_RangeStatus:
+			robot.InterfaceType = "range"
+			robot.RobotStatus = &infoserver.Robot_RangeStatus{
+				RangeStatus: &infoserver.RangeStatus{
+					Min:     status.RangeStatus.Min,
+					Max:     status.RangeStatus.Max,
+					Current: status.RangeStatus.Value,
+				},
+			}
+		}
+
+		// send robot
+		err = stream.Send(robot)
 		if err != nil {
 			return err
 		}
