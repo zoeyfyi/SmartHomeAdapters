@@ -18,4 +18,6 @@
     <string name="manual_entry_button_text">手動入力</string>
     <string name="saf_title_text">添付ファイルを選択</string>
     <string name="register_button_text">登録</string>
+    <string name="next_button_text">続ける</string>
+    <string name="welcome_text">ようこそ，&lt;NAME&gt;</string>
 </resources>

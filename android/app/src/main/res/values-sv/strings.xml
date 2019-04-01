@@ -18,4 +18,6 @@
     <string name="manual_entry_button_text">Ange manuellt</string>
     <string name="saf_title_text">Välj Funktion</string>
     <string name="register_button_text">Registrera</string>
+    <string name="welcome_text">Välkommen Hem, &lt;NAME&gt;</string>
+    <string name="next_button_text">FORTSÄTT</string>
 </resources>

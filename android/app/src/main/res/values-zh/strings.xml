@@ -18,4 +18,6 @@
     <string name="manual_entry_button_text">手动输入</string>
     <string name="saf_title_text">选择附件</string>
     <string name="register_button_text">注册</string>
+    <string name="next_button_text">继续</string>
+    <string name="welcome_text">欢迎，&lt;NAME&gt;</string>
 </resources>
