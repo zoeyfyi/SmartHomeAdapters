@@ -176,7 +176,7 @@ func (s *UsecaseServer) SetUsecase(ctx context.Context, request *usercaseserver.
 				p.Default,
 			)
 		default:
-			log.Fatalf("unrecognized parameter type: %v", p)
+			log.Fatalf("unrecognized parameter type (%T): %v", p, p)
 		}
 	}
 
@@ -282,7 +282,7 @@ func (s *UsecaseServer) Toggle(ctx context.Context, action *usercaseserver.Toggl
 	}
 
 	// update status
-	_, err = s.db.Exec(
+	res, err := s.db.Exec(
 		"UPDATE togglestatus SET value = $1 WHERE robotId = $2",
 		action.NewValue,
 		action.Robot.Id,
@@ -291,6 +291,8 @@ func (s *UsecaseServer) Toggle(ctx context.Context, action *usercaseserver.Toggl
 		log.Printf("error updating toggle status: %v", err)
 		return nil, errInternal
 	}
+	rows, err := res.RowsAffected()
+	log.Printf("updated toggle status, rows effected: %v, err: %v", rows, err)
 
 	return &empty.Empty{}, nil
 }
@@ -338,8 +340,9 @@ func (s *UsecaseServer) getCalibrationParameters(usecase Usecase, robotID string
 		switch p := p.(type) {
 		case BoolParameter:
 			row := s.db.QueryRow(
-				"SELECT value FROM boolparameter WHERE robotId = $1",
+				"SELECT value FROM boolparameter WHERE robotId = $1 AND serial = $2",
 				robotID,
+				p.ID,
 			)
 			var value bool
 			err := row.Scan(&value)
@@ -352,13 +355,14 @@ func (s *UsecaseServer) getCalibrationParameters(usecase Usecase, robotID string
 			params = append(params, p)
 		case IntParameter:
 			row := s.db.QueryRow(
-				"SELECT value FROM boolparameter WHERE robotId = $1",
+				"SELECT value FROM intparameter WHERE robotId = $1 AND serial = $2",
 				robotID,
+				p.ID,
 			)
 			var value int64
 			err := row.Scan(&value)
 			if err != nil {
-				log.Printf("error scanning bool parameter: %v", err)
+				log.Printf("error scanning int parameter: %v", err)
 				return nil, errInternal
 			}
 
