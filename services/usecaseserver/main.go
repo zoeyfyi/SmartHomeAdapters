@@ -368,6 +368,11 @@ func (s *UsecaseServer) getCalibrationParameters(usecase Usecase, robotID string
 
 			p.Current = value
 			params = append(params, p)
+
+		default:
+			log.Printf("Error: parameter is not IntParameter or BoolParameter")
+			return nil, nil
+		}
 		}
 	}
 
@@ -389,6 +394,7 @@ func (s *UsecaseServer) GetCalibrationParameters(request *usercaseserver.GetCali
 	for _, p := range params {
 		switch p := p.(type) {
 		case BoolParameter:
+			log.Printf("Found boolparameter, sending parameters")
 			stream.Send(&usercaseserver.CalibrationParameter{
 				Id:   p.ID,
 				Name: p.Name,
@@ -400,6 +406,7 @@ func (s *UsecaseServer) GetCalibrationParameters(request *usercaseserver.GetCali
 				},
 			})
 		case IntParameter:
+			log.Printf("Found intparameter, sending parameters")
 			stream.Send(&usercaseserver.CalibrationParameter{
 				Id:   p.ID,
 				Name: p.Name,
@@ -412,6 +419,9 @@ func (s *UsecaseServer) GetCalibrationParameters(request *usercaseserver.GetCali
 					},
 				},
 			})
+		default:
+			log.Printf("Error: parameter is not IntParameter or BoolParameter")
+			return nil
 		}
 	}
 
