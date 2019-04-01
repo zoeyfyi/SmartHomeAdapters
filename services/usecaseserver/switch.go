@@ -32,7 +32,7 @@ func (s *Switch) Type() UsecaseType {
 }
 
 func (s *Switch) DefaultParameters() []Parameter {
-	parameters := make([]Parameter, len(switchParameters))
+	parameters := make([]Parameter, 0, len(switchParameters))
 	for _, p := range switchParameters {
 		parameters = append(parameters, p)
 	}
@@ -58,12 +58,23 @@ func (s *Switch) DefaultRangeStatus() (int, int, int) {
 }
 
 func (s *Switch) Toggle(value bool, parameters []Parameter, controller RobotController) error {
+	log.Printf("toggling switch to: %t", value)
+
 	angleID := "OnAngle"
 	if !value {
 		angleID = "OffAngle"
 	}
 
-	angle := (*s.GetParameter(angleID)).(IntParameter).Current
+	// TODO provide better way to get parameters
+	var angle int64
+	for _, p := range parameters {
+		if p, ok := p.(IntParameter); ok && p.ID == angleID {
+			angle = p.Current
+			break
+		}
+	}
+
+	log.Printf("setting servo to %d", angle)
 	return controller.SetServo(angle)
 }
 
