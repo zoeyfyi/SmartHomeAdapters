@@ -9,12 +9,15 @@
 
     <!-- Strings related to ConfigureRobotFragment -->
     <string name="finish_button_text">Finish</string>
+    <string name="crf_title_text" translatable="false">Calibrate Your Device</string>
 
     <!-- Strings related to EditRobotFragment -->
     <string name="reconfigure_button_text">Reconfigure</string>
     <string name="rename_button_text">Rename</string>
     <string name="delete_button_text">Delete</string>
     <string name="erf_title_text">Edit %s</string>
+    <string name="confirm_delete_title" translatable="false">Permanently delete the device</string>
+    <string name="confirm_delete_body" translatable="false">Are you sure you want to delete %s?\nThis will permanently remove the device from your account.</string>
 
     <!-- Strings related to ManualEntryFragment -->
     <string name="mef_title_text">Manual Robot Code Entry</string>
