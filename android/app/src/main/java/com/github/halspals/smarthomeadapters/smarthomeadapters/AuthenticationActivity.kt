@@ -18,23 +18,8 @@ class AuthenticationActivity : AppCompatActivity() {
 
     private val authRequestCode = 42
 
-    private val authRequest: AuthorizationRequest by lazy {
-        val authServiceConfig = AuthorizationServiceConfiguration(
-                Uri.parse("https://oauth.halspals.co.uk/oauth2/auth"),
-                Uri.parse("https://oauth.halspals.co.uk/oauth2/token")
-        )
-        AuthorizationRequest.Builder(
-                authServiceConfig,
-                "refresh_test4",
-                ResponseTypeValues.CODE,
-                Uri.parse("https://callback.halspals.co.uk")
-        ).setScope("offline").build()
-    }
-
-    private val authService: AuthorizationService by lazy {
-        AuthorizationService(this)
-    }
-
+    private lateinit var authRequest: AuthorizationRequest
+    private lateinit var authService: AuthorizationService
     private lateinit var authState: AuthState
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -44,6 +29,19 @@ class AuthenticationActivity : AppCompatActivity() {
         auth_button.setOnClickListener { _ ->
             startOAuthView()
         }
+
+        val authServiceConfig = AuthorizationServiceConfiguration(
+                Uri.parse("https://oauth.halspals.co.uk/oauth2/auth"),
+                Uri.parse("https://oauth.halspals.co.uk/oauth2/token")
+        )
+        authRequest = AuthorizationRequest.Builder(
+                authServiceConfig,
+                "refresh_test4",
+                ResponseTypeValues.CODE,
+                Uri.parse("https://callback.halspals.co.uk")
+        ).setScope("offline").build()
+
+        authService = AuthorizationService(this)
     }
 
     override fun onStart() {
