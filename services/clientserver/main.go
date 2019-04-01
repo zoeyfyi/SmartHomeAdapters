@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"strconv"
 
+	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/julienschmidt/httprouter"
 	"github.com/mrbenshef/SmartHomeAdapters/microservice/infoserver"
 	"github.com/mrbenshef/SmartHomeAdapters/microservice/userserver"
@@ -325,9 +326,8 @@ func toggleHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 }
 
 type usecase struct {
-	ID         string                 `json:"id"`
-	Name       string                 `json:"name"`
-	Parameters []calibrationParameter `json:"parameters"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
 }
 
 type parameterDetails interface {
@@ -349,110 +349,33 @@ type calibrationParameter struct {
 	Details     parameterDetails `json:"details"`
 }
 
-// TODO: load from some kind of resource file
-// we want this to extendable, so plugins can request a list of parameters
-var usecases = map[string]usecase{
-	"1": {
-		ID:   "1",
-		Name: "Switch",
-		Parameters: []calibrationParameter{
-			{
-				Name:        "On Angle",
-				Description: "Angle to turn the servo to turn the switch on",
-				Type:        "int",
-				Details: intParameter{
-					Min:     90,
-					Max:     180,
-					Default: 100,
-				},
-			},
-			{
-				Name:        "Off Angle",
-				Description: "Angle to turn the servo to turn the switch off",
-				Type:        "int",
-				Details: intParameter{
-					Min:     0,
-					Max:     90,
-					Default: 80,
-				},
-			},
-		},
-	},
-	"2": {
-		ID:   "2",
-		Name: "Thermostat",
-		Parameters: []calibrationParameter{
-			{
-				Name:        "Minimum tempreture",
-				Description: "Minimum tempreture of the thermostat",
-				Type:        "int",
-				Details: intParameter{
-					Min:     200,
-					Max:     400,
-					Default: 293,
-				},
-			},
-			{
-				Name:        "Maximum tempreture",
-				Description: "Maximum tempreture of the thermostat",
-				Type:        "int",
-				Details: intParameter{
-					Min:     200,
-					Max:     400,
-					Default: 293,
-				},
-			},
-			{
-				Name:        "Minimum tempreture angle",
-				Description: "Angle of the minimum tempreture",
-				Type:        "int",
-				Details: intParameter{
-					Min:     0,
-					Max:     180,
-					Default: 80,
-				},
-			},
-			{
-				Name:        "Maximum tempreture angle",
-				Description: "Angle of the maximum tempreture",
-				Type:        "int",
-				Details: intParameter{
-					Min:     0,
-					Max:     180,
-					Default: 100,
-				},
-			},
-		},
-	},
-}
-
 func usecasesHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	// map -> list
-	usecaseList := make([]usecase, 0, len(usecases))
-	for _, usecase := range usecases {
-		usecaseList = append(usecaseList, usecase)
-	}
-
-	w.WriteHeader(http.StatusOK)
-	err := json.NewEncoder(w).Encode(usecaseList)
+	stream, err := infoserverClient.GetUsecases(context.Background(), &empty.Empty{})
 	if err != nil {
-		log.Printf("Failed to encode error responce: %v", err)
-		HTTPError(w, errFailedEncode)
-	}
-}
-
-func usecaseHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	id := ps.ByName("id")
-
-	usecase, ok := usecases[id]
-	if !ok {
-		err := status.Newf(codes.NotFound, "No usecase with id \"%s\"", id).Err()
 		HTTPError(w, err)
 		return
 	}
 
+	usecases := make([]usecase, 0)
+
+	for {
+		uc, err := stream.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			HTTPError(w, err)
+			return
+		}
+
+		usecases = append(usecases, usecase{
+			Name:        uc.Name,
+			Description: uc.Description,
+		})
+	}
+
 	w.WriteHeader(http.StatusOK)
-	err := json.NewEncoder(w).Encode(usecase)
+	err = json.NewEncoder(w).Encode(usecases)
 	if err != nil {
 		log.Printf("Failed to encode error responce: %v", err)
 		HTTPError(w, errFailedEncode)
@@ -731,8 +654,7 @@ func createRouter() *httprouter.Router {
 	router.PATCH("/robot/:id/toggle/:value", auth(toggleHandler))
 	router.PATCH("/robot/:id/range/:value", auth(rangeHandler))
 	router.PATCH("/robot/:id/nickname", auth(renameHandler))
-	router.GET("/usecases", auth(usecasesHandler))
-	router.GET("/usecase/:id", auth(usecaseHandler))
+	router.GET("/usecases", usecasesHandler)
 	router.GET("/robot/:id/calibration", auth(getCalibrationHandler))
 	router.PUT("/robot/:id/calibration", auth(setCalibrationHandler))
 
