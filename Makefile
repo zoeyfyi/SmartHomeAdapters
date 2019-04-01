@@ -40,10 +40,16 @@ docker-push:
 	@docker push smarthomeadapters/infoserver:latest
 	@docker tag smarthomeadapters/robotserver smarthomeadapters/robotserver:latest
 	@docker push smarthomeadapters/robotserver:latest
+	@docker tag smarthomeadapters/usecasedb smarthomeadapters/usecasedb:latest
+	@docker push smarthomeadapters/usecasedb:latest
+	@docker tag smarthomeadapters/usecaseserver smarthomeadapters/usecaseserver:latest
+	@docker push smarthomeadapters/usecaseserver:latest
 	@docker tag smarthomeadapters/userdb smarthomeadapters/userdb:latest
 	@docker push smarthomeadapters/userdb:latest
 	@docker tag smarthomeadapters/userserver smarthomeadapters/userserver:latest
 	@docker push smarthomeadapters/userserver:latest
+	@docker tag smarthomeadapters/account-app smarthomeadapters/account-app:latest
+	@docker push smarthomeadapters/account-app:latest
 
 docker-push-test:
 	@docker tag smarthomeadapters/clientserver smarthomeadapters/clientserver:test
@@ -54,6 +60,10 @@ docker-push-test:
 	@docker push smarthomeadapters/infoserver:test
 	@docker tag smarthomeadapters/robotserver smarthomeadapters/robotserver:test
 	@docker push smarthomeadapters/robotserver:test
+	@docker tag smarthomeadapters/usecasedb smarthomeadapters/usecasedb:test
+	@docker push smarthomeadapters/usecasedb:test
+	@docker tag smarthomeadapters/usecaseserver smarthomeadapters/usecaseserver:test
+	@docker push smarthomeadapters/usecaseserver:test
 	@docker tag smarthomeadapters/userdb smarthomeadapters/userdb:test
 	@docker push smarthomeadapters/userdb:test
 	@docker tag smarthomeadapters/userserver smarthomeadapters/userserver:test
