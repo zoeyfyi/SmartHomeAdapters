@@ -5,16 +5,16 @@ import (
 )
 
 var boltlockParameters = map[string]Parameter{
-	"OnAngle": IntParameter{
-		ID:      "OnAngle",
-		Name:    "On Angle",
+	"LockAngle": IntParameter{
+		ID:      "LockAngle",
+		Name:    "Lock Angle",
 		Min:     0,
 		Max:     180,
 		Default: 80,
 	},
-	"OffAngle": IntParameter{
-		ID:      "OffAngle",
-		Name:    "Off Angle",
+	"UnlockAngle": IntParameter{
+		ID:      "UnlockAngle",
+		Name:    "Unlock Angle",
 		Min:     0,
 		Max:     180,
 		Default: 100,
@@ -60,9 +60,9 @@ func (s *Boltlock) DefaultRangeStatus() (int, int, int) {
 func (s *Boltlock) Toggle(value bool, parameters []Parameter, controller RobotController) error {
 	log.Printf("toggling boltlock to: %t", value)
 
-	angleID := "OnAngle"
+	angleID := "LockAngle"
 	if !value {
-		angleID = "OffAngle"
+		angleID = "UnlockAngle"
 	}
 
 	// TODO provide better way to get parameters
