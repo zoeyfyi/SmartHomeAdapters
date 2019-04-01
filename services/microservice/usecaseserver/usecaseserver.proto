@@ -32,7 +32,20 @@ message GetStatusRequest {
 }
 
 message Status {
-    string value = 1;
+    oneof status {
+        ToggleStatus toggleStatus = 1; 
+        RangeStatus rangeStatus = 2;
+    }
+}
+
+message ToggleStatus {
+    bool value = 1;
+}
+
+message RangeStatus {
+    int64 min = 1;
+    int64 max = 2;
+    int64 value = 3;
 }
 
 message ToggleRequest {
