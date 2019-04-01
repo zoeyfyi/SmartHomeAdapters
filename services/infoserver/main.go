@@ -114,16 +114,18 @@ func (s *server) GetRobots(query *infoserver.RobotsQuery, stream infoserver.Info
 			log.Printf("Failed to scan row of robots table: %v", err)
 			return err
 		}
+
 		if robotType == robotTypeSwitch {
 			interfaceType = "toggle"
 		} else {
 			interfaceType = "range"
 		}
+
 		err = stream.Send(&infoserver.Robot{
 			Id:            serial,
 			Nickname:      nickname,
 			RobotType:     robotType,
-			InterfaceType: interfaceType, // what should this be? used to be "toggle" or "range"
+			InterfaceType: interfaceType,
 		})
 		if err != nil {
 			return err
@@ -133,26 +135,41 @@ func (s *server) GetRobots(query *infoserver.RobotsQuery, stream infoserver.Info
 }
 
 func (s *server) RegisterRobot(ctx context.Context, query *infoserver.RegisterRobotQuery) (*empty.Empty, error) {
-	log.Println("registering robot")
-	rows, err := s.DB.Query("SELECT * FROM robots WHERE serial = $1", query.Id)
+	log.Printf("registering robot \"%s\"", query.Id)
+	row := s.DB.QueryRow("SELECT serial, nickname, robotType, registeredUserId FROM robots WHERE serial = $1", query.Id)
+
+	// get robot
+	var (
+		serial           string
+		nickname         *string
+		robotType        *string
+		registeredUserID *string
+	)
+	err := row.Scan(&serial, &nickname, &robotType, &registeredUserID)
 	if err != nil {
-		log.Println("Failed to search database for robot.")
-		return nil, err
-	}
-	for rows.Next() {
-		return nil, status.Newf(codes.AlreadyExists, "Robot \"%s\" already exists", query.Id).Err()
+		if err == sql.ErrNoRows {
+			return nil, status.Newf(codes.NotFound, "robot \"%s\" does not exist", query.Id).Err()
+		}
+		log.Printf("error scanning robots: %v", err)
+		return nil, status.New(codes.Internal, "internal error").Err()
 	}
 
+	// check robot is not registerd
+	if registeredUserID != nil {
+		return nil, status.New(codes.FailedPrecondition, "robot \"%s\" has already been registered").Err()
+	}
+
+	// update robot
 	_, err = s.DB.Exec(
-		"INSERT INTO robots (serial, nickname, robotType, registeredUserId) VALUES ($1, $2, $3, $4)",
-		query.Id,
+		"UPDATE robots SET nickname = $1, robotType = $2, registeredUserId = $3 WHERE serial = $4",
 		query.Nickname,
 		query.RobotType,
 		query.UserId,
+		query.Id,
 	)
-
 	if err != nil {
-		return nil, err
+		log.Printf("failed to update robots: %v", err)
+		return nil, status.New(codes.Internal, "internal error").Err()
 	}
 
 	return &empty.Empty{}, nil
