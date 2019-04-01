@@ -46,6 +46,7 @@ func TestRegisterFieldValidation(t *testing.T) {
 	}{
 		{
 			&userserver.RegisterRequest{
+				Name:     "foobar",
 				Email:    "",
 				Password: "password",
 			},
@@ -53,6 +54,7 @@ func TestRegisterFieldValidation(t *testing.T) {
 		},
 		{
 			&userserver.RegisterRequest{
+				Name:     "foobar",
 				Email:    "foo",
 				Password: "password",
 			},
@@ -60,6 +62,7 @@ func TestRegisterFieldValidation(t *testing.T) {
 		},
 		{
 			&userserver.RegisterRequest{
+				Name:     "foobar",
 				Email:    "foo@bar.com",
 				Password: "",
 			},
@@ -67,6 +70,7 @@ func TestRegisterFieldValidation(t *testing.T) {
 		},
 		{
 			&userserver.RegisterRequest{
+				Name:     "foobar",
 				Email:    "foo@bar.com",
 				Password: "pass",
 			},
@@ -91,6 +95,7 @@ func TestSuccessfullRegistration(t *testing.T) {
 	clearDatabase(t)
 
 	user, err := testServer.Register(context.Background(), &userserver.RegisterRequest{
+		Name:     "foobar",
 		Email:    "foo@email.com",
 		Password: "password",
 	})
@@ -108,6 +113,7 @@ func TestRegisterDuplicateEmails(t *testing.T) {
 	clearDatabase(t)
 
 	_, err := testServer.Register(context.Background(), &userserver.RegisterRequest{
+		Name:     "foobar",
 		Email:    "foo@email.com",
 		Password: "password",
 	})
@@ -116,6 +122,7 @@ func TestRegisterDuplicateEmails(t *testing.T) {
 	}
 
 	user, err := testServer.Register(context.Background(), &userserver.RegisterRequest{
+		Name:     "foobar",
 		Email:    "foo@email.com",
 		Password: "password",
 	})
@@ -139,6 +146,7 @@ func TestSuccessfullCheckCredentials(t *testing.T) {
 	clearDatabase(t)
 
 	_, err := testServer.Register(context.Background(), &userserver.RegisterRequest{
+		Name:     "foobar",
 		Email:    "foo@email.com",
 		Password: "password",
 	})
@@ -164,6 +172,7 @@ func TestCheckCredentialsFailure(t *testing.T) {
 	clearDatabase(t)
 
 	_, err := testServer.Register(context.Background(), &userserver.RegisterRequest{
+		Name:     "foobar",
 		Email:    "foo@email.com",
 		Password: "password",
 	})
@@ -214,6 +223,7 @@ func TestSuccessfullGetUserID(t *testing.T) {
 	ctx := context.Background()
 
 	_, err := testServer.Register(ctx, &userserver.RegisterRequest{
+		Name:     "foobar",
 		Email:    "foo@email.com",
 		Password: "password",
 	})

@@ -11,6 +11,7 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/mrbenshef/SmartHomeAdapters/microservice"
 	"github.com/mrbenshef/SmartHomeAdapters/microservice/robotserver"
+	"github.com/mrbenshef/SmartHomeAdapters/microservice/usecaseserver"
 	usercaseserver "github.com/mrbenshef/SmartHomeAdapters/microservice/usecaseserver"
 	"google.golang.org/grpc"
 
@@ -56,6 +57,7 @@ const (
 // TODO: seperate into toggle and range
 type Usecase interface {
 	Name() string
+	Description() string
 	Type() UsecaseType
 	DefaultParameters() []Parameter
 	GetParameter(id string) *Parameter
@@ -207,6 +209,20 @@ func (s *UsecaseServer) SetUsecase(ctx context.Context, request *usercaseserver.
 	}
 
 	return &empty.Empty{}, nil
+}
+
+func (s *UsecaseServer) GetUsecases(_ *empty.Empty, stream usecaseserver.UsecaseServer_GetUsecasesServer) error {
+	for _, usecase := range s.usecases {
+		err := stream.Send(&usecaseserver.Usecase{
+			Name:        usecase.Name(),
+			Description: usecase.Description(),
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (s *UsecaseServer) GetStatus(ctx context.Context, request *usercaseserver.GetStatusRequest) (*usercaseserver.Status, error) {
@@ -467,7 +483,7 @@ func (s *UsecaseServer) SetCalibrationParameter(ctx context.Context, request *us
 
 func main() {
 	Serve("usecaseserver:80", map[string]Usecase{
-		"switch": &Switch{},
+		"switch":   &Switch{},
 		"boltlock": &Boltlock{},
 	})
 }

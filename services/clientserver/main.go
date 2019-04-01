@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"strconv"
 
+	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/julienschmidt/httprouter"
 	"github.com/mrbenshef/SmartHomeAdapters/microservice/infoserver"
 	"github.com/mrbenshef/SmartHomeAdapters/microservice/userserver"
@@ -139,6 +140,32 @@ func registerHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params
 	}
 }
 
+type userResponce struct {
+	Name string `json:"name"`
+}
+
+func userHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	userID := r.Context().Value(userIDKey).(string)
+	log.Printf("getting user with id %s", userID)
+
+	user, err := userserverClient.GetUserByID(context.Background(), &userserver.UserId{
+		Id: userID,
+	})
+	if err != nil {
+		HTTPError(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	err = json.NewEncoder(w).Encode(userResponce{
+		Name: user.Name,
+	})
+	if err != nil {
+		log.Printf("failed to encode error responce: %v", err)
+		HTTPError(w, errFailedEncode)
+	}
+}
+
 type robot struct {
 	ID            string      `json:"id"`
 	Nickname      string      `json:"nickname"`
@@ -187,11 +214,29 @@ func robotsHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 			return
 		}
 
+		// convert robot status
+		var status robotStatus
+		switch robotStatus := rbt.RobotStatus.(type) {
+		case *infoserver.Robot_ToggleStatus:
+			status = toggleStatus{
+				Value: robotStatus.ToggleStatus.Value,
+			}
+		case *infoserver.Robot_RangeStatus:
+			status = rangeStatus{
+				Min:     int(robotStatus.RangeStatus.Min),
+				Max:     int(robotStatus.RangeStatus.Max),
+				Current: int(robotStatus.RangeStatus.Current),
+			}
+		default:
+			panic(fmt.Sprintf("%T is not a valid robot status", robotStatus))
+		}
+
 		robots = append(robots, robot{
 			ID:            rbt.Id,
 			Nickname:      rbt.Nickname,
 			RobotType:     rbt.RobotType,
 			InterfaceType: rbt.InterfaceType,
+			Status:        status,
 		})
 	}
 
@@ -283,6 +328,23 @@ func registerRobotHandler(w http.ResponseWriter, r *http.Request, ps httprouter.
 	w.WriteHeader(http.StatusOK)
 }
 
+func unregisterRobotHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	id := ps.ByName("id")
+	userID := r.Context().Value(userIDKey).(string)
+	log.Printf("unregistering robot with id %s", id)
+
+	_, err := infoserverClient.UnregisterRobot(context.Background(), &infoserver.UnregisterRobotQuery{
+		Id:     id,
+		UserId: userID,
+	})
+	if err != nil {
+		HTTPError(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
 func toggleHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	id := ps.ByName("id")
 	value := ps.ByName("value")
@@ -307,134 +369,37 @@ func toggleHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 }
 
 type usecase struct {
-	ID         string                 `json:"id"`
-	Name       string                 `json:"name"`
-	Parameters []calibrationParameter `json:"parameters"`
-}
-
-type parameterDetails interface {
-	parameterDetails()
-}
-
-type intParameter struct {
-	Min     int `json:"min"`
-	Max     int `json:"max"`
-	Default int `json:"default"`
-}
-
-func (p intParameter) parameterDetails() {}
-
-type calibrationParameter struct {
-	Name        string           `json:"name"`
-	Description string           `json:"description"`
-	Type        string           `json:"type"`
-	Details     parameterDetails `json:"details"`
-}
-
-// TODO: load from some kind of resource file
-// we want this to extendable, so plugins can request a list of parameters
-var usecases = map[string]usecase{
-	"1": {
-		ID:   "1",
-		Name: "Switch",
-		Parameters: []calibrationParameter{
-			{
-				Name:        "On Angle",
-				Description: "Angle to turn the servo to turn the switch on",
-				Type:        "int",
-				Details: intParameter{
-					Min:     90,
-					Max:     180,
-					Default: 100,
-				},
-			},
-			{
-				Name:        "Off Angle",
-				Description: "Angle to turn the servo to turn the switch off",
-				Type:        "int",
-				Details: intParameter{
-					Min:     0,
-					Max:     90,
-					Default: 80,
-				},
-			},
-		},
-	},
-	"2": {
-		ID:   "2",
-		Name: "Thermostat",
-		Parameters: []calibrationParameter{
-			{
-				Name:        "Minimum tempreture",
-				Description: "Minimum tempreture of the thermostat",
-				Type:        "int",
-				Details: intParameter{
-					Min:     200,
-					Max:     400,
-					Default: 293,
-				},
-			},
-			{
-				Name:        "Maximum tempreture",
-				Description: "Maximum tempreture of the thermostat",
-				Type:        "int",
-				Details: intParameter{
-					Min:     200,
-					Max:     400,
-					Default: 293,
-				},
-			},
-			{
-				Name:        "Minimum tempreture angle",
-				Description: "Angle of the minimum tempreture",
-				Type:        "int",
-				Details: intParameter{
-					Min:     0,
-					Max:     180,
-					Default: 80,
-				},
-			},
-			{
-				Name:        "Maximum tempreture angle",
-				Description: "Angle of the maximum tempreture",
-				Type:        "int",
-				Details: intParameter{
-					Min:     0,
-					Max:     180,
-					Default: 100,
-				},
-			},
-		},
-	},
+	Name        string `json:"name"`
+	Description string `json:"description"`
 }
 
 func usecasesHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	// map -> list
-	usecaseList := make([]usecase, 0, len(usecases))
-	for _, usecase := range usecases {
-		usecaseList = append(usecaseList, usecase)
-	}
-
-	w.WriteHeader(http.StatusOK)
-	err := json.NewEncoder(w).Encode(usecaseList)
+	stream, err := infoserverClient.GetUsecases(context.Background(), &empty.Empty{})
 	if err != nil {
-		log.Printf("Failed to encode error responce: %v", err)
-		HTTPError(w, errFailedEncode)
-	}
-}
-
-func usecaseHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	id := ps.ByName("id")
-
-	usecase, ok := usecases[id]
-	if !ok {
-		err := status.Newf(codes.NotFound, "No usecase with id \"%s\"", id).Err()
 		HTTPError(w, err)
 		return
 	}
 
+	usecases := make([]usecase, 0)
+
+	for {
+		uc, err := stream.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			HTTPError(w, err)
+			return
+		}
+
+		usecases = append(usecases, usecase{
+			Name:        uc.Name,
+			Description: uc.Description,
+		})
+	}
+
 	w.WriteHeader(http.StatusOK)
-	err := json.NewEncoder(w).Encode(usecase)
+	err = json.NewEncoder(w).Encode(usecases)
 	if err != nil {
 		log.Printf("Failed to encode error responce: %v", err)
 		HTTPError(w, errFailedEncode)
@@ -610,6 +575,37 @@ func rangeHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 	}
 }
 
+type renameRequest struct {
+	Nickname string `json:"nickname"`
+}
+
+func renameHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	id := ps.ByName("id")
+
+	log.Printf("renaming robot \"%s\"", id)
+
+	// decode json request
+	var request renameRequest
+	err := json.NewDecoder(r.Body).Decode(&request)
+	if err != nil {
+		log.Printf("Invalid rename request JSON: %v", err)
+		HTTPError(w, errInvalidJSON)
+		return
+	}
+
+	log.Printf("renaming robot \"%s\" to \"%s\"", id, request.Nickname)
+
+	_, err = infoserverClient.RenameRobot(context.Background(), &infoserver.RenameRobotRequest{
+		Id:          id,
+		UserId:      r.Context().Value(userIDKey).(string),
+		NewNickname: request.Nickname,
+	})
+	if err != nil {
+		HTTPError(w, err)
+		return
+	}
+}
+
 type hydraIntrospect struct {
 	Subject   string `json:"sub"`
 	Active    bool   `json:"active"`
@@ -676,13 +672,15 @@ func createRouter() *httprouter.Router {
 	// register routes
 	router.GET("/ping", pingHandler)
 	router.POST("/register", registerHandler)
-	router.POST("/robot/:id", auth(registerRobotHandler))
+	router.GET("/user", auth(userHandler))
 	router.GET("/robots", auth(robotsHandler))
 	router.GET("/robot/:id", auth(robotHandler))
+	router.POST("/robot/:id", auth(registerRobotHandler))
+	router.DELETE("/robot/:id", auth(unregisterRobotHandler))
 	router.PATCH("/robot/:id/toggle/:value", auth(toggleHandler))
 	router.PATCH("/robot/:id/range/:value", auth(rangeHandler))
-	router.GET("/usecases", auth(usecasesHandler))
-	router.GET("/usecase/:id", auth(usecaseHandler))
+	router.PATCH("/robot/:id/nickname", auth(renameHandler))
+	router.GET("/usecases", usecasesHandler)
 	router.GET("/robot/:id/calibration", auth(getCalibrationHandler))
 	router.PUT("/robot/:id/calibration", auth(setCalibrationHandler))
 

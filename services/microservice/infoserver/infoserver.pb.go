@@ -35,7 +35,7 @@ func (m *RobotsQuery) Reset()         { *m = RobotsQuery{} }
 func (m *RobotsQuery) String() string { return proto.CompactTextString(m) }
 func (*RobotsQuery) ProtoMessage()    {}
 func (*RobotsQuery) Descriptor() ([]byte, []int) {
-	return fileDescriptor_infoserver_dac06615ba301450, []int{0}
+	return fileDescriptor_infoserver_1ab29d2802dd84c5, []int{0}
 }
 func (m *RobotsQuery) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RobotsQuery.Unmarshal(m, b)
@@ -74,7 +74,7 @@ func (m *RobotQuery) Reset()         { *m = RobotQuery{} }
 func (m *RobotQuery) String() string { return proto.CompactTextString(m) }
 func (*RobotQuery) ProtoMessage()    {}
 func (*RobotQuery) Descriptor() ([]byte, []int) {
-	return fileDescriptor_infoserver_dac06615ba301450, []int{1}
+	return fileDescriptor_infoserver_1ab29d2802dd84c5, []int{1}
 }
 func (m *RobotQuery) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RobotQuery.Unmarshal(m, b)
@@ -122,7 +122,7 @@ func (m *RegisterRobotQuery) Reset()         { *m = RegisterRobotQuery{} }
 func (m *RegisterRobotQuery) String() string { return proto.CompactTextString(m) }
 func (*RegisterRobotQuery) ProtoMessage()    {}
 func (*RegisterRobotQuery) Descriptor() ([]byte, []int) {
-	return fileDescriptor_infoserver_dac06615ba301450, []int{2}
+	return fileDescriptor_infoserver_1ab29d2802dd84c5, []int{2}
 }
 func (m *RegisterRobotQuery) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RegisterRobotQuery.Unmarshal(m, b)
@@ -170,6 +170,52 @@ func (m *RegisterRobotQuery) GetRobotType() string {
 	return ""
 }
 
+type UnregisterRobotQuery struct {
+	Id                   string   `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	UserId               string   `protobuf:"bytes,2,opt,name=userId,proto3" json:"userId,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *UnregisterRobotQuery) Reset()         { *m = UnregisterRobotQuery{} }
+func (m *UnregisterRobotQuery) String() string { return proto.CompactTextString(m) }
+func (*UnregisterRobotQuery) ProtoMessage()    {}
+func (*UnregisterRobotQuery) Descriptor() ([]byte, []int) {
+	return fileDescriptor_infoserver_1ab29d2802dd84c5, []int{3}
+}
+func (m *UnregisterRobotQuery) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_UnregisterRobotQuery.Unmarshal(m, b)
+}
+func (m *UnregisterRobotQuery) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_UnregisterRobotQuery.Marshal(b, m, deterministic)
+}
+func (dst *UnregisterRobotQuery) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_UnregisterRobotQuery.Merge(dst, src)
+}
+func (m *UnregisterRobotQuery) XXX_Size() int {
+	return xxx_messageInfo_UnregisterRobotQuery.Size(m)
+}
+func (m *UnregisterRobotQuery) XXX_DiscardUnknown() {
+	xxx_messageInfo_UnregisterRobotQuery.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_UnregisterRobotQuery proto.InternalMessageInfo
+
+func (m *UnregisterRobotQuery) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
+func (m *UnregisterRobotQuery) GetUserId() string {
+	if m != nil {
+		return m.UserId
+	}
+	return ""
+}
+
 type ToggleRequest struct {
 	Id                   string   `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	UserId               string   `protobuf:"bytes,2,opt,name=userId,proto3" json:"userId,omitempty"`
@@ -184,7 +230,7 @@ func (m *ToggleRequest) Reset()         { *m = ToggleRequest{} }
 func (m *ToggleRequest) String() string { return proto.CompactTextString(m) }
 func (*ToggleRequest) ProtoMessage()    {}
 func (*ToggleRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_infoserver_dac06615ba301450, []int{3}
+	return fileDescriptor_infoserver_1ab29d2802dd84c5, []int{4}
 }
 func (m *ToggleRequest) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ToggleRequest.Unmarshal(m, b)
@@ -245,7 +291,7 @@ func (m *RangeRequest) Reset()         { *m = RangeRequest{} }
 func (m *RangeRequest) String() string { return proto.CompactTextString(m) }
 func (*RangeRequest) ProtoMessage()    {}
 func (*RangeRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_infoserver_dac06615ba301450, []int{4}
+	return fileDescriptor_infoserver_1ab29d2802dd84c5, []int{5}
 }
 func (m *RangeRequest) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RangeRequest.Unmarshal(m, b)
@@ -304,7 +350,7 @@ func (m *Robot) Reset()         { *m = Robot{} }
 func (m *Robot) String() string { return proto.CompactTextString(m) }
 func (*Robot) ProtoMessage()    {}
 func (*Robot) Descriptor() ([]byte, []int) {
-	return fileDescriptor_infoserver_dac06615ba301450, []int{5}
+	return fileDescriptor_infoserver_1ab29d2802dd84c5, []int{6}
 }
 func (m *Robot) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Robot.Unmarshal(m, b)
@@ -474,7 +520,7 @@ func (m *ToggleStatus) Reset()         { *m = ToggleStatus{} }
 func (m *ToggleStatus) String() string { return proto.CompactTextString(m) }
 func (*ToggleStatus) ProtoMessage()    {}
 func (*ToggleStatus) Descriptor() ([]byte, []int) {
-	return fileDescriptor_infoserver_dac06615ba301450, []int{6}
+	return fileDescriptor_infoserver_1ab29d2802dd84c5, []int{7}
 }
 func (m *ToggleStatus) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ToggleStatus.Unmarshal(m, b)
@@ -514,7 +560,7 @@ func (m *RangeStatus) Reset()         { *m = RangeStatus{} }
 func (m *RangeStatus) String() string { return proto.CompactTextString(m) }
 func (*RangeStatus) ProtoMessage()    {}
 func (*RangeStatus) Descriptor() ([]byte, []int) {
-	return fileDescriptor_infoserver_dac06615ba301450, []int{7}
+	return fileDescriptor_infoserver_1ab29d2802dd84c5, []int{8}
 }
 func (m *RangeStatus) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RangeStatus.Unmarshal(m, b)
@@ -568,7 +614,7 @@ func (m *CalibrationRequest) Reset()         { *m = CalibrationRequest{} }
 func (m *CalibrationRequest) String() string { return proto.CompactTextString(m) }
 func (*CalibrationRequest) ProtoMessage()    {}
 func (*CalibrationRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_infoserver_dac06615ba301450, []int{8}
+	return fileDescriptor_infoserver_1ab29d2802dd84c5, []int{9}
 }
 func (m *CalibrationRequest) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CalibrationRequest.Unmarshal(m, b)
@@ -625,7 +671,7 @@ func (m *CalibrationParameter) Reset()         { *m = CalibrationParameter{} }
 func (m *CalibrationParameter) String() string { return proto.CompactTextString(m) }
 func (*CalibrationParameter) ProtoMessage()    {}
 func (*CalibrationParameter) Descriptor() ([]byte, []int) {
-	return fileDescriptor_infoserver_dac06615ba301450, []int{9}
+	return fileDescriptor_infoserver_1ab29d2802dd84c5, []int{10}
 }
 func (m *CalibrationParameter) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CalibrationParameter.Unmarshal(m, b)
@@ -775,7 +821,7 @@ func (m *CalibrationParameters) Reset()         { *m = CalibrationParameters{} }
 func (m *CalibrationParameters) String() string { return proto.CompactTextString(m) }
 func (*CalibrationParameters) ProtoMessage()    {}
 func (*CalibrationParameters) Descriptor() ([]byte, []int) {
-	return fileDescriptor_infoserver_dac06615ba301450, []int{10}
+	return fileDescriptor_infoserver_1ab29d2802dd84c5, []int{11}
 }
 func (m *CalibrationParameters) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CalibrationParameters.Unmarshal(m, b)
@@ -815,7 +861,7 @@ func (m *SetUsecaseRequest) Reset()         { *m = SetUsecaseRequest{} }
 func (m *SetUsecaseRequest) String() string { return proto.CompactTextString(m) }
 func (*SetUsecaseRequest) ProtoMessage()    {}
 func (*SetUsecaseRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_infoserver_dac06615ba301450, []int{11}
+	return fileDescriptor_infoserver_1ab29d2802dd84c5, []int{12}
 }
 func (m *SetUsecaseRequest) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_SetUsecaseRequest.Unmarshal(m, b)
@@ -856,10 +902,119 @@ func (m *SetUsecaseRequest) GetUsecase() string {
 	return ""
 }
 
+type RenameRobotRequest struct {
+	Id                   string   `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	UserId               string   `protobuf:"bytes,2,opt,name=userId,proto3" json:"userId,omitempty"`
+	NewNickname          string   `protobuf:"bytes,3,opt,name=newNickname,proto3" json:"newNickname,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *RenameRobotRequest) Reset()         { *m = RenameRobotRequest{} }
+func (m *RenameRobotRequest) String() string { return proto.CompactTextString(m) }
+func (*RenameRobotRequest) ProtoMessage()    {}
+func (*RenameRobotRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_infoserver_1ab29d2802dd84c5, []int{13}
+}
+func (m *RenameRobotRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_RenameRobotRequest.Unmarshal(m, b)
+}
+func (m *RenameRobotRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_RenameRobotRequest.Marshal(b, m, deterministic)
+}
+func (dst *RenameRobotRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RenameRobotRequest.Merge(dst, src)
+}
+func (m *RenameRobotRequest) XXX_Size() int {
+	return xxx_messageInfo_RenameRobotRequest.Size(m)
+}
+func (m *RenameRobotRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_RenameRobotRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_RenameRobotRequest proto.InternalMessageInfo
+
+func (m *RenameRobotRequest) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
+func (m *RenameRobotRequest) GetUserId() string {
+	if m != nil {
+		return m.UserId
+	}
+	return ""
+}
+
+func (m *RenameRobotRequest) GetNewNickname() string {
+	if m != nil {
+		return m.NewNickname
+	}
+	return ""
+}
+
+type Usecase struct {
+	Id                   string   `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name                 string   `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Description          string   `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *Usecase) Reset()         { *m = Usecase{} }
+func (m *Usecase) String() string { return proto.CompactTextString(m) }
+func (*Usecase) ProtoMessage()    {}
+func (*Usecase) Descriptor() ([]byte, []int) {
+	return fileDescriptor_infoserver_1ab29d2802dd84c5, []int{14}
+}
+func (m *Usecase) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Usecase.Unmarshal(m, b)
+}
+func (m *Usecase) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Usecase.Marshal(b, m, deterministic)
+}
+func (dst *Usecase) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Usecase.Merge(dst, src)
+}
+func (m *Usecase) XXX_Size() int {
+	return xxx_messageInfo_Usecase.Size(m)
+}
+func (m *Usecase) XXX_DiscardUnknown() {
+	xxx_messageInfo_Usecase.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Usecase proto.InternalMessageInfo
+
+func (m *Usecase) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
+func (m *Usecase) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
+func (m *Usecase) GetDescription() string {
+	if m != nil {
+		return m.Description
+	}
+	return ""
+}
+
 func init() {
 	proto.RegisterType((*RobotsQuery)(nil), "RobotsQuery")
 	proto.RegisterType((*RobotQuery)(nil), "RobotQuery")
 	proto.RegisterType((*RegisterRobotQuery)(nil), "RegisterRobotQuery")
+	proto.RegisterType((*UnregisterRobotQuery)(nil), "UnregisterRobotQuery")
 	proto.RegisterType((*ToggleRequest)(nil), "ToggleRequest")
 	proto.RegisterType((*RangeRequest)(nil), "RangeRequest")
 	proto.RegisterType((*Robot)(nil), "Robot")
@@ -869,6 +1024,8 @@ func init() {
 	proto.RegisterType((*CalibrationParameter)(nil), "CalibrationParameter")
 	proto.RegisterType((*CalibrationParameters)(nil), "CalibrationParameters")
 	proto.RegisterType((*SetUsecaseRequest)(nil), "SetUsecaseRequest")
+	proto.RegisterType((*RenameRobotRequest)(nil), "RenameRobotRequest")
+	proto.RegisterType((*Usecase)(nil), "Usecase")
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -886,11 +1043,14 @@ type InfoServerClient interface {
 	GetRobot(ctx context.Context, in *RobotQuery, opts ...grpc.CallOption) (*Robot, error)
 	GetRobots(ctx context.Context, in *RobotsQuery, opts ...grpc.CallOption) (InfoServer_GetRobotsClient, error)
 	RegisterRobot(ctx context.Context, in *RegisterRobotQuery, opts ...grpc.CallOption) (*empty.Empty, error)
+	UnregisterRobot(ctx context.Context, in *UnregisterRobotQuery, opts ...grpc.CallOption) (*empty.Empty, error)
 	ToggleRobot(ctx context.Context, in *ToggleRequest, opts ...grpc.CallOption) (*empty.Empty, error)
 	CalibrateRobot(ctx context.Context, in *CalibrationRequest, opts ...grpc.CallOption) (*Robot, error)
 	GetCalibration(ctx context.Context, in *RobotQuery, opts ...grpc.CallOption) (*CalibrationParameters, error)
 	SetUsecase(ctx context.Context, in *SetUsecaseRequest, opts ...grpc.CallOption) (*Robot, error)
 	RangeRobot(ctx context.Context, in *RangeRequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	RenameRobot(ctx context.Context, in *RenameRobotRequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	GetUsecases(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (InfoServer_GetUsecasesClient, error)
 }
 
 type infoServerClient struct {
@@ -951,6 +1111,15 @@ func (c *infoServerClient) RegisterRobot(ctx context.Context, in *RegisterRobotQ
 	return out, nil
 }
 
+func (c *infoServerClient) UnregisterRobot(ctx context.Context, in *UnregisterRobotQuery, opts ...grpc.CallOption) (*empty.Empty, error) {
+	out := new(empty.Empty)
+	err := c.cc.Invoke(ctx, "/InfoServer/UnregisterRobot", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *infoServerClient) ToggleRobot(ctx context.Context, in *ToggleRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
 	out := new(empty.Empty)
 	err := c.cc.Invoke(ctx, "/InfoServer/ToggleRobot", in, out, opts...)
@@ -996,16 +1165,60 @@ func (c *infoServerClient) RangeRobot(ctx context.Context, in *RangeRequest, opt
 	return out, nil
 }
 
+func (c *infoServerClient) RenameRobot(ctx context.Context, in *RenameRobotRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
+	out := new(empty.Empty)
+	err := c.cc.Invoke(ctx, "/InfoServer/RenameRobot", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *infoServerClient) GetUsecases(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (InfoServer_GetUsecasesClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_InfoServer_serviceDesc.Streams[1], "/InfoServer/GetUsecases", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &infoServerGetUsecasesClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type InfoServer_GetUsecasesClient interface {
+	Recv() (*Usecase, error)
+	grpc.ClientStream
+}
+
+type infoServerGetUsecasesClient struct {
+	grpc.ClientStream
+}
+
+func (x *infoServerGetUsecasesClient) Recv() (*Usecase, error) {
+	m := new(Usecase)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // InfoServerServer is the server API for InfoServer service.
 type InfoServerServer interface {
 	GetRobot(context.Context, *RobotQuery) (*Robot, error)
 	GetRobots(*RobotsQuery, InfoServer_GetRobotsServer) error
 	RegisterRobot(context.Context, *RegisterRobotQuery) (*empty.Empty, error)
+	UnregisterRobot(context.Context, *UnregisterRobotQuery) (*empty.Empty, error)
 	ToggleRobot(context.Context, *ToggleRequest) (*empty.Empty, error)
 	CalibrateRobot(context.Context, *CalibrationRequest) (*Robot, error)
 	GetCalibration(context.Context, *RobotQuery) (*CalibrationParameters, error)
 	SetUsecase(context.Context, *SetUsecaseRequest) (*Robot, error)
 	RangeRobot(context.Context, *RangeRequest) (*empty.Empty, error)
+	RenameRobot(context.Context, *RenameRobotRequest) (*empty.Empty, error)
+	GetUsecases(*empty.Empty, InfoServer_GetUsecasesServer) error
 }
 
 func RegisterInfoServerServer(s *grpc.Server, srv InfoServerServer) {
@@ -1065,6 +1278,24 @@ func _InfoServer_RegisterRobot_Handler(srv interface{}, ctx context.Context, dec
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(InfoServerServer).RegisterRobot(ctx, req.(*RegisterRobotQuery))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _InfoServer_UnregisterRobot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UnregisterRobotQuery)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InfoServerServer).UnregisterRobot(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/InfoServer/UnregisterRobot",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InfoServerServer).UnregisterRobot(ctx, req.(*UnregisterRobotQuery))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1159,6 +1390,45 @@ func _InfoServer_RangeRobot_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _InfoServer_RenameRobot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RenameRobotRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InfoServerServer).RenameRobot(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/InfoServer/RenameRobot",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InfoServerServer).RenameRobot(ctx, req.(*RenameRobotRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _InfoServer_GetUsecases_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(empty.Empty)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(InfoServerServer).GetUsecases(m, &infoServerGetUsecasesServer{stream})
+}
+
+type InfoServer_GetUsecasesServer interface {
+	Send(*Usecase) error
+	grpc.ServerStream
+}
+
+type infoServerGetUsecasesServer struct {
+	grpc.ServerStream
+}
+
+func (x *infoServerGetUsecasesServer) Send(m *Usecase) error {
+	return x.ServerStream.SendMsg(m)
+}
+
 var _InfoServer_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "InfoServer",
 	HandlerType: (*InfoServerServer)(nil),
@@ -1170,6 +1440,10 @@ var _InfoServer_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RegisterRobot",
 			Handler:    _InfoServer_RegisterRobot_Handler,
+		},
+		{
+			MethodName: "UnregisterRobot",
+			Handler:    _InfoServer_UnregisterRobot_Handler,
 		},
 		{
 			MethodName: "ToggleRobot",
@@ -1191,6 +1465,10 @@ var _InfoServer_serviceDesc = grpc.ServiceDesc{
 			MethodName: "RangeRobot",
 			Handler:    _InfoServer_RangeRobot_Handler,
 		},
+		{
+			MethodName: "RenameRobot",
+			Handler:    _InfoServer_RenameRobot_Handler,
+		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
@@ -1198,53 +1476,65 @@ var _InfoServer_serviceDesc = grpc.ServiceDesc{
 			Handler:       _InfoServer_GetRobots_Handler,
 			ServerStreams: true,
 		},
+		{
+			StreamName:    "GetUsecases",
+			Handler:       _InfoServer_GetUsecases_Handler,
+			ServerStreams: true,
+		},
 	},
 	Metadata: "infoserver/infoserver.proto",
 }
 
 func init() {
-	proto.RegisterFile("infoserver/infoserver.proto", fileDescriptor_infoserver_dac06615ba301450)
+	proto.RegisterFile("infoserver/infoserver.proto", fileDescriptor_infoserver_1ab29d2802dd84c5)
 }
 
-var fileDescriptor_infoserver_dac06615ba301450 = []byte{
-	// 624 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x54, 0x5f, 0x4f, 0xdb, 0x3e,
-	0x14, 0x4d, 0x1a, 0x28, 0xed, 0x4d, 0x83, 0x7e, 0x3f, 0x0f, 0x50, 0x54, 0xd0, 0xc4, 0x2c, 0x90,
-	0xd0, 0x1e, 0x5c, 0x04, 0x43, 0xbc, 0xed, 0x81, 0x69, 0xa2, 0x68, 0xd3, 0xb4, 0x99, 0x3f, 0xef,
-	0x69, 0x70, 0xa3, 0x68, 0x6d, 0xdc, 0xd9, 0x0e, 0x1a, 0x8f, 0xfb, 0x1e, 0xfb, 0x8a, 0xfb, 0x0e,
-	0x53, 0xec, 0xa4, 0x71, 0x68, 0x87, 0xe8, 0x9b, 0xef, 0xf5, 0xb9, 0x3e, 0xb9, 0xe7, 0xde, 0x1c,
-	0xd8, 0x4d, 0xb3, 0x31, 0x97, 0x4c, 0x3c, 0x30, 0x31, 0xa8, 0x8f, 0x64, 0x26, 0xb8, 0xe2, 0xfd,
-	0xdd, 0x84, 0xf3, 0x64, 0xc2, 0x06, 0x3a, 0x1a, 0xe5, 0xe3, 0x01, 0x9b, 0xce, 0xd4, 0xa3, 0xb9,
-	0xc4, 0x87, 0xe0, 0x53, 0x3e, 0xe2, 0x4a, 0x7e, 0xcb, 0x99, 0x78, 0x44, 0x3b, 0xd0, 0xce, 0x25,
-	0x13, 0x57, 0xf7, 0xa1, 0xbb, 0xef, 0x1e, 0x75, 0x69, 0x19, 0xe1, 0x77, 0x00, 0x1a, 0x66, 0x50,
-	0x9b, 0xd0, 0x4a, 0x2b, 0x44, 0x2b, 0xbd, 0xb7, 0xaa, 0x5a, 0x8d, 0xaa, 0x07, 0x40, 0x94, 0x25,
-	0xa9, 0x54, 0x4c, 0xac, 0x5e, 0x8d, 0xfa, 0xd0, 0xc9, 0xd2, 0xf8, 0x7b, 0x16, 0x4d, 0x59, 0xe8,
-	0xe9, 0x9b, 0x79, 0x8c, 0xf6, 0xa0, 0x2b, 0x8a, 0x17, 0x6f, 0x1e, 0x67, 0x2c, 0x5c, 0xd3, 0x97,
-	0x75, 0x02, 0xc7, 0x10, 0xdc, 0xf0, 0x24, 0x99, 0x30, 0xca, 0x7e, 0xe4, 0x4c, 0xaa, 0x17, 0x53,
-	0x6e, 0xc1, 0xfa, 0x43, 0x34, 0xc9, 0x0d, 0x5f, 0x87, 0x9a, 0xa0, 0xc8, 0x8e, 0xb9, 0x88, 0x0d,
-	0x51, 0x87, 0x9a, 0x00, 0x7f, 0x86, 0x1e, 0x8d, 0xb2, 0xe4, 0x05, 0x1c, 0xde, 0x72, 0x8e, 0x82,
-	0xda, 0x2b, 0x39, 0xf0, 0x1f, 0x17, 0xd6, 0xb5, 0x46, 0x0b, 0xef, 0xd8, 0x32, 0xb4, 0x9e, 0x93,
-	0xc1, 0x7b, 0x22, 0x03, 0x3a, 0x80, 0x20, 0xcd, 0x14, 0x13, 0xe3, 0x28, 0x66, 0x96, 0x50, 0xcd,
-	0x24, 0x3a, 0x85, 0x9e, 0xd2, 0x62, 0x5d, 0xab, 0x48, 0xe5, 0x32, 0x5c, 0xdf, 0x77, 0x8f, 0xfc,
-	0x93, 0x80, 0xdc, 0x58, 0xc9, 0xa1, 0x43, 0x1b, 0x20, 0x74, 0x0c, 0xbe, 0x28, 0x9a, 0x2f, 0x6b,
-	0xda, 0xba, 0xa6, 0x47, 0x68, 0x9d, 0x1b, 0x3a, 0xd4, 0x86, 0x5c, 0x04, 0xe0, 0xeb, 0x2f, 0x33,
-	0x21, 0x3e, 0x80, 0x9e, 0x4d, 0x50, 0xab, 0xe2, 0x5a, 0xca, 0xe3, 0x4f, 0xe0, 0x5b, 0x4f, 0xa2,
-	0xff, 0xc0, 0x9b, 0x46, 0x3f, 0x35, 0xc4, 0xa3, 0xc5, 0x51, 0x67, 0xd2, 0xac, 0x94, 0xb2, 0x38,
-	0xa2, 0x10, 0x36, 0xe2, 0x5c, 0x08, 0x96, 0x29, 0x2d, 0x88, 0x47, 0xab, 0x10, 0x4b, 0x40, 0x1f,
-	0xa2, 0x49, 0x3a, 0x12, 0x91, 0x4a, 0x79, 0xb6, 0xea, 0xd8, 0xce, 0x00, 0x66, 0x91, 0x88, 0xa6,
-	0x4c, 0x31, 0x21, 0xc3, 0xd6, 0xbe, 0x77, 0xe4, 0x9f, 0x6c, 0x13, 0xeb, 0xc1, 0xaf, 0xd5, 0x2d,
-	0xb5, 0x80, 0xf8, 0x97, 0x0b, 0x5b, 0xcb, 0x40, 0x0b, 0xbc, 0x08, 0xd6, 0xf4, 0x88, 0xcd, 0x8c,
-	0xf4, 0x19, 0xbd, 0x86, 0xee, 0x88, 0xf3, 0xc9, 0xdd, 0x7c, 0x5d, 0x3a, 0x43, 0x87, 0xd6, 0x29,
-	0xb4, 0x07, 0x9d, 0x34, 0x53, 0x77, 0xf3, 0x8d, 0xf5, 0x86, 0x0e, 0x9d, 0x67, 0x2e, 0x36, 0x4a,
-	0x49, 0xf1, 0x17, 0xd8, 0x5e, 0xf6, 0x09, 0xf2, 0x49, 0x4f, 0xee, 0x4b, 0x7b, 0xba, 0x85, 0xff,
-	0xaf, 0x99, 0xba, 0x95, 0x2c, 0x8e, 0xe4, 0xca, 0xeb, 0x1f, 0xc2, 0x46, 0x6e, 0x2a, 0xcb, 0x6d,
-	0xae, 0xc2, 0x93, 0xdf, 0x1e, 0xc0, 0x55, 0x36, 0xe6, 0xd7, 0xda, 0xbc, 0xd0, 0x1b, 0xe8, 0x5c,
-	0x32, 0x65, 0xfe, 0x09, 0x9f, 0xd4, 0xfe, 0xd1, 0x6f, 0x9b, 0x00, 0x3b, 0xe8, 0x10, 0xba, 0x15,
-	0x44, 0xa2, 0x1e, 0xb1, 0x8c, 0xac, 0x06, 0x1d, 0xbb, 0xe8, 0x3d, 0x04, 0x0d, 0x1b, 0x42, 0xaf,
-	0xc8, 0xa2, 0x2d, 0xf5, 0x77, 0x88, 0xf1, 0x49, 0x52, 0xf9, 0x24, 0xf9, 0x58, 0xf8, 0x24, 0x76,
-	0xd0, 0x39, 0xf8, 0xa5, 0x9d, 0x98, 0x1f, 0x94, 0x34, 0xcc, 0xe5, 0x99, 0xc2, 0x01, 0x6c, 0x56,
-	0x62, 0xb2, 0x8a, 0x79, 0x71, 0x05, 0xad, 0x86, 0xce, 0x61, 0xf3, 0x92, 0x29, 0x0b, 0xd2, 0xec,
-	0x7c, 0x67, 0xe9, 0x6c, 0x24, 0x76, 0xd0, 0x5b, 0x80, 0x7a, 0x24, 0x08, 0x91, 0x85, 0xf9, 0x58,
-	0x24, 0x67, 0x00, 0xc6, 0xb8, 0xf4, 0x17, 0x05, 0xc4, 0x76, 0xb1, 0x7f, 0x37, 0x33, 0x6a, 0xeb,
-	0xcc, 0xe9, 0xdf, 0x00, 0x00, 0x00, 0xff, 0xff, 0xf1, 0x8f, 0x14, 0xe0, 0x6c, 0x06, 0x00, 0x00,
+var fileDescriptor_infoserver_1ab29d2802dd84c5 = []byte{
+	// 723 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x55, 0x5f, 0x4f, 0xdb, 0x3a,
+	0x14, 0x6f, 0x1a, 0x68, 0xd3, 0x93, 0x96, 0x7b, 0xaf, 0x2f, 0xa0, 0xa8, 0xa0, 0xa9, 0xb3, 0x40,
+	0x42, 0x7b, 0x70, 0x11, 0x0c, 0xf1, 0x32, 0xf1, 0xc0, 0x34, 0x51, 0xb4, 0x89, 0x6d, 0xe6, 0xcf,
+	0xe3, 0xa4, 0x34, 0xb8, 0x55, 0xb4, 0x36, 0xe9, 0x6c, 0x87, 0x8d, 0xc7, 0x7d, 0xc6, 0x7d, 0x8e,
+	0x7d, 0x87, 0x29, 0x76, 0xd2, 0x38, 0x6d, 0xa9, 0xe8, 0xde, 0x7c, 0x8e, 0x7f, 0xc7, 0xe7, 0x9c,
+	0x9f, 0x8f, 0x7f, 0x86, 0x9d, 0x30, 0x1a, 0xc4, 0x82, 0xf1, 0x07, 0xc6, 0xbb, 0xc5, 0x92, 0x4c,
+	0x78, 0x2c, 0xe3, 0xf6, 0xce, 0x30, 0x8e, 0x87, 0x23, 0xd6, 0x55, 0x56, 0x3f, 0x19, 0x74, 0xd9,
+	0x78, 0x22, 0x1f, 0xf5, 0x26, 0xde, 0x07, 0x97, 0xc6, 0xfd, 0x58, 0x8a, 0xcf, 0x09, 0xe3, 0x8f,
+	0x68, 0x1b, 0x6a, 0x89, 0x60, 0xfc, 0xf2, 0xde, 0xb3, 0x3a, 0xd6, 0x41, 0x83, 0x66, 0x16, 0x7e,
+	0x0d, 0xa0, 0x60, 0x1a, 0xb5, 0x01, 0xd5, 0x30, 0x47, 0x54, 0xc3, 0x7b, 0x23, 0xaa, 0x5a, 0x8a,
+	0x7a, 0x00, 0x44, 0xd9, 0x30, 0x14, 0x92, 0xf1, 0xd5, 0xa3, 0x51, 0x1b, 0x9c, 0x28, 0x0c, 0xbe,
+	0x46, 0xfe, 0x98, 0x79, 0xb6, 0xda, 0x99, 0xda, 0x68, 0x17, 0x1a, 0x3c, 0x3d, 0xf1, 0xe6, 0x71,
+	0xc2, 0xbc, 0x35, 0xb5, 0x59, 0x38, 0xf0, 0x19, 0x6c, 0xde, 0x46, 0xfc, 0xaf, 0x33, 0xe3, 0x00,
+	0x5a, 0x37, 0xf1, 0x70, 0x38, 0x62, 0x94, 0x7d, 0x4b, 0x98, 0x90, 0xcf, 0x2e, 0x79, 0x13, 0xd6,
+	0x1f, 0xfc, 0x51, 0xa2, 0xeb, 0x75, 0xa8, 0x36, 0x52, 0xef, 0x20, 0xe6, 0x81, 0x2e, 0xd4, 0xa1,
+	0xda, 0xc0, 0x1f, 0xa0, 0x49, 0xfd, 0x68, 0xf8, 0x8c, 0x1c, 0xf6, 0xe2, 0x1c, 0x69, 0x6a, 0x3b,
+	0xcb, 0x81, 0x7f, 0x5b, 0xb0, 0xae, 0x3a, 0x9d, 0x3b, 0xc7, 0xa4, 0xb1, 0xba, 0x8c, 0x46, 0x7b,
+	0x86, 0x46, 0xb4, 0x07, 0xad, 0x30, 0x92, 0x8c, 0x0f, 0xfc, 0x80, 0x19, 0x44, 0x97, 0x9d, 0xe8,
+	0x18, 0x9a, 0x52, 0x91, 0x75, 0x2d, 0x7d, 0x99, 0x08, 0x6f, 0xbd, 0x63, 0x1d, 0xb8, 0x47, 0x2d,
+	0x72, 0x63, 0x38, 0x7b, 0x15, 0x5a, 0x02, 0xa1, 0x43, 0x70, 0x79, 0xda, 0x7c, 0x16, 0x53, 0x53,
+	0x31, 0x4d, 0x42, 0x0b, 0x5f, 0xaf, 0x42, 0x4d, 0xc8, 0x79, 0x0b, 0x5c, 0x55, 0x99, 0x36, 0xf1,
+	0x1e, 0x34, 0xcd, 0x04, 0x05, 0x2b, 0x96, 0xc1, 0x3c, 0x7e, 0x0f, 0xae, 0x71, 0x24, 0xfa, 0x17,
+	0xec, 0xb1, 0xff, 0x43, 0x41, 0x6c, 0x9a, 0x2e, 0x95, 0x27, 0x8c, 0x32, 0x2a, 0xd3, 0x25, 0xf2,
+	0xa0, 0x1e, 0x24, 0x9c, 0xb3, 0x48, 0x2a, 0x42, 0x6c, 0x9a, 0x9b, 0x58, 0x00, 0x7a, 0xeb, 0x8f,
+	0xc2, 0x3e, 0xf7, 0x65, 0x18, 0x47, 0xab, 0x5e, 0xdb, 0x09, 0xc0, 0xc4, 0xe7, 0xfe, 0x98, 0x49,
+	0xc6, 0x85, 0x57, 0xed, 0xd8, 0x07, 0xee, 0xd1, 0x16, 0x31, 0x0e, 0xfc, 0x94, 0xef, 0x52, 0x03,
+	0x88, 0x7f, 0x5a, 0xb0, 0xb9, 0x08, 0x34, 0x97, 0x17, 0xc1, 0x9a, 0xba, 0x62, 0x7d, 0x47, 0x6a,
+	0x8d, 0x5e, 0x40, 0xa3, 0x1f, 0xc7, 0xa3, 0xbb, 0xe9, 0xb8, 0x38, 0xbd, 0x0a, 0x2d, 0x5c, 0x68,
+	0x17, 0x9c, 0x30, 0x92, 0x77, 0xd3, 0x89, 0xb5, 0x7b, 0x15, 0x3a, 0xf5, 0x9c, 0xd7, 0x33, 0x4a,
+	0xf1, 0x15, 0x6c, 0x2d, 0x2a, 0x41, 0xcc, 0xf4, 0x64, 0x3d, 0xb7, 0xa7, 0x5b, 0xf8, 0xef, 0x9a,
+	0xc9, 0x5b, 0xc1, 0x02, 0x5f, 0xac, 0x3c, 0xfe, 0x1e, 0xd4, 0x13, 0x1d, 0x99, 0x4d, 0x73, 0x6e,
+	0xe2, 0x2f, 0xa9, 0xda, 0xa4, 0x7d, 0xab, 0x77, 0xb0, 0xea, 0xd3, 0xed, 0x80, 0x1b, 0xb1, 0xef,
+	0x57, 0x65, 0xc1, 0x31, 0x5d, 0xf8, 0x23, 0xd4, 0xb3, 0x9a, 0x9f, 0x24, 0xbf, 0x6a, 0x90, 0xdf,
+	0x01, 0xf7, 0x9e, 0x89, 0x80, 0x87, 0x93, 0x94, 0x89, 0xfc, 0x40, 0xc3, 0x75, 0xf4, 0x6b, 0x0d,
+	0xe0, 0x32, 0x1a, 0xc4, 0xd7, 0x4a, 0xad, 0xd1, 0x4b, 0x70, 0x2e, 0x98, 0xd4, 0x8f, 0xd8, 0x25,
+	0x85, 0x6c, 0xb5, 0x6b, 0xda, 0xc0, 0x15, 0xb4, 0x0f, 0x8d, 0x1c, 0x22, 0x50, 0x93, 0x18, 0xca,
+	0x5d, 0x80, 0x0e, 0x2d, 0x74, 0x06, 0xad, 0x92, 0xee, 0xa2, 0xff, 0xc9, 0xbc, 0x0e, 0xb7, 0xb7,
+	0x89, 0xfe, 0x18, 0x48, 0xfe, 0x31, 0x90, 0x77, 0xe9, 0xc7, 0x80, 0x2b, 0xe8, 0x1c, 0xfe, 0x99,
+	0xd1, 0x4f, 0xb4, 0x45, 0x16, 0x29, 0xea, 0x92, 0x33, 0x4e, 0xc1, 0xcd, 0x34, 0x54, 0xab, 0x12,
+	0x29, 0x29, 0xea, 0x92, 0xc0, 0x2e, 0x6c, 0xe4, 0x13, 0xc4, 0xf2, 0xea, 0xe7, 0xdf, 0x9d, 0x41,
+	0xca, 0x29, 0x6c, 0x5c, 0x30, 0x69, 0x40, 0xca, 0xec, 0x6d, 0x2f, 0x1c, 0x48, 0x81, 0x2b, 0xe8,
+	0x15, 0x40, 0x31, 0x87, 0x08, 0x91, 0xb9, 0xa1, 0x34, 0x92, 0x9c, 0x00, 0x68, 0xb5, 0x56, 0x15,
+	0xb5, 0x88, 0x29, 0xdd, 0x4b, 0x9a, 0x79, 0x03, 0xae, 0x31, 0x93, 0xea, 0x1e, 0x66, 0x27, 0x74,
+	0x49, 0xf4, 0x31, 0xb8, 0x17, 0xd3, 0x9a, 0x04, 0x7a, 0x02, 0xd8, 0x76, 0x48, 0x06, 0x49, 0x2f,
+	0xbf, 0x5f, 0x53, 0xbb, 0xc7, 0x7f, 0x02, 0x00, 0x00, 0xff, 0xff, 0x8c, 0xfd, 0xb8, 0x89, 0x14,
+	0x08, 0x00, 0x00,
 }
