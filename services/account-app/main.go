@@ -278,7 +278,7 @@ func consentError(w http.ResponseWriter, err error) {
 func acceptConsent(w http.ResponseWriter, r *http.Request, challenge string) {
 	acceptConsentURL := fmt.Sprintf("https://hydra.halspals.co.uk/oauth2/auth/requests/consent/%s/accept", challenge)
 
-	jsonData := []byte(`{ "remember":false, "grant_scope":["openid"]}`)
+	jsonData := []byte(`{ "remember":false, "grant_scope":["openid,offline"]}`)
 	req, err := http.NewRequest("PUT", acceptConsentURL, bytes.NewBuffer(jsonData))
 	if err != nil {
 		log.Printf("error making hydra request: %v", err)
