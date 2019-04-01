@@ -18,6 +18,8 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
+const val RECALIBRATE_FLAG = "Recalibrate"
+
 /**
  * The final screen of the robot registration wizard, where the user configures the robot parameters.
  */
@@ -37,6 +39,11 @@ class ConfigureRobotFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        if (arguments?.getBoolean(RECALIBRATE_FLAG, false) == true) {
+            // If we have been instructed to recalibrate, rename the finish button for clarity
+            finish_button.setText(R.string.reconfigure_button_text)
+        }
 
         finish_button.setOnClickListener { _ -> setConfigParametersAndFinish() }
 

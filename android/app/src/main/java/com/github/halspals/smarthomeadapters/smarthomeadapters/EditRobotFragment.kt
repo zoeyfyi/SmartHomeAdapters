@@ -41,14 +41,12 @@ class EditRobotFragment : Fragment() {
 
         finish_edit_image_view.setOnClickListener { _ -> parent.startFragment(RobotsFragment()) }
 
-        recalibrate_layout.setOnClickListener { _ -> /*TODO*/ }
+        recalibrate_layout.setOnClickListener { _ ->
+            startRegistrationWizardAtScreen(RECALIBRATE_FLAG)
+        }
+
         rename_layout.setOnClickListener { _ ->
-            parent.startActivity(
-                    parent.intentFor<RegisterRobotActivity>(
-                            SKIP_TO_SCREEN_FLAG to RENAME_FLAG,
-                            ROBOT_ID_FLAG to parent.robotToEdit.id
-                    )
-            )
+           startRegistrationWizardAtScreen(RENAME_FLAG)
         }
 
         delete_layout.setOnClickListener { _ ->
@@ -144,6 +142,21 @@ class EditRobotFragment : Fragment() {
                         })
             }
         }
+    }
+
+
+    /**
+     * Tells the parent [MainActivity] to start a [RegisterRobotActivity] at the desired screen.
+     *
+     * @param skipToScreenFlag the flag indicating which screen/fragment to start at
+     */
+    private fun startRegistrationWizardAtScreen(skipToScreenFlag: String) {
+        parent.startActivity(
+                parent.intentFor<RegisterRobotActivity>(
+                        SKIP_TO_SCREEN_FLAG to skipToScreenFlag,
+                        ROBOT_ID_FLAG to parent.robotToEdit.id
+                )
+        )
     }
 
 }

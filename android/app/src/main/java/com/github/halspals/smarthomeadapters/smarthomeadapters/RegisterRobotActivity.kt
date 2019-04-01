@@ -68,9 +68,27 @@ class RegisterRobotActivity : AppCompatActivity() {
                     // Start the NicknameFragment and let it know we want to rename
                     Log.v(tag, "Starting NicknameFragment for renaming $givenRobotId")
                     robotId = givenRobotId
-                    val args = Bundle()
-                    args.putBoolean(RENAME_FLAG, true)
+                    val args = Bundle().apply {
+                        putBoolean(RENAME_FLAG, true)
+                    }
                     startFragment(fragment = NicknameFragment(), args = args)
+                }
+            }
+
+            RECALIBRATE_FLAG -> {
+                // The user wants to recalibrate an existing robot; make sure we have been told
+                // which one
+                if (givenRobotId == null) {
+                    Log.e(tag,  "User wanted to move straight to ConfigureRobotFragment " +
+                            "but no robot ID was given")
+                } else {
+                    // Start the ConfigureRobotFragment and let it know we want to recalibrate
+                    Log.v(tag, "Starting ConfigureRobotFragment to recalibrate $givenRobotId")
+                    robotId = givenRobotId
+                    val args = Bundle().apply {
+                        putBoolean(RECALIBRATE_FLAG, true)
+                    }
+                    startFragment(fragment = ConfigureRobotFragment(), args = args)
                 }
             }
 
