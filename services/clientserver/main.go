@@ -302,6 +302,23 @@ func registerRobotHandler(w http.ResponseWriter, r *http.Request, ps httprouter.
 	w.WriteHeader(http.StatusOK)
 }
 
+func unregisterRobotHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	id := ps.ByName("id")
+	userID := r.Context().Value(userIDKey).(string)
+	log.Printf("unregistering robot with id %s", id)
+
+	_, err := infoserverClient.UnregisterRobot(context.Background(), &infoserver.UnregisterRobotQuery{
+		Id:     id,
+		UserId: userID,
+	})
+	if err != nil {
+		HTTPError(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
 func toggleHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	id := ps.ByName("id")
 	value := ps.ByName("value")
@@ -629,9 +646,10 @@ func createRouter() *httprouter.Router {
 	// register routes
 	router.GET("/ping", pingHandler)
 	router.POST("/register", registerHandler)
-	router.POST("/robot/:id", auth(registerRobotHandler))
 	router.GET("/robots", auth(robotsHandler))
 	router.GET("/robot/:id", auth(robotHandler))
+	router.POST("/robot/:id", auth(registerRobotHandler))
+	router.DELETE("/robot/:id", auth(unregisterRobotHandler))
 	router.PATCH("/robot/:id/toggle/:value", auth(toggleHandler))
 	router.PATCH("/robot/:id/range/:value", auth(rangeHandler))
 	router.PATCH("/robot/:id/nickname", auth(renameHandler))
