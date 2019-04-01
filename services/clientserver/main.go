@@ -517,9 +517,11 @@ func setCalibrationHandler(w http.ResponseWriter, r *http.Request, ps httprouter
 
 func getCalibrationHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	id := ps.ByName("id")
+	userID := r.Context().Value(userIDKey).(string)
 
 	params, err := infoserverClient.GetCalibration(context.Background(), &infoserver.RobotQuery{
-		Id: id,
+		Id:     id,
+		UserId: userID,
 	})
 	if err != nil {
 		HTTPError(w, err)
