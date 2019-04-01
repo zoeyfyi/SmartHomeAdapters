@@ -21,12 +21,15 @@ data class ConfigDetails(
 /**
  * Model for a configuration parameter for a robot.
  *
+ * @property id the unique id of the configuration parameter
  * @property name the parameter's name
  * @property description a description of the parameter
  * @property type the parameter's expected response type
  * @property details fine details of the parameter's possible values
  */
 data class ConfigParameter(
+    @SerializedName("id")
+    val id: String,
     @SerializedName("name")
     val name: String,
     @SerializedName("description")
@@ -45,12 +48,12 @@ data class ConfigParameter(
 /**
  * Model for the the user's chosen setting for a configuration parameter.
  *
- * @property name the configuration parameter's name
+ * @property id the unique id of the configuration parameter
  * @property the value that the user has chosen for the parameter
  */
 data class ConfigResult(
-    @SerializedName("name")
-    val name: String,
+    @SerializedName("id")
+    val id: String,
     @SerializedName("value")
     val value: String
 )
