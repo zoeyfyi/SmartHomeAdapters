@@ -48,7 +48,6 @@ class RobotAdapter (
             getRealRobotView(position, convertView, parent)
     }
 
-    @SuppressWarnings("ClickableViewAccessibility")
     /**
      * Inflates and sets up the view corresponding to a non-dummy [Robot] register to the user.
      */
@@ -66,44 +65,10 @@ class RobotAdapter (
         val robotIcon = view.findViewById<ImageView>(R.id.robot_image_view)
         val robotRangeText = view.findViewById<TextView>(R.id.robot_range_text_view)
 
-        updateRobotDisplay(robot, robotCircle, robotIcon, robotRangeText)
+        robot.updateViews(parent, robotCircle, robotIcon, robotRangeText)
+        robot.setViewEvents(parent, robotCircle, robotIcon, robotRangeText)
 
-        // configure interactions with the robot
-        when (robot.robotInterfaceType) {
-            Robot.INTERFACE_TYPE_TOGGLE -> {
-                robotCircle.setOnClickListener { _ ->
-                    if (parent.isInEditMode) {
-                        parent.robotToEdit = robot
-                        parent.startFragment(EditRobotFragment())
-                    } else {
-                        onToggle(robot, robotCircle, robotIcon)
-                    }
-                }
-            }
 
-            Robot.INTERFACE_TYPE_RANGE -> {
-                robotCircle.setOnTouchListener { _, motionEvent ->
-                    if (parent.isInEditMode) {
-                        parent.robotToEdit = robot
-                        parent.startFragment(EditRobotFragment())
-                    } else {
-                        if (motionEvent.action == MotionEvent.ACTION_UP) {
-                            onSeek(robot)
-                        } else {
-                            if (motionEvent.y > robotCircle.y) {
-                                robot.robotStatus.current++
-                                Log.v(tag, "Increases current value of $robot")
-                            } else {
-                                robot.robotStatus.current--
-                            }
-                            Log.v(tag, "Decreases current calue of $robot")
-                            updateRobotDisplay(robot = robot, robotRangeText = robotRangeText)
-                        }
-                    }
-                        true
-                }
-            }
-        }
 
         // Configure static nickname view
         robotNickname.text = robots[position].nickname
@@ -134,159 +99,6 @@ class RobotAdapter (
 
     override fun getCount(): Int = robots.size
 
-    private fun updateRobotDisplay(
-            robot: Robot,
-            robotCircle: ImageView? = null,
-            robotIcon: ImageView? = null,
-            robotRangeText: TextView? = null)
-    {
-        when (robot.robotInterfaceType) {
-            Robot.INTERFACE_TYPE_TOGGLE -> {
-                robotCircle?.setColorFilter(
-                        if (robot.robotStatus.value) {
-                            parent.getColor(R.color.colorToggleOn)
-                        } else {
-                            parent.getColor(R.color.colorToggleOff)
-                        }
-                )
-            }
 
-            Robot.INTERFACE_TYPE_RANGE -> {
-                robotRangeText?.text = robot.robotStatus.current.toString()
-            }
-
-            else -> TODO("NO OTHER ROBOT INTERFACE TYPE EXPECTED")
-        }
-
-        when (robot.robotType) {
-            Robot.ROBOT_TYPE_SWITCH -> {
-                robotIcon?.setImageResource(
-                        if (robot.robotStatus.value) {
-                            R.drawable.ic_light_on
-                        } else {
-                            R.drawable.ic_light_off
-                        }
-                )
-            }
-
-            Robot.ROBOT_TYPE_THERMOSTAT -> {
-                // Display no image
-            }
-
-            Robot.ROBOT_TYPE_BOLTLOCK -> {
-                robotIcon?.setImageResource(
-                        if (robot.robotStatus.value) {
-                            R.drawable.basic_lock
-                        } else {
-                            R.drawable.basic_lock_open
-                        }
-                )
-            }
-
-            else -> TODO("NO OTHER ROBOT TYPE EXPECTED")
-
-        }
-    }
-
-    /**
-     * Handles a toggle-type event for a robot, updating its value and sending it to the server.
-     *
-     * @param robot the [Robot] which the event fired for.
-     */
-    private fun onToggle(robot: Robot, robotCircle: ImageView, robotIcon: ImageView) {
-        Log.d(tag, "[onToggle]: robot is $robot)")
-
-        // Send the update to the server
-        parent.authState.performActionWithFreshTokens(parent.authService)
-        { accessToken: String?, _: String?, ex: AuthorizationException? ->
-            if (accessToken == null) {
-                Log.e(tag, "[onSwitch] got null access token, exception: $ex")
-            } else {
-                parent.restApiService
-                        .robotToggle(robot.id, !robot.robotStatus.value, accessToken, mapOf())
-                        .enqueue(object: Callback<ResponseBody> {
-
-                            override fun onResponse(
-                                    call: Call<ResponseBody>,
-                                    response: Response<ResponseBody>) {
-
-                                if (response.isSuccessful) {
-                                    parent.toast("Success")
-                                    Log.d(tag, "[onToggle] Server accepted setting" +
-                                            "toggle to ${!robot.robotStatus.value}")
-                                    robot.robotStatus.value = !robot.robotStatus.value
-                                    updateRobotDisplay(
-                                            robot = robot,
-                                            robotCircle = robotCircle,
-                                            robotIcon = robotIcon)
-
-                                } else {
-                                    val error = RestApiService.extractErrorFromResponse(response)
-                                    Log.e(tag, "[onToggle] Unsuccessful, "
-                                            + "error: $error")
-                                    if (error != null) {
-                                        parent.snackbar_layout.snackbar(error)
-                                    }
-                                }
-                            }
-
-                            override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                                val error = t.message
-                                Log.e(tag, "[onToggle] FAILED, error: $error")
-                                if (error != null) {
-                                    parent.snackbar_layout.snackbar(error)
-                                }
-                            }
-                        })
-            }
-        }
-    }
-
-    /**
-     * onSeek is called whenever a range-type robot wants to make an API call to change state
-     *
-     * @param robot the range-type robot which is being acted on
-     */
-    private fun onSeek(robot: Robot) {
-        Log.d(tag, "onSeek(${robot.robotStatus.current})")
-
-        parent.authState.performActionWithFreshTokens(parent.authService)
-        { accessToken: String?, _: String?, ex: AuthorizationException? ->
-            if (accessToken == null) {
-                Log.e(tag, "[onSeek] got null access token, exception: $ex")
-            } else {
-                // TODO make more elegant solution than just going K->C by removing 273
-                parent.restApiService
-                        .robotRange(robot.id, robot.robotStatus.current-273, accessToken, mapOf())
-                        .enqueue(object : Callback<ResponseBody> {
-
-                            override fun onResponse(
-                                    call: Call<ResponseBody>,
-                                    response: Response<ResponseBody>) {
-
-                                if (response.isSuccessful) {
-                                    parent.toast("Success")
-                                    Log.d(tag, "Server accepted setting range to ${robot.robotStatus.current}")
-                                } else {
-                                    val error = RestApiService.extractErrorFromResponse(response)
-                                    Log.e(tag, "Setting the range was unsuccessful, "
-                                            + "error: $error")
-                                    if (error != null) {
-                                        parent.snackbar_layout.snackbar(error)
-                                    }
-                                }
-                            }
-
-                            override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                                val error = t.message
-                                Log.e(tag, "onSeek(${robot.robotStatus.current}) FAILED, error: $error")
-                                if (error != null) {
-                                    parent.snackbar_layout.snackbar(error)
-                                }
-                            }
-                        })
-            }
-        }
-    }
 
 }

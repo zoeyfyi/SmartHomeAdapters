@@ -70,24 +70,14 @@ class EditRobotFragment : Fragment() {
         val inflater = parent.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
         val robotView = inflater.inflate(R.layout.view_robot_card, robot_layout.parent as ViewGroup, false)
 
-        // get internal views
+        // Get internal views
         val robotNickname = robotView.findViewById<TextView>(R.id.robot_nickname_text_view)
         val robotIcon = robotView.findViewById<ImageView>(R.id.robot_image_view)
+        val robotCircle = robotView.findViewById<ImageView>(R.id.robot_circle_drawable)
+        val robotText = robotView.findViewById<TextView>(R.id.robot_range_text_view)
 
-        // Set the icon accordingly
-        when (robot.robotType) {
-            Robot.ROBOT_TYPE_SWITCH -> {
-                robotIcon.setImageResource(R.drawable.ic_light_on)
-            }
-
-            Robot.ROBOT_TYPE_THERMOSTAT -> {
-                robotIcon.setImageResource(R.drawable.basic_accelerator)
-            }
-
-            else -> TODO("NO OTHER ROBOT TYPE EXPECTED")
-
-        }
-
+        // Set up internal views
+        robot.updateViews(parent, robotCircle, robotIcon, robotText)
         robotNickname.text = robot.nickname
 
         robot_layout.addView(robotView)
