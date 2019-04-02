@@ -83,6 +83,7 @@ message BoolParameter {
 message CalibrationParameter {
     string id = 1;
     string name = 2;
+    string description = 6;
     string type = 3;
     oneof details {
         IntParameter intParameter = 4; 

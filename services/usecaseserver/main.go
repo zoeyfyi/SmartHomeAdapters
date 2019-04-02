@@ -28,21 +28,23 @@ type Parameter interface {
 }
 
 type IntParameter struct {
-	ID      string
-	Name    string
-	Min     int64
-	Max     int64
-	Default int64
-	Current int64
+	ID          string
+	Name        string
+	Description string
+	Min         int64
+	Max         int64
+	Default     int64
+	Current     int64
 }
 
 func (p IntParameter) parameter() {}
 
 type BoolParameter struct {
-	ID      string
-	Name    string
-	Default bool
-	Current bool
+	ID          string
+	Name        string
+	Description string
+	Default     bool
+	Current     bool
 }
 
 func (p BoolParameter) parameter() {}
@@ -415,8 +417,9 @@ func (s *UsecaseServer) GetCalibrationParameters(request *usercaseserver.GetCali
 		case BoolParameter:
 			log.Printf("Found boolparameter, sending parameters")
 			stream.Send(&usercaseserver.CalibrationParameter{
-				Id:   p.ID,
-				Name: p.Name,
+				Id:          p.ID,
+				Name:        p.Name,
+				Description: p.Description,
 				Details: &usercaseserver.CalibrationParameter_BoolParameter{
 					BoolParameter: &usercaseserver.BoolParameter{
 						Default: p.Default,
@@ -427,8 +430,9 @@ func (s *UsecaseServer) GetCalibrationParameters(request *usercaseserver.GetCali
 		case IntParameter:
 			log.Printf("Found intparameter, sending parameters")
 			stream.Send(&usercaseserver.CalibrationParameter{
-				Id:   p.ID,
-				Name: p.Name,
+				Id:          p.ID,
+				Name:        p.Name,
+				Description: p.Description,
 				Details: &usercaseserver.CalibrationParameter_IntParameter{
 					IntParameter: &usercaseserver.IntParameter{
 						Min:     p.Min,
