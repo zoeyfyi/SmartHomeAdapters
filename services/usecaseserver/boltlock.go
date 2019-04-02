@@ -6,18 +6,20 @@ import (
 
 var boltlockParameters = map[string]Parameter{
 	"LockAngle": IntParameter{
-		ID:      "LockAngle",
-		Name:    "Lock Angle",
-		Min:     0,
-		Max:     180,
-		Default: 80,
+		ID:          "LockAngle",
+		Name:        "Lock Angle",
+		Description: "Angle to lock boltlock",
+		Min:         0,
+		Max:         180,
+		Default:     80,
 	},
 	"UnlockAngle": IntParameter{
-		ID:      "UnlockAngle",
-		Name:    "Unlock Angle",
-		Min:     0,
-		Max:     180,
-		Default: 100,
+		ID:          "UnlockAngle",
+		Name:        "Unlock Angle",
+		Description: "Angle to unlock boltlock",
+		Min:         0,
+		Max:         180,
+		Default:     100,
 	},
 }
 

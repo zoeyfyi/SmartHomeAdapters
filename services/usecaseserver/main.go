@@ -28,21 +28,23 @@ type Parameter interface {
 }
 
 type IntParameter struct {
-	ID      string
-	Name    string
-	Min     int64
-	Max     int64
-	Default int64
-	Current int64
+	ID          string
+	Name        string
+	Description string
+	Min         int64
+	Max         int64
+	Default     int64
+	Current     int64
 }
 
 func (p IntParameter) parameter() {}
 
 type BoolParameter struct {
-	ID      string
-	Name    string
-	Default bool
-	Current bool
+	ID          string
+	Name        string
+	Description string
+	Default     bool
+	Current     bool
 }
 
 func (p BoolParameter) parameter() {}
@@ -349,6 +351,7 @@ func (s *UsecaseServer) Range(ctx context.Context, action *usercaseserver.RangeR
 
 func (s *UsecaseServer) getCalibrationParameters(usecase Usecase, robotID string, db *sql.DB) ([]Parameter, error) {
 	defaultParams := usecase.DefaultParameters()
+	log.Printf("default parameters: %+v", defaultParams)
 
 	params := make([]Parameter, 0, len(defaultParams))
 
@@ -391,6 +394,7 @@ func (s *UsecaseServer) getCalibrationParameters(usecase Usecase, robotID string
 		}
 	}
 
+	log.Printf("params: %+v", params)
 	return params, nil
 }
 
@@ -415,8 +419,9 @@ func (s *UsecaseServer) GetCalibrationParameters(request *usercaseserver.GetCali
 		case BoolParameter:
 			log.Printf("Found boolparameter, sending parameters")
 			stream.Send(&usercaseserver.CalibrationParameter{
-				Id:   p.ID,
-				Name: p.Name,
+				Id:          p.ID,
+				Name:        p.Name,
+				Description: p.Description,
 				Details: &usercaseserver.CalibrationParameter_BoolParameter{
 					BoolParameter: &usercaseserver.BoolParameter{
 						Default: p.Default,
@@ -427,8 +432,9 @@ func (s *UsecaseServer) GetCalibrationParameters(request *usercaseserver.GetCali
 		case IntParameter:
 			log.Printf("Found intparameter, sending parameters")
 			stream.Send(&usercaseserver.CalibrationParameter{
-				Id:   p.ID,
-				Name: p.Name,
+				Id:          p.ID,
+				Name:        p.Name,
+				Description: p.Description,
 				Details: &usercaseserver.CalibrationParameter_IntParameter{
 					IntParameter: &usercaseserver.IntParameter{
 						Min:     p.Min,
@@ -461,9 +467,10 @@ func (s *UsecaseServer) SetCalibrationParameter(ctx context.Context, request *us
 	switch (*parameter).(type) {
 	case BoolParameter:
 		_, err := s.db.Exec(
-			"UPDATE boolparameter SET value = $1 WHERE robotId = $2",
+			"UPDATE boolparameter SET value = $1 WHERE robotId = $2 AND serial = $3",
 			request.GetBoolValue(),
 			request.Robot.Id,
+			request.Id,
 		)
 		if err != nil {
 			log.Printf("error updating bool parameter: %v", err)
@@ -471,9 +478,10 @@ func (s *UsecaseServer) SetCalibrationParameter(ctx context.Context, request *us
 		}
 	case IntParameter:
 		_, err := s.db.Exec(
-			"UPDATE intparameter SET value = $1 WHERE robotId = $2",
+			"UPDATE intparameter SET value = $1 WHERE robotId = $2 AND serial = $3",
 			request.GetIntValue(),
 			request.Robot.Id,
+			request.Id,
 		)
 		if err != nil {
 			log.Printf("error updating int parameter: %v", err)

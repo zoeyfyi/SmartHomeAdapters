@@ -286,44 +286,43 @@ func (s *server) CalibrateRobot(
 	request *infoserver.CalibrationRequest,
 ) (*infoserver.Robot, error) {
 	robot, err := s.GetRobot(ctx, &infoserver.RobotQuery{
-		Id:     request.Id,
+		Id:     request.RobotId,
 		UserId: request.UserId,
 	})
 	if err != nil {
 		return nil, err
 	}
+	log.Printf("found robot: %+v", robot)
 
-	for _, param := range request.Parameters {
-		// basic parameter infomation
-		request := &usecaseserver.SetCalibrationParameterRequest{
-			Robot: &usecaseserver.Robot{
-				Id: robot.Id,
-			},
-			Id:      param.Id,
-			Usecase: robot.RobotType,
+	// basic parameter infomation
+	usecaseRequest := &usecaseserver.SetCalibrationParameterRequest{
+		Robot: &usecaseserver.Robot{
+			Id: robot.Id,
+		},
+		Id:      request.Id,
+		Usecase: robot.RobotType,
+	}
+
+	// set the value of the parameter
+	switch value := request.Value.(type) {
+	case *infoserver.CalibrationRequest_BoolValue:
+		usecaseRequest.Details = &usecaseserver.SetCalibrationParameterRequest_BoolValue{
+			BoolValue: value.BoolValue,
 		}
-
-		// set the value of the parameter
-		switch value := param.Value.(type) {
-		case *infoserver.CalibrationParameter_BoolValue:
-			request.Details = &usecaseserver.SetCalibrationParameterRequest_BoolValue{
-				BoolValue: value.BoolValue,
-			}
-		case *infoserver.CalibrationParameter_IntValue:
-			request.Details = &usecaseserver.SetCalibrationParameterRequest_IntValue{
-				IntValue: value.IntValue,
-			}
-		}
-
-		// submit request
-		_, err := s.UsecaseClient.SetCalibrationParameter(ctx, request)
-		if err != nil {
-			return nil, err
+	case *infoserver.CalibrationRequest_IntValue:
+		usecaseRequest.Details = &usecaseserver.SetCalibrationParameterRequest_IntValue{
+			IntValue: value.IntValue,
 		}
 	}
 
+	// submit request
+	_, err = s.UsecaseClient.SetCalibrationParameter(ctx, usecaseRequest)
+	if err != nil {
+		return nil, err
+	}
+
 	return s.GetRobot(ctx, &infoserver.RobotQuery{
-		Id:     request.Id,
+		Id:     request.RobotId,
 		UserId: request.UserId,
 	})
 }
@@ -361,19 +360,32 @@ func (s *server) GetCalibration(
 			return nil, err
 		}
 
+		log.Printf("usecase parameter: %+v", param)
+
 		infoParam := &infoserver.CalibrationParameter{
-			Id:   param.Id,
-			Name: param.Name,
+			Id:          param.Id,
+			Name:        param.Name,
+			Description: param.Description,
 		}
 
 		switch details := param.Details.(type) {
 		case *usecaseserver.CalibrationParameter_BoolParameter:
-			infoParam.Value = &infoserver.CalibrationParameter_BoolValue{
-				BoolValue: details.BoolParameter.Current,
+			infoParam.Type = "bool"
+			infoParam.Details = &infoserver.CalibrationParameter_BoolDetails{
+				BoolDetails: &infoserver.BoolDetails{
+					Current: details.BoolParameter.Current,
+					Default: details.BoolParameter.Default,
+				},
 			}
 		case *usecaseserver.CalibrationParameter_IntParameter:
-			infoParam.Value = &infoserver.CalibrationParameter_IntValue{
-				IntValue: details.IntParameter.Current,
+			infoParam.Type = "int"
+			infoParam.Details = &infoserver.CalibrationParameter_IntDetails{
+				IntDetails: &infoserver.IntDetails{
+					Current: details.IntParameter.Current,
+					Default: details.IntParameter.Default,
+					Min:     details.IntParameter.Min,
+					Max:     details.IntParameter.Max,
+				},
 			}
 		}
 

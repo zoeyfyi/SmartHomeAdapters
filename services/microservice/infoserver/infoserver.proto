@@ -74,16 +74,34 @@ message RangeStatus {
 
 message CalibrationRequest {
     string id = 1;
+    string robotId = 5;
     string userId = 3;
-    repeated CalibrationParameter parameters = 2;
+    oneof value {
+        bool boolValue = 2;
+        int64 intValue = 4;
+    }
+}
+
+message IntDetails {
+    int64 min = 1;
+    int64 max = 2;
+    int64 current = 3;
+    int64 default = 4;
+}
+
+message BoolDetails {
+    bool current = 3;
+    bool default = 4;
 }
 
 message CalibrationParameter {
     string id = 1;
     string name = 4;
-    oneof value {
-        bool boolValue = 2;
-        int64 intValue = 3;
+    string type = 5;
+    string description = 6;
+    oneof details {
+        IntDetails intDetails = 2;
+        BoolDetails boolDetails = 3;
     }
 }
 

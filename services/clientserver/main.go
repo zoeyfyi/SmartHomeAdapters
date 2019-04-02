@@ -406,19 +406,18 @@ func usecasesHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 	}
 }
 
-type parameter struct {
-	ID    string  `json:"id"`
-	Name  *string `json:"name"`
-	Type  string  `json:"type"`
-	Value string  `json:"value"`
+type setParameterRequest struct {
+	ID    string `json:"id"`
+	Type  string `json:"type"`
+	Value string `json:"value"`
 }
 
 func setCalibrationHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	id := ps.ByName("id")
+	robotID := ps.ByName("id")
 
 	// decode json request
-	var parameters []parameter
-	err := json.NewDecoder(r.Body).Decode(&parameters)
+	var setParameter setParameterRequest
+	err := json.NewDecoder(r.Body).Decode(&setParameter)
 	if err != nil {
 		log.Printf("Invalid calibration JSON: %v", err)
 		HTTPError(w, errInvalidJSON)
@@ -427,53 +426,36 @@ func setCalibrationHandler(w http.ResponseWriter, r *http.Request, ps httprouter
 
 	// build infoserver calibration request
 	request := &infoserver.CalibrationRequest{
-		Id:     id,
-		UserId: r.Context().Value(userIDKey).(string),
+		Id:      setParameter.ID,
+		RobotId: robotID,
+		UserId:  r.Context().Value(userIDKey).(string),
 	}
+	log.Printf("calibration request: %+v", request)
 
-	// parse parameters
-	for _, param := range parameters {
-		infoParam := &infoserver.CalibrationParameter{
-			Id: param.ID,
-		}
-
-		switch param.Type {
-		case "bool":
-			// parse value as bool
-			value, err := strconv.ParseBool(param.Value)
-			if err != nil {
-				HTTPError(
-					w,
-					status.Newf(
-						codes.InvalidArgument,
-						"\"%s\" is not a bool, should be \"true\" or \"false\"",
-						param.Type,
-					).Err(),
-				)
-				return
-			}
-
-			infoParam.Value = &infoserver.CalibrationParameter_BoolValue{
-				BoolValue: value,
-			}
-		case "int":
-			// parse value as int
-			value, err := strconv.ParseInt(param.Value, 10, 64)
-			if err != nil {
-				HTTPError(w, status.Newf(codes.InvalidArgument, "\"%s\" is not an integer", param.Type).Err())
-				return
-			}
-
-			infoParam.Value = &infoserver.CalibrationParameter_IntValue{
-				IntValue: value,
-			}
-
-		default:
-			HTTPError(w, status.Newf(codes.InvalidArgument, "\"%s\" is not a recognized parameter type", param.Type).Err())
+	switch setParameter.Type {
+	case "bool":
+		value, err := strconv.ParseBool(setParameter.Value)
+		if err != nil {
+			HTTPError(w, fmt.Errorf("value should be either \"true\" or \"false\""))
 			return
 		}
-
-		request.Parameters = append(request.Parameters)
+		log.Printf("value: %t", value)
+		request.Value = &infoserver.CalibrationRequest_BoolValue{
+			BoolValue: value,
+		}
+	case "int":
+		value, err := strconv.ParseInt(setParameter.Value, 10, 64)
+		if err != nil {
+			HTTPError(w, fmt.Errorf("value must be an integer"))
+			return
+		}
+		log.Printf("value: %d", value)
+		request.Value = &infoserver.CalibrationRequest_IntValue{
+			IntValue: value,
+		}
+	default:
+		HTTPError(w, fmt.Errorf("\"%s\" is not a recognized parameter type", setParameter.Type))
+		return
 	}
 
 	// send request
@@ -515,6 +497,34 @@ func setCalibrationHandler(w http.ResponseWriter, r *http.Request, ps httprouter
 	}
 }
 
+type parameter struct {
+	ID          string  `json:"id"`
+	Name        *string `json:"name"`
+	Type        string  `json:"type"`
+	Description string  `json:"description"`
+	Details     details `json:"details"`
+}
+
+type details interface {
+	details()
+}
+
+type intDetails struct {
+	Min     int64 `json:"min"`
+	Max     int64 `json:"max"`
+	Default int64 `json:"default"`
+	Current int64 `json:"current"`
+}
+
+func (d intDetails) details() {}
+
+type boolDetails struct {
+	Default bool `json:"default"`
+	Current bool `json:"current"`
+}
+
+func (d boolDetails) details() {}
+
 func getCalibrationHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	id := ps.ByName("id")
 	userID := r.Context().Value(userIDKey).(string)
@@ -532,15 +542,25 @@ func getCalibrationHandler(w http.ResponseWriter, r *http.Request, ps httprouter
 
 	for _, p := range params.Parameters {
 		param := parameter{
-			ID:   p.Id,
-			Name: &p.Name,
+			ID:          p.Id,
+			Name:        &p.Name,
+			Description: p.Description,
+			Type:        p.Type,
 		}
 
-		switch value := p.Value.(type) {
-		case *infoserver.CalibrationParameter_BoolValue:
-			param.Value = fmt.Sprintf("%t", value.BoolValue)
-		case *infoserver.CalibrationParameter_IntValue:
-			param.Value = fmt.Sprintf("%d", value.IntValue)
+		switch details := p.Details.(type) {
+		case *infoserver.CalibrationParameter_BoolDetails:
+			param.Details = boolDetails{
+				Default: details.BoolDetails.Default,
+				Current: details.BoolDetails.Current,
+			}
+		case *infoserver.CalibrationParameter_IntDetails:
+			param.Details = intDetails{
+				Min:     details.IntDetails.Min,
+				Max:     details.IntDetails.Max,
+				Default: details.IntDetails.Default,
+				Current: details.IntDetails.Current,
+			}
 		}
 
 		parameters = append(parameters, param)
