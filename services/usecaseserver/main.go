@@ -265,11 +265,26 @@ func (s *UsecaseServer) GetStatus(ctx context.Context, request *usercaseserver.G
 			log.Printf("error scanning rangestatus: %v", err)
 			return nil, errInternal
 		}
+		var lowTemp int64
+		var highTemp int64
+		parameters := usecase.DefaultParameters()
+		for _, p := range parameters {
+			if p, ok := p.(IntParameter); ok {
+				if p.ID == "LowTemperature" {
+					lowTemp = p.Min
+				}
+				if p.ID == "HighTemperature" {
+					highTemp = p.Max
+				}
 
+			}
+		}
 		return &usercaseserver.Status{
 			Status: &usercaseserver.Status_RangeStatus{
 				RangeStatus: &usercaseserver.RangeStatus{
 					Value: int64(value),
+					Min:   lowTemp,
+					Max:   highTemp,
 				},
 			},
 		}, nil
@@ -494,8 +509,8 @@ func (s *UsecaseServer) SetCalibrationParameter(ctx context.Context, request *us
 
 func main() {
 	Serve("usecaseserver:80", map[string]Usecase{
-		"switch":   &Switch{},
-		"boltlock": &Boltlock{},
-		"thermostat" : &Thermostat{},
+		"switch":     &Switch{},
+		"boltlock":   &Boltlock{},
+		"thermostat": &Thermostat{},
 	})
 }
