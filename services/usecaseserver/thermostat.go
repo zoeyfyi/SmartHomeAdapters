@@ -6,36 +6,32 @@ import (
 
 var thermostatParameters = map[string]Parameter{
 	"LowAngle": IntParameter{
-		ID:      "LowAngle",
-		Name:    "Low Angle",
+		ID:          "LowAngle",
+		Name:        "Low Angle",
 		Description: "This is the smallest angle your thermostat can be at",
-		Min:     0,
-		Max:     180,
-		Default: 80,
+		Min:         0,
+		Max:         180,
+		Default:     80,
 	},
 	"HighAngle": IntParameter{
-		ID:      "HighAngle",
-		Name:    "High Angle",
+		ID:          "HighAngle",
+		Name:        "High Angle",
 		Description: "This is the greatest angle your thermostat can be at",
-		Min:     0,
-		Max:     180,
-		Default: 80,
+		Min:         0,
+		Max:         180,
+		Default:     100,
 	},
 	"LowTemperature": IntParameter{
-		ID:      "LowTemperature",
-		Name:    "Low Temperature",
+		ID:          "LowTemperature",
+		Name:        "Low Temperature",
 		Description: "This is the lowest temperature marked on your thermostat",
-		Min:     273,
-		Max:     373,
-		Default: 300,
+		Default:     273,
 	},
 	"HighTemperature": IntParameter{
-		ID:      "HighTemperature",
-		Name:    "High Temperature",
+		ID:          "HighTemperature",
+		Name:        "High Temperature",
 		Description: "This is the highest temperature marked on your thermostat",
-		Min:     273,
-		Max:     373,
-		Default: 300,
+		Default:     373,
 	},
 }
 
@@ -86,22 +82,32 @@ func (s *Thermostat) Range(value int64, parameters []Parameter, controller Robot
 
 	// need to convert value to an angle
 	var angle float64
-	var angleParameter Parameter
-	var tempParameter Parameter
+	var lowAngle int64
+	var lowTemp int64
+	var highAngle int64
+	var highTemp int64
 	// TODO - this better
 	for _, p := range parameters {
 		if p, ok := p.(IntParameter); ok {
-			if p.ID == "Angle" {
-				angleParameter = p
+			if p.ID == "LowAngle" {
+				lowAngle = p.Current
 			}
-			if p.ID == "Thermostat" {
-				tempParameter = p
+			if p.ID == "LowTemperature" {
+				lowTemp = p.Current
+			}
+			if p.ID == "HighAngle" {
+				highAngle = p.Current
+			}
+			if p.ID == "HighTemperature" {
+				highTemp = p.Current
 			}
 		}
 	}
-	temperatureRatio := float64(value-tempParameter.(IntParameter).Min) /
-		float64(tempParameter.(IntParameter).Max-tempParameter.(IntParameter).Min)
-	angle = float64(angleParameter.(IntParameter).Min) + float64(angleParameter.(IntParameter).Max-angleParameter.(IntParameter).Min)*temperatureRatio
+
+	// calculate the angle required to give the desired temperature
+	temperatureRatio := float64(value-lowTemp) /
+		float64(highTemp-lowTemp)
+	angle = float64(lowAngle) + float64(highAngle-lowAngle)*temperatureRatio
 
 	log.Printf("turning thermostat to angle %t, value: %t", angle, value)
 
