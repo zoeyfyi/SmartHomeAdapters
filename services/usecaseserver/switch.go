@@ -6,18 +6,20 @@ import (
 
 var switchParameters = map[string]Parameter{
 	"OnAngle": IntParameter{
-		ID:      "OnAngle",
-		Name:    "On Angle",
-		Min:     0,
-		Max:     180,
-		Default: 80,
+		ID:          "OnAngle",
+		Name:        "On Angle",
+		Description: "Angle to turn switch on",
+		Min:         0,
+		Max:         180,
+		Default:     80,
 	},
 	"OffAngle": IntParameter{
-		ID:      "OffAngle",
-		Name:    "Off Angle",
-		Min:     0,
-		Max:     180,
-		Default: 100,
+		ID:          "OffAngle",
+		Name:        "Off Angle",
+		Description: "Angle to turn switch off",
+		Min:         0,
+		Max:         180,
+		Default:     100,
 	},
 }
 
@@ -25,6 +27,10 @@ type Switch struct{}
 
 func (s *Switch) Name() string {
 	return "switch"
+}
+
+func (s *Switch) Description() string {
+	return "TODO: switch description"
 }
 
 func (s *Switch) Type() UsecaseType {
