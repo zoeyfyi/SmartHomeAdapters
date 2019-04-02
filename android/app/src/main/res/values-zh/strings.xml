@@ -25,5 +25,5 @@
     <string name="welcome_text_no_name">欢迎</string>
     <string name="crf_title_text">校准您的设备</string>
     <string name="confirm_delete_title">永久删除该设备</string>
-    <string name="confirm_delete_body">确定删除%s?这会从您的帐户中永久删除该设备。</string>
+    <string name="confirm_delete_body">确定删除%s？这会从您的帐户中永久删除该设备。</string>
 </resources>
