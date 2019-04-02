@@ -227,6 +227,7 @@ func postRegisterHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 		return
 	}
 
+	name := r.PostForm.Get("name")
 	email := r.PostForm.Get("email")
 	password := r.PostForm.Get("password")
 	confirmPassword := r.PostForm.Get("password_confirm")
@@ -239,6 +240,7 @@ func postRegisterHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 
 	// register user
 	_, err = userserverClient.Register(context.Background(), &userserver.RegisterRequest{
+		Name:     name,
 		Email:    email,
 		Password: password,
 	})

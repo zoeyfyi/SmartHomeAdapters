@@ -11,6 +11,7 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/mrbenshef/SmartHomeAdapters/microservice"
 	"github.com/mrbenshef/SmartHomeAdapters/microservice/robotserver"
+	"github.com/mrbenshef/SmartHomeAdapters/microservice/usecaseserver"
 	usercaseserver "github.com/mrbenshef/SmartHomeAdapters/microservice/usecaseserver"
 	"google.golang.org/grpc"
 
@@ -27,21 +28,23 @@ type Parameter interface {
 }
 
 type IntParameter struct {
-	ID      string
-	Name    string
-	Min     int64
-	Max     int64
-	Default int64
-	Current int64
+	ID          string
+	Name        string
+	Description string
+	Min         int64
+	Max         int64
+	Default     int64
+	Current     int64
 }
 
 func (p IntParameter) parameter() {}
 
 type BoolParameter struct {
-	ID      string
-	Name    string
-	Default bool
-	Current bool
+	ID          string
+	Name        string
+	Description string
+	Default     bool
+	Current     bool
 }
 
 func (p BoolParameter) parameter() {}
@@ -56,6 +59,7 @@ const (
 // TODO: seperate into toggle and range
 type Usecase interface {
 	Name() string
+	Description() string
 	Type() UsecaseType
 	DefaultParameters() []Parameter
 	GetParameter(id string) *Parameter
@@ -209,6 +213,20 @@ func (s *UsecaseServer) SetUsecase(ctx context.Context, request *usercaseserver.
 	return &empty.Empty{}, nil
 }
 
+func (s *UsecaseServer) GetUsecases(_ *empty.Empty, stream usecaseserver.UsecaseServer_GetUsecasesServer) error {
+	for _, usecase := range s.usecases {
+		err := stream.Send(&usecaseserver.Usecase{
+			Name:        usecase.Name(),
+			Description: usecase.Description(),
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (s *UsecaseServer) GetStatus(ctx context.Context, request *usercaseserver.GetStatusRequest) (*usercaseserver.Status, error) {
 	usecase, ok := s.usecases[request.Usecase]
 	if !ok {
@@ -333,8 +351,9 @@ func (s *UsecaseServer) Range(ctx context.Context, action *usercaseserver.RangeR
 
 func (s *UsecaseServer) getCalibrationParameters(usecase Usecase, robotID string, db *sql.DB) ([]Parameter, error) {
 	defaultParams := usecase.DefaultParameters()
+	log.Printf("default parameters: %+v", defaultParams)
 
-	params := make([]Parameter, len(defaultParams))
+	params := make([]Parameter, 0, len(defaultParams))
 
 	for _, p := range defaultParams {
 		switch p := p.(type) {
@@ -368,9 +387,14 @@ func (s *UsecaseServer) getCalibrationParameters(usecase Usecase, robotID string
 
 			p.Current = value
 			params = append(params, p)
+
+		default:
+			log.Printf("Error: parameter is not IntParameter or BoolParameter")
+			return nil, nil
 		}
 	}
 
+	log.Printf("params: %+v", params)
 	return params, nil
 }
 
@@ -380,16 +404,24 @@ func (s *UsecaseServer) GetCalibrationParameters(request *usercaseserver.GetCali
 		return fmt.Errorf("usecase \"%s\" is unrecognized", request.Usecase)
 	}
 
+	log.Printf("getting calibration parameter for usecase: %T and robot with id %s", usecase, request.Robot.Id)
+
 	params, err := s.getCalibrationParameters(usecase, request.Robot.Id, s.db)
 	if err != nil {
+		log.Printf("Error with getCalibrationParameters %v, %v:", err, errInternal)
 		return errInternal
 	}
+
+	log.Printf("params: %v", params)
+
 	for _, p := range params {
 		switch p := p.(type) {
 		case BoolParameter:
+			log.Printf("Found boolparameter, sending parameters")
 			stream.Send(&usercaseserver.CalibrationParameter{
-				Id:   p.ID,
-				Name: p.Name,
+				Id:          p.ID,
+				Name:        p.Name,
+				Description: p.Description,
 				Details: &usercaseserver.CalibrationParameter_BoolParameter{
 					BoolParameter: &usercaseserver.BoolParameter{
 						Default: p.Default,
@@ -398,9 +430,11 @@ func (s *UsecaseServer) GetCalibrationParameters(request *usercaseserver.GetCali
 				},
 			})
 		case IntParameter:
+			log.Printf("Found intparameter, sending parameters")
 			stream.Send(&usercaseserver.CalibrationParameter{
-				Id:   p.ID,
-				Name: p.Name,
+				Id:          p.ID,
+				Name:        p.Name,
+				Description: p.Description,
 				Details: &usercaseserver.CalibrationParameter_IntParameter{
 					IntParameter: &usercaseserver.IntParameter{
 						Min:     p.Min,
@@ -410,6 +444,9 @@ func (s *UsecaseServer) GetCalibrationParameters(request *usercaseserver.GetCali
 					},
 				},
 			})
+		default:
+			log.Printf("Error: parameter is not IntParameter or BoolParameter")
+			return nil
 		}
 	}
 
@@ -430,9 +467,10 @@ func (s *UsecaseServer) SetCalibrationParameter(ctx context.Context, request *us
 	switch (*parameter).(type) {
 	case BoolParameter:
 		_, err := s.db.Exec(
-			"UPDATE boolparameter SET value = $1 WHERE robotId = $2",
+			"UPDATE boolparameter SET value = $1 WHERE robotId = $2 AND serial = $3",
 			request.GetBoolValue(),
 			request.Robot.Id,
+			request.Id,
 		)
 		if err != nil {
 			log.Printf("error updating bool parameter: %v", err)
@@ -440,9 +478,10 @@ func (s *UsecaseServer) SetCalibrationParameter(ctx context.Context, request *us
 		}
 	case IntParameter:
 		_, err := s.db.Exec(
-			"UPDATE intparameter SET value = $1 WHERE robotId = $2",
+			"UPDATE intparameter SET value = $1 WHERE robotId = $2 AND serial = $3",
 			request.GetIntValue(),
 			request.Robot.Id,
+			request.Id,
 		)
 		if err != nil {
 			log.Printf("error updating int parameter: %v", err)
@@ -455,7 +494,7 @@ func (s *UsecaseServer) SetCalibrationParameter(ctx context.Context, request *us
 
 func main() {
 	Serve("usecaseserver:80", map[string]Usecase{
-		"switch": &Switch{},
+		"switch":   &Switch{},
 		"boltlock": &Boltlock{},
 		"thermostat" : &Thermostat{},
 	})
