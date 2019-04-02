@@ -5,16 +5,34 @@ import (
 )
 
 var thermostatParameters = map[string]Parameter{
-	"Angle": IntParameter{
-		ID:      "Angle",
-		Name:    "Angle",
+	"LowAngle": IntParameter{
+		ID:      "LowAngle",
+		Name:    "Low Angle",
+		Description: "This is the smallest angle your thermostat can be at",
 		Min:     0,
 		Max:     180,
 		Default: 80,
 	},
-	"Temperature": IntParameter{
-		ID:      "Temperature",
-		Name:    "Temperature",
+	"HighAngle": IntParameter{
+		ID:      "HighAngle",
+		Name:    "High Angle",
+		Description: "This is the greatest angle your thermostat can be at",
+		Min:     0,
+		Max:     180,
+		Default: 80,
+	},
+	"LowTemperature": IntParameter{
+		ID:      "LowTemperature",
+		Name:    "Low Temperature",
+		Description: "This is the lowest temperature marked on your thermostat",
+		Min:     273,
+		Max:     373,
+		Default: 300,
+	},
+	"HighTemperature": IntParameter{
+		ID:      "HighTemperature",
+		Name:    "High Temperature",
+		Description: "This is the highest temperature marked on your thermostat",
 		Min:     273,
 		Max:     373,
 		Default: 300,
