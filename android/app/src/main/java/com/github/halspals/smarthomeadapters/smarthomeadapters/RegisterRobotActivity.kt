@@ -1,15 +1,19 @@
 package com.github.halspals.smarthomeadapters.smarthomeadapters
 
+import android.content.Context
 import android.content.Intent
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.support.v4.app.FragmentManager
 import android.util.Log
-import com.github.halspals.smarthomeadapters.smarthomeadapters.model.UseCase
+import android.widget.LinearLayout
+import com.github.halspals.smarthomeadapters.smarthomeadapters.model.Robot
 import com.google.zxing.integration.android.IntentIntegrator
 import com.google.zxing.integration.android.IntentResult
+import kotlinx.android.synthetic.main.activity_register_robot.*
 import net.openid.appauth.AuthorizationService
+import org.jetbrains.anko.toast
 
 const val SKIP_TO_SCREEN_FLAG = "SkipTo"
 const val ROBOT_ID_FLAG = "passedRobotId"
@@ -17,7 +21,7 @@ const val ROBOT_ID_FLAG = "passedRobotId"
 /**
  * The activity forming the base of the robot registration wizard.
  */
-class RegisterRobotActivity : AppCompatActivity() {
+class RegisterRobotActivity : AppCompatActivity(), RestApiActivity {
 
     private val tag = "RegisterRobotActivity"
 
@@ -25,17 +29,36 @@ class RegisterRobotActivity : AppCompatActivity() {
     internal lateinit var robotId: String
     internal lateinit var robotNickname: String
 
-    internal val restApiService by lazy {
+    override val restApiService by lazy {
         RestApiService.new()
     }
 
-    internal val authState by lazy {
+    override val authState by lazy {
         readAuthState(this)
     }
 
-    internal val authService by lazy {
+    override val authService by lazy {
         AuthorizationService(this)
     }
+
+    override fun makeToast(charSequence: CharSequence) {
+        // TODO rewrite this using function referencing
+        this.toast(charSequence)
+    }
+
+    override val context: Context
+        get() = this
+
+    override val snackbarLayout: LinearLayout
+        get() = this.snackbar_layout
+
+    override var isInEditMode: Boolean
+        get() = false
+        set(value) {}
+
+    override var robotToEdit: Robot
+        get() = TODO("not implemented")
+        set(value) {}
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -109,8 +132,8 @@ class RegisterRobotActivity : AppCompatActivity() {
      * otherwise backstack will be dropped
      * @param args the arguments to attach to the fragment, if any
      */
-    internal fun startFragment(
-            fragment: Fragment, addToBackstack: Boolean = false, args: Bundle? = null) {
+    override fun startFragment(
+            fragment: Fragment, addToBackstack: Boolean, args: Bundle?) {
 
         Log.d(tag, "[startFragment] Invoked")
 

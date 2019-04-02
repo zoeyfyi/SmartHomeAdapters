@@ -6,16 +6,11 @@ import android.util.Log
 import android.view.MotionEvent
 import android.widget.ImageView
 import android.widget.TextView
-import com.github.halspals.smarthomeadapters.smarthomeadapters.EditRobotFragment
-import com.github.halspals.smarthomeadapters.smarthomeadapters.MainActivity
-import com.github.halspals.smarthomeadapters.smarthomeadapters.R
-import com.github.halspals.smarthomeadapters.smarthomeadapters.RestApiService
+import com.github.halspals.smarthomeadapters.smarthomeadapters.*
 import com.google.gson.annotations.SerializedName
-import kotlinx.android.synthetic.main.activity_main.*
 import net.openid.appauth.AuthorizationException
 import okhttp3.ResponseBody
 import org.jetbrains.anko.design.snackbar
-import org.jetbrains.anko.toast
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -123,7 +118,7 @@ data class Robot(
 
     @SuppressWarnings("ClickableViewAccessibility")
     internal fun setViewEvents(
-            parent: MainActivity,
+            parent: RestApiActivity,
             robotCircle: ImageView? = null,
             robotIcon: ImageView? = null,
             robotRangeText: TextView? = null
@@ -149,11 +144,11 @@ data class Robot(
                 val touchRunnableIncrease = object : Runnable {
                     override fun run() {
                         robotStatus.current++
-                        if (robotStatus.current < robotStatus.max) {
+                        if (robotStatus.current > robotStatus.max) {
                             robotStatus.current = robotStatus.max
                         }
                         Log.d(tag, "Increasing current value of $this")
-                        updateViews(context = parent, robotRangeText = robotRangeText)
+                        updateViews(context = parent.context, robotRangeText = robotRangeText)
                         handler.postDelayed(this, 500)
                     }
                 }
@@ -163,8 +158,8 @@ data class Robot(
                         if (robotStatus.current < robotStatus.min) {
                             robotStatus.current = robotStatus.min
                         }
-                        Log.d(tag, "Increasing current value of $this")
-                        updateViews(context = parent, robotRangeText = robotRangeText)
+                        Log.d(tag, "Decreasing current value of $this")
+                        updateViews(context = parent.context, robotRangeText = robotRangeText)
                         handler.postDelayed(this, 500)
                     }
                 }
@@ -203,7 +198,7 @@ data class Robot(
     /**
      * Handles a toggle-type event for a robot, updating its value and sending it to the server.
      */
-    private fun onToggle(parent: MainActivity, robotCircle: ImageView?, robotIcon: ImageView?) {
+    private fun onToggle(parent: RestApiActivity, robotCircle: ImageView?, robotIcon: ImageView?) {
         Log.wtf(tag, "[onToggle]: robot is $this)")
 
         // Send the update to the server
@@ -221,12 +216,12 @@ data class Robot(
                                     response: Response<ResponseBody>) {
 
                                 if (response.isSuccessful) {
-                                    parent.toast("Success")
+                                    parent.makeToast("Success")
                                     Log.d(tag, "[onToggle] Server accepted setting" +
                                             "toggle to ${!robotStatus.value}")
                                     robotStatus.value = !robotStatus.value
                                     updateViews(
-                                            context = parent,
+                                            context = parent.context,
                                             robotCircle = robotCircle,
                                             robotIcon = robotIcon)
 
@@ -235,7 +230,7 @@ data class Robot(
                                     Log.e(tag, "[onToggle] Unsuccessful, "
                                             + "error: $error")
                                     if (error != null) {
-                                        parent.snackbar_layout.snackbar(error)
+                                        parent.snackbarLayout.snackbar(error)
                                     }
                                 }
                             }
@@ -244,7 +239,7 @@ data class Robot(
                                 val error = t.message
                                 Log.e(tag, "[onToggle] FAILED, error: $error")
                                 if (error != null) {
-                                    parent.snackbar_layout.snackbar(error)
+                                    parent.snackbarLayout.snackbar(error)
                                 }
                             }
                         })
@@ -255,7 +250,7 @@ data class Robot(
     /**
      * onSeek is called whenever a range-type robot wants to make an API call to change state
      */
-    private fun onSeek(parent: MainActivity) {
+    private fun onSeek(parent: RestApiActivity) {
         Log.d(tag, "onSeek(${robotStatus.current})")
 
         parent.authState.performActionWithFreshTokens(parent.authService)
@@ -272,14 +267,14 @@ data class Robot(
                                     response: Response<ResponseBody>) {
 
                                 if (response.isSuccessful) {
-                                    parent.toast("Success")
+                                    parent.makeToast("Success")
                                     Log.d(tag, "Server accepted setting range to ${robotStatus.current}")
                                 } else {
                                     val error = RestApiService.extractErrorFromResponse(response)
                                     Log.e(tag, "Setting the range was unsuccessful, "
                                             + "error: $error")
                                     if (error != null) {
-                                        parent.snackbar_layout.snackbar(error)
+                                        parent.snackbarLayout.snackbar(error)
                                     }
                                 }
                             }
@@ -288,7 +283,7 @@ data class Robot(
                                 val error = t.message
                                 Log.e(tag, "onSeek(${robotStatus.current}) FAILED, error: $error")
                                 if (error != null) {
-                                    parent.snackbar_layout.snackbar(error)
+                                    parent.snackbarLayout.snackbar(error)
                                 }
                             }
                         })

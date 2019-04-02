@@ -1,36 +1,51 @@
 package com.github.halspals.smarthomeadapters.smarthomeadapters
 
+import android.content.Context
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.support.v4.app.FragmentManager
 import android.util.Log
+import android.widget.LinearLayout
 import com.github.halspals.smarthomeadapters.smarthomeadapters.model.Robot
+import kotlinx.android.synthetic.main.activity_main.*
 import net.openid.appauth.AuthState
 import net.openid.appauth.AuthorizationService
 import org.jetbrains.anko.clearTask
 import org.jetbrains.anko.intentFor
 import org.jetbrains.anko.newTask
+import org.jetbrains.anko.toast
 
 /**
  * The activity encompassing the app's main [Fragment]s.
  */
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), RestApiActivity {
 
-    internal val restApiService by lazy {
+    override val restApiService by lazy {
         RestApiService.new()
     }
 
-    internal val authState by lazy {
+    override val authState by lazy {
         readAuthState(this)
     }
 
-    internal val authService by lazy {
+    override val authService by lazy {
         AuthorizationService(this)
     }
 
-    internal var isInEditMode = false
-    internal lateinit var robotToEdit: Robot
+    override fun makeToast(charSequence: CharSequence) {
+        // TODO rewrite this using function referencing
+        this.toast(charSequence)
+    }
+
+    override val context: Context
+        get() = this
+
+    override val snackbarLayout: LinearLayout
+        get() = this.snackbar_layout
+
+    override var isInEditMode = false
+    override lateinit var robotToEdit: Robot
 
     private val tag = "MainActivity"
 
@@ -52,7 +67,7 @@ class MainActivity : AppCompatActivity() {
      * @param addToBackstack if true, fragment will be added to the backstack,
      * otherwise backstack will be dropped
      */
-    fun startFragment(fragment: Fragment, addToBackstack: Boolean = false) {
+    override fun startFragment(fragment: Fragment, addToBackstack: Boolean, args: Bundle?) {
         Log.d(tag, "[startFragment] Invoked")
 
         val fManager = supportFragmentManager

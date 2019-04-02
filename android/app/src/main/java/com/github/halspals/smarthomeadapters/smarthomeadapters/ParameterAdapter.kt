@@ -3,6 +3,7 @@ package com.github.halspals.smarthomeadapters.smarthomeadapters
 import android.content.Context
 import android.support.design.card.MaterialCardView
 import android.support.v7.widget.RecyclerView
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,6 +12,12 @@ import android.widget.Switch
 import android.widget.TextView
 import com.github.halspals.smarthomeadapters.smarthomeadapters.model.ConfigParameter
 import com.github.halspals.smarthomeadapters.smarthomeadapters.model.ConfigResult
+import kotlinx.android.synthetic.main.fragment_configure_robot.*
+import net.openid.appauth.AuthorizationException
+import okhttp3.ResponseBody
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 /**
  * Provides an adapter to list [ConfigParameter]s in a [RecyclerView] of [MaterialCardView]s.
@@ -18,8 +25,16 @@ import com.github.halspals.smarthomeadapters.smarthomeadapters.model.ConfigResul
  * @property parameters the configuration parameters to list
  */
 class ParameterAdapter(
+        private val fragment: ConfigureRobotFragment,
         private val parameters: List<ConfigParameter>
 ):  RecyclerView.Adapter<ParameterAdapter.ParameterAdapterViewHolder>() {
+
+    private val tag = "ParameterAdapter"
+
+    class ParameterAdapterViewHolder(
+            internal val cardView: MaterialCardView,
+            internal val context: Context
+    ) : RecyclerView.ViewHolder(cardView)
 
     override fun getItemCount(): Int = parameters.size
 
@@ -91,10 +106,44 @@ class ParameterAdapter(
                         parameters.size)
     }
 
-    class ParameterAdapterViewHolder(internal val cardView: MaterialCardView, internal val context: Context) : RecyclerView.ViewHolder(cardView)
+    private fun sendConfigResultToServer(configResult: ConfigResult) {
+        fragment.progress_bar.visibility = View.VISIBLE
+        fragment.finish_button.isEnabled = false
 
-    internal fun getConfigResultsSnapshot(): List<ConfigResult> {
-        return parameters.map { ConfigResult(it.id, it.type, it.details.current.toString()) }
+        fragment.parent.authState.performActionWithFreshTokens(fragment.parent.authService)
+        { accessToken: String?, _: String?, ex: AuthorizationException? ->
+            if (accessToken == null) {
+                Log.e(tag, "[setConfigParameters] got null access token, ex: $ex")
+            } else {
+                fragment.numAcksExpected++
+                    fragment.parent.restApiService
+                            .setConfigParameter(fragment.parent.robotId, accessToken, configResult)
+                            .enqueue(object : Callback<ResponseBody> {
+
+                                override fun onResponse(
+                                        call: Call<ResponseBody>,
+                                        response: Response<ResponseBody>) {
+
+                                    if (response.isSuccessful) {
+                                        Log.v(tag, "[setConfigParameter] Success")
+                                        fragment.numAcksReceived++
+                                        fragment.allowFinishIfAllDone()
+                                    } else {
+                                        val error = RestApiService.extractErrorFromResponse(response)
+                                        Log.e(tag, "[setConfigParameters] got unsuccessful "
+                                                + "response, error: $error")
+                                        fragment.numRejectsReceived++
+                                    }
+                                }
+
+                                override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                                    val error = t.message
+                                    Log.e(tag, "[setConfigParameters] FAILED, error: $error")
+                                    fragment.numRejectsReceived++
+                                }
+                            })
+            }
+        }
     }
 
 }
