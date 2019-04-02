@@ -45,7 +45,7 @@ func (s *Thermostat) Description() string {
 	return "Thermostat usecase for controlling your temperature."
 }
 func (s *Thermostat) Type() UsecaseType {
-	return ToggleUsecaseType
+	return RangeUsecaseType
 }
 
 func (s *Thermostat) DefaultParameters() []Parameter {
