@@ -496,5 +496,6 @@ func main() {
 	Serve("usecaseserver:80", map[string]Usecase{
 		"switch":   &Switch{},
 		"boltlock": &Boltlock{},
+		"thermostat" : &Thermostat{},
 	})
 }
