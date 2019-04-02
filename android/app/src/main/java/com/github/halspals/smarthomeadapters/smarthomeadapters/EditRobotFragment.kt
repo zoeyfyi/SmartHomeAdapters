@@ -39,7 +39,10 @@ class EditRobotFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        finish_edit_image_view.setOnClickListener { _ -> parent.startFragment(RobotsFragment()) }
+        finish_edit_image_view.setOnClickListener { _ ->
+            parent.isInEditMode = false
+            parent.startFragment(RobotsFragment())
+        }
 
         recalibrate_layout.setOnClickListener { _ ->
             startRegistrationWizardAtScreen(RECALIBRATE_FLAG)
