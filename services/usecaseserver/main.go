@@ -351,6 +351,7 @@ func (s *UsecaseServer) Range(ctx context.Context, action *usercaseserver.RangeR
 
 func (s *UsecaseServer) getCalibrationParameters(usecase Usecase, robotID string, db *sql.DB) ([]Parameter, error) {
 	defaultParams := usecase.DefaultParameters()
+	log.Printf("default parameters: %+v", defaultParams)
 
 	params := make([]Parameter, 0, len(defaultParams))
 
@@ -393,6 +394,7 @@ func (s *UsecaseServer) getCalibrationParameters(usecase Usecase, robotID string
 		}
 	}
 
+	log.Printf("params: %+v", params)
 	return params, nil
 }
 
@@ -465,9 +467,10 @@ func (s *UsecaseServer) SetCalibrationParameter(ctx context.Context, request *us
 	switch (*parameter).(type) {
 	case BoolParameter:
 		_, err := s.db.Exec(
-			"UPDATE boolparameter SET value = $1 WHERE robotId = $2",
+			"UPDATE boolparameter SET value = $1 WHERE robotId = $2 AND serial = $3",
 			request.GetBoolValue(),
 			request.Robot.Id,
+			request.Id,
 		)
 		if err != nil {
 			log.Printf("error updating bool parameter: %v", err)
@@ -475,9 +478,10 @@ func (s *UsecaseServer) SetCalibrationParameter(ctx context.Context, request *us
 		}
 	case IntParameter:
 		_, err := s.db.Exec(
-			"UPDATE intparameter SET value = $1 WHERE robotId = $2",
+			"UPDATE intparameter SET value = $1 WHERE robotId = $2 AND serial = $3",
 			request.GetIntValue(),
 			request.Robot.Id,
+			request.Id,
 		)
 		if err != nil {
 			log.Printf("error updating int parameter: %v", err)
