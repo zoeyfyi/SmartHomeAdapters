@@ -46,7 +46,7 @@ func (s *Thermostat) Name() string {
 }
 
 func (s *Thermostat) Description() string {
-	return "Thermostat usecase for controlling your temperature."
+	return "Thermostat robot for controlling your temperature."
 }
 func (s *Thermostat) Type() UsecaseType {
 	return RangeUsecaseType
