@@ -35,6 +35,7 @@ data class Robot(
         const val INTERFACE_TYPE_RANGE = "range"
         const val ROBOT_TYPE_SWITCH = "switch"
         const val ROBOT_TYPE_THERMOSTAT = "thermostat"
+        const val ROBOT_TYPE_BOLTLOCK = "boltlock"
         val ADD_ROBOT = Robot("","","","",
                 RobotStatus(false,0,0,0))
     }

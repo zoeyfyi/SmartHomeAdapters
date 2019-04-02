@@ -170,7 +170,17 @@ class RobotAdapter (
             }
 
             Robot.ROBOT_TYPE_THERMOSTAT -> {
-                // Do nothing
+                // Display no image
+            }
+
+            Robot.ROBOT_TYPE_BOLTLOCK -> {
+                robotIcon?.setImageResource(
+                        if (robot.robotStatus.value) {
+                            R.drawable.basic_lock
+                        } else {
+                            R.drawable.basic_lock_open
+                        }
+                )
             }
 
             else -> TODO("NO OTHER ROBOT TYPE EXPECTED")
