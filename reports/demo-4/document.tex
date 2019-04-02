@@ -1,0 +1,175 @@
+\documentclass[a4paper]{article}
+\usepackage{array}  
+\usepackage[table]{xcolor}% http://ctan.org/pkg/xcolor
+\usepackage{geometry}
+\geometry{margin=1.25in}
+\usepackage{hhline}
+\usepackage{environ}
+ %\geometry{
+ %a4paper,z
+ %total={170mm,257mm},
+ %left=40mm,
+ %right=40mm
+ %}
+ \newcommand{\colWidth}{141mm}
+
+\begin{document} 
+\section*{Demo day: \textit{(demo number)} Group \textit{(group number)}}
+
+% ------------GOALS----------
+
+\begin{center}
+\begin{tabular}{|p{\colWidth}|}
+	\hline
+	\cellcolor{blue!25}\large
+	\textbf{What were your goals?}
+	\\ \hline
+	\vtop to 60mm{
+	
+		For this demo, we focused our goals around polishing our existing systems.
+		The following is a complete breakdown of what aspects we aimed at improving:
+		\begin{itemize}
+			\item Web server:
+			\begin{itemize}
+				\item New UI for OAuth web page
+				\item Refactor existing systems to make them more easily extendable
+				\item Make changes to accommodate new UI
+				\begin{itemize}
+					\item Add real names to user accounts (to welcome them with in the app)
+					\item Endpoint to delete a robot from the user's account
+					\item Endpoint to recalibrate a robot already registered to the user
+					\item Endpoint to rename a robot already registered to the user
+					\item Return robot statuses when fetching all robots
+				\end{itemize}
+				\item Penetration testing analysis
+			\end{itemize}
+			\item Android app:
+			\begin{itemize}
+				\item Implement new UI
+				\begin{itemize}
+					\item Move to single-main-page architecture
+					\item Interact with robots directly from the main page
+					\item New Robot Registration Wizard UI
+					\item New Login/Registration activity UI
+					\item Horizontal list for configuration parameters
+				\end{itemize}
+				\item Automatically deploy signed APKS to GitHub Releases when a commit is pushed into the master branch
+				\item Add support for some non-English languages/locales
+				\begin{itemize}
+					\item Chinese
+					\item Swedish
+					\item Japanese
+					\item German
+				\end{itemize}
+			\end{itemize}
+			\item Robot:
+			\begin{itemize}
+				\item 3D-printed HAL design
+				\item Final 3D-printed mechanisms for Switch, Thermostat, and Boltlock PALs
+				\item Complete PCB design
+				\item Light sleep for the ESP, to reduce power draw
+				\item Final power consumption analysis
+			\end{itemize}
+		\end{itemize}
+  }
+  \\
+  \hline
+\end{tabular}
+\vskip 5mm
+
+% ------------ORGANISATION----------
+
+\begin{tabular}{|p{\colWidth}|}
+	\hline
+	\cellcolor{blue!25}\large
+	\textbf{Summarise how your group organised the workload to achieve your goals.}
+	\\ \hline
+	\vtop to 120mm{
+%  some text some text some text some text
+%  some text some text some text some text
+%  some text some text some text some text
+%  some text some text some text some text 
+  }
+  \\
+  \hline
+\end{tabular}
+\vskip 5mm
+
+% ------------ACHIEVEMENTS----------
+
+\begin{tabular}{|p{\colWidth}|}
+	\hline
+	\cellcolor{blue!25}\large
+	\textbf{What were your main achievements?}
+	\\ \hline
+	\vtop to 95mm{
+%  some text some text some text some text
+%  some text some text some text some text
+
+%  some text some text some text some text
+%  some text some text some text some text 
+  }
+  \\
+  \hline
+\end{tabular}
+\vskip 5mm
+
+% ------------NOT ACHIEVED----------
+
+\begin{tabular}{|p{\colWidth}|}
+	\hline
+	\cellcolor{blue!25}\large
+	\textbf{What did you not achieve? Briefly explain why.}
+	\\ \hline
+	\vtop to 95mm{
+%  some text some text some text some text
+%  some text some text some text some text
+
+%  some text some text some text some text
+%  some text some text some text some text 
+  }
+  \\
+  \hline
+\end{tabular}
+\vskip 5mm
+
+% ------------QUANTITIVE----------
+
+\begin{tabular}{|p{\colWidth}|}
+	\hline
+	\cellcolor{blue!25}\large
+	\textbf{Include any quantitative data you have collected (this can be a graph/table with a few words)}
+	\\ \hline
+	\vtop to 135mm{
+%  some text some text some text some text
+%  some text some text some text some text
+
+%  some text some text some text some text
+%  some text some text some text some text 
+  }
+  \\
+  \hline
+\end{tabular}
+\vskip 5mm
+
+% ------------NEXT STEPS----------
+
+\begin{tabular}{|p{\colWidth}|}
+	\hline
+	\cellcolor{blue!25}\large
+	\textbf{Say briefly what changes you will make to your plan for the next demo.}
+	\\ \hline
+	\vtop to 45mm{
+%  some text some text some text some text
+%  some text some text some text some text
+
+%  some text some text some text some text
+%  some text some text some text some text 
+  }
+  \\
+  \hline
+\end{tabular}
+
+\end{center}
+  
+\end{document}
