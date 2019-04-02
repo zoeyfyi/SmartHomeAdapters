@@ -8,6 +8,9 @@ import android.util.Log
 import com.github.halspals.smarthomeadapters.smarthomeadapters.model.Robot
 import net.openid.appauth.AuthState
 import net.openid.appauth.AuthorizationService
+import org.jetbrains.anko.clearTask
+import org.jetbrains.anko.intentFor
+import org.jetbrains.anko.newTask
 
 /**
  * The activity encompassing the app's main [Fragment]s.
@@ -74,6 +77,6 @@ class MainActivity : AppCompatActivity() {
     internal fun signOut() {
         Log.v(tag, "[signOut] Invoked")
         writeAuthState(this, AuthState())
-        finish()
+        startActivity(intentFor<AuthenticationActivity>().clearTask().newTask())
     }
 }
