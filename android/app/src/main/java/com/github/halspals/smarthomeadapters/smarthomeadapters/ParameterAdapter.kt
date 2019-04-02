@@ -1,105 +1,78 @@
 package com.github.halspals.smarthomeadapters.smarthomeadapters
 
-import android.content.Context
-import android.util.Log
+import android.support.design.card.MaterialCardView
+import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.*
+import android.widget.SeekBar
+import android.widget.Switch
+import android.widget.TextView
 import com.github.halspals.smarthomeadapters.smarthomeadapters.model.ConfigParameter
 import com.github.halspals.smarthomeadapters.smarthomeadapters.model.ConfigResult
 
 /**
- * Provides an adapter to list [ConfigParameter]s in a grid of cards.
+ * Provides an adapter to list [ConfigParameter]s in a [RecyclerView] of [MaterialCardView]s.
  *
- * @property context the context invoking the adapter
  * @property parameters the configuration parameters to list
  */
 class ParameterAdapter(
-        private val context: Context,
         private val parameters: List<ConfigParameter>
-):  BaseAdapter() {
+):  RecyclerView.Adapter<ParameterAdapter.ParameterAdapterViewHolder>() {
 
-    private val configSettings = HashMap<String, String>()
+    override fun getItemCount(): Int = parameters.size
 
-    private val tag = "ParameterAdapter"
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ParameterAdapterViewHolder {
+        // Otherwise inflate the appropriate card and set up its fields
+        val cardView = LayoutInflater.from(parent.context)
+                .inflate(R.layout.view_config_card, parent, false)
+        return ParameterAdapterViewHolder(cardView as MaterialCardView)
 
-    init {
-        for (param in parameters) {
-            when (param.type) {
-                ConfigParameter.BOOL_TYPE -> {
-                    configSettings[param.name] = (param.details.default != 0).toString()
-                }
-
-                ConfigParameter.INT_TYPE -> {
-                    configSettings[param.name] = param.details.default.toString()
-                }
-
-                else -> {
-                    TODO("No other types expected")
-                }
-            }
-        }
     }
 
-    override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
+    override fun onBindViewHolder(viewHolder: ParameterAdapter.ParameterAdapterViewHolder, position: Int) {
 
-        if (convertView != null) {
-            // We've already been given a view which is set up -- use it
-            return convertView
-        }
-
-        // Otherwise inflate the appropriate card and set up its fields
-        val inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
         val parameter = parameters[position]
+        val cardView = viewHolder.cardView
+        val switch = cardView.findViewById<Switch>(R.id.input_switch)
+        val seekBar = cardView.findViewById<SeekBar>(R.id.input_seekbar)
+        val seekBarValueTextView = cardView.findViewById<TextView>(R.id.seekbar_value_text_view)
 
-        val view = when (parameter.type) {
+        when (parameter.type) {
             ConfigParameter.BOOL_TYPE -> {
-                // The parameter is a boolean one -- inflate the bool card and set the default state
-                val cardView = inflater.inflate(R.layout.view_bool_config_card, parent, false)
-                val switch = cardView.findViewById<Switch>(R.id.input_switch)
-                switch.isChecked = parameter.details.default != 0
+                // The parameter is a boolean one -- set up the switch
+                seekBar.visibility = View.GONE
+                seekBarValueTextView.visibility = View.GONE
+                switch.isChecked = parameter.details.current != 0
                 switch.setOnCheckedChangeListener { _, b ->
-                    configSettings[parameter.name] = b.toString()
+                  parameter.details.current = if (b) { 1 } else { 0 }
                 }
-                cardView
             }
 
             ConfigParameter.INT_TYPE -> {
-                // The parameter is an integer one -- inflate the int card and set up the seek bar
-                val cardView = inflater.inflate(R.layout.view_int_config_card, parent, false)
+                // The parameter is an integer one -- set up the seek bar
+                switch.visibility = View.GONE
 
                 val max = parameter.details.max
                 val min = parameter.details.min
-                val default = parameter.details.default
+                val current = parameter.details.current
 
-                val seekBar = cardView.findViewById<SeekBar>(R.id.input_seekbar)
                 seekBar.max = max - min // manually add min later as api <26 doesn't support seekBar.setMin()
-                seekBar.progress = default - min
-
-                val seekBarValueTextView = cardView.findViewById<TextView>(R.id.seekbar_value_text_view)
-                seekBarValueTextView.text = "$default"
+                seekBar.progress = current - min
+                seekBarValueTextView.text = "$current"
 
                 // Set up the change listener for the seekbar
                 seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-                    override fun onStopTrackingTouch(p0: SeekBar?) {
-                        // Not interested
-                    }
-
-                    override fun onStartTrackingTouch(p0: SeekBar?) {
-                        // Not interested
-                    }
+                    override fun onStopTrackingTouch(p0: SeekBar?) {}
+                    override fun onStartTrackingTouch(p0: SeekBar?) {}
 
                     override fun onProgressChanged(seekBar: SeekBar?, progress: Int, byUser: Boolean) {
                         // add back the min we subtracted earlier as the seekbar starts at 0
-                        val newValue = (progress + min).toString()
-                        seekBarValueTextView.text = newValue
-                        configSettings[parameter.name] = newValue
-
+                        val newValue = progress + min
+                        seekBarValueTextView.text = newValue.toString()
+                        parameter.details.current = newValue
                     }
                 })
-
-                cardView
             }
 
             else -> {
@@ -108,31 +81,14 @@ class ParameterAdapter(
         }
 
         // Regardless of the type of card, set up the name and description fields
-        view.findViewById<TextView>(R.id.config_name_text_view).text = parameter.name
-        view.findViewById<TextView>(R.id.config_explanation_text_view).text = parameter.description
-
-        return view
+        cardView.findViewById<TextView>(R.id.config_name_text_view).text = parameter.name
+        cardView.findViewById<TextView>(R.id.config_explanation_text_view).text = parameter.description
     }
 
-    override fun getCount(): Int = parameters.size
+    class ParameterAdapterViewHolder(internal val cardView: MaterialCardView) : RecyclerView.ViewHolder(cardView)
 
-    override fun getItem(position: Int): Any = parameters[position]
-
-    override fun getItemId(p0: Int): Long = 0L
-
-    // TODO make more elegant solution than just stripping the space
-    internal fun getConfigValuesSnapshot(): List<ConfigResult> {
-        val snapshot = ArrayList<ConfigResult>()
-        for (paramName in configSettings.keys) {
-            snapshot.add(
-                    ConfigResult(
-                            paramName.replace(" ", ""),
-                            configSettings[paramName]!!
-                    )
-            )
-        }
-
-        return snapshot
+    internal fun getConfigResultsSnapshot(): List<ConfigResult> {
+        return parameters.map { ConfigResult(it.id, it.type, it.details.current.toString()) }
     }
 
 }

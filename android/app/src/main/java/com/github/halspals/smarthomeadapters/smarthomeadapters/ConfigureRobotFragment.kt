@@ -1,8 +1,9 @@
 package com.github.halspals.smarthomeadapters.smarthomeadapters
 
-import android.content.Context
 import android.os.Bundle
 import android.support.v4.app.Fragment
+import android.support.v7.widget.LinearLayoutManager
+import android.support.v7.widget.LinearSnapHelper
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -47,16 +48,20 @@ class ConfigureRobotFragment : Fragment() {
 
         finish_button.setOnClickListener { _ -> setConfigParametersAndFinish() }
 
-        getConfigParameters(view.context)
+        cancel_button.setOnClickListener { _ -> parent.finish() }
+
+        parameter_recycler_view.layoutManager = LinearLayoutManager(view.context, LinearLayoutManager.HORIZONTAL, false)
+        val snapHelper = LinearSnapHelper()
+        snapHelper.attachToRecyclerView(parameter_recycler_view)
+
+        getConfigParameters()
     }
 
 
     /**
-     * Gets the configuration parameters for the robot and updates the [parameter_grid].
-     *
-     * @param context the [Context] to pass to the [parameter_grid]'s adapter
+     * Gets the configuration parameters for the robot and updates the [parameter_recycler_view].
      */
-    private fun getConfigParameters(context: Context) {
+    private fun getConfigParameters() {
 
         progress_bar.visibility = View.VISIBLE
         finish_button.isEnabled = false
@@ -83,7 +88,7 @@ class ConfigureRobotFragment : Fragment() {
                                     Log.v(fTag, "[getConfigParameters] Got params $params")
                                     // Set up the grid's adapter to display the configuration
                                     // parameters requested
-                                    parameter_grid.adapter = ParameterAdapter(context, params)
+                                    parameter_recycler_view.adapter = ParameterAdapter(params)
                                 } else {
                                     val error = RestApiService.extractErrorFromResponse(response)
                                     Log.e(fTag, "[setConfigParameters] got unsuccessful "
@@ -116,7 +121,7 @@ class ConfigureRobotFragment : Fragment() {
      */
     private fun setConfigParametersAndFinish() {
 
-        val config = (parameter_grid.adapter as ParameterAdapter).getConfigValuesSnapshot()
+        val config = (parameter_recycler_view.adapter as ParameterAdapter).getConfigResultsSnapshot()
 
         Log.v(fTag, "[setConfigParametersAndFinish] got config $config")
 

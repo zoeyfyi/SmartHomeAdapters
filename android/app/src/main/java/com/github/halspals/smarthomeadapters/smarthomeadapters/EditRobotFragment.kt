@@ -51,9 +51,8 @@ class EditRobotFragment : Fragment() {
 
         delete_layout.setOnClickListener { _ ->
             parent.alert(
-                    "Are you sure you want to delete ${parent.robotToEdit.nickname}?\n" +
-                            "This will permanently remove the robot from your account.",
-                    "Permanently delete robot") {
+                    getString(R.string.confirm_delete_body, parent.robotToEdit.nickname),
+                    getString(R.string.confirm_delete_title)) {
                 yesButton { deleteRobot(parent.robotToEdit.id) }
                 noButton {}
             }.show()
