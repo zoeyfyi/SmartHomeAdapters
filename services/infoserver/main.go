@@ -20,6 +20,11 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+const (
+	robotTypeSwitch     = "switch"
+	robotTypeThermostat = "thermostat"
+)
+
 type server struct {
 	DB               *sql.DB
 	SwitchClient     switchserver.SwitchServerClient
@@ -36,7 +41,12 @@ func (s *server) GetRobot(ctx context.Context, query *infoserver.RobotQuery) (*i
 	log.Printf("getting robot with id: %s (user id: %s)", query.Id, query.UserId)
 
 	// query toggleRobots table for matching robots
-	row := s.DB.QueryRow("SELECT serial, nickname, robotType FROM robots WHERE serial = $1 AND registeredUserId = $2", query.Id, query.UserId)
+	row := s.DB.QueryRow(
+		"SELECT serial, nickname, robotType FROM robots WHERE serial = $1 AND registeredUserId = $2",
+		query.Id,
+		query.UserId,
+	)
+
 	err := row.Scan(&serial, &nickname, &robotType)
 	if err == sql.ErrNoRows {
 		return nil, status.Newf(codes.NotFound, "Robot \"%s\" does not exist", query.Id).Err()
@@ -47,7 +57,7 @@ func (s *server) GetRobot(ctx context.Context, query *infoserver.RobotQuery) (*i
 
 	// get the status of the robot
 	switch robotType {
-	case "switch":
+	case robotTypeSwitch:
 		switchRobot, err := s.SwitchClient.GetSwitch(context.Background(), &switchserver.SwitchQuery{
 			Id: serial,
 		})
@@ -67,7 +77,7 @@ func (s *server) GetRobot(ctx context.Context, query *infoserver.RobotQuery) (*i
 				},
 			},
 		}, nil
-	case "thermostat":
+	case robotTypeThermostat:
 		thermostat, err := s.ThermostatClient.GetThermostat(context.Background(), &thermostatserver.ThermostatQuery{
 			Id: serial,
 		})
@@ -117,7 +127,7 @@ func (s *server) GetRobots(query *infoserver.RobotsQuery, stream infoserver.Info
 			log.Printf("Failed to scan row of robots table: %v", err)
 			return err
 		}
-		if robotType == "switch" {
+		if robotType == robotTypeSwitch {
 			interfaceType = "toggle"
 		} else {
 			interfaceType = "range"
@@ -146,7 +156,13 @@ func (s *server) RegisterRobot(ctx context.Context, query *infoserver.RegisterRo
 		return nil, status.Newf(codes.AlreadyExists, "Robot \"%s\" already exists", query.Id).Err()
 	}
 
-	_, err = s.DB.Exec("INSERT INTO robots (serial, nickname, robotType, registeredUserId) VALUES ($1, $2, $3, $4)", query.Id, query.Nickname, query.RobotType, query.UserId)
+	_, err = s.DB.Exec(
+		"INSERT INTO robots (serial, nickname, robotType, registeredUserId) VALUES ($1, $2, $3, $4)",
+		query.Id,
+		query.Nickname,
+		query.RobotType,
+		query.UserId,
+	)
 
 	if err != nil {
 		return nil, err
@@ -169,7 +185,7 @@ func (s *server) ToggleRobot(ctx context.Context, request *infoserver.ToggleRequ
 
 	// forward request to relevent service
 	switch robot.RobotType {
-	case "switch":
+	case robotTypeSwitch:
 		stream, err := s.SwitchClient.SetSwitch(context.Background(), &switchserver.SetSwitchRequest{
 			Id:    request.Id,
 			On:    request.Value,
@@ -192,7 +208,12 @@ func (s *server) ToggleRobot(ctx context.Context, request *infoserver.ToggleRequ
 
 	default:
 		log.Printf("robot type \"%s\" is not toggelable", robot.RobotType)
-		return nil, status.Newf(codes.InvalidArgument, "Robot \"%s\" of type \"%s\" cannot be toggled", request.Id, robot.RobotType).Err()
+		return nil, status.Newf(
+			codes.InvalidArgument,
+			"Robot \"%s\" of type \"%s\" cannot be toggled",
+			request.Id,
+			robot.RobotType,
+		).Err()
 	}
 
 	return &empty.Empty{}, nil
@@ -212,7 +233,7 @@ func (s *server) RangeRobot(ctx context.Context, request *infoserver.RangeReques
 
 	// forward request to relevent service
 	switch robot.RobotType {
-	case "thermostat":
+	case robotTypeThermostat:
 		stream, err := s.ThermostatClient.SetThermostat(context.Background(), &thermostatserver.SetThermostatRequest{
 			Id:         request.Id,
 			Tempreture: request.Value,
@@ -235,13 +256,21 @@ func (s *server) RangeRobot(ctx context.Context, request *infoserver.RangeReques
 
 	default:
 		log.Printf("robot type \"%s\" is not a range robot", robot.RobotType)
-		return nil, status.Newf(codes.InvalidArgument, "Robot \"%s\" of type \"%s\" is not a range robot", request.Id, robot.RobotType).Err()
+		return nil, status.Newf(
+			codes.InvalidArgument,
+			"Robot \"%s\" of type \"%s\" is not a range robot",
+			request.Id,
+			robot.RobotType,
+		).Err()
 	}
 
 	return &empty.Empty{}, nil
 }
 
-func (s *server) CalibrateRobot(ctx context.Context, request *infoserver.CalibrationRequest) (*infoserver.Robot, error) {
+func (s *server) CalibrateRobot(
+	ctx context.Context,
+	request *infoserver.CalibrationRequest,
+) (*infoserver.Robot, error) {
 	robot, err := s.GetRobot(ctx, &infoserver.RobotQuery{
 		Id:     request.Id,
 		UserId: request.UserId,
@@ -251,7 +280,7 @@ func (s *server) CalibrateRobot(ctx context.Context, request *infoserver.Calibra
 	}
 
 	switch robot.RobotType {
-	case "switch":
+	case robotTypeSwitch:
 		parameters := &switchserver.SwitchCalibrationParameters{
 			Id: request.Id,
 		}
@@ -307,7 +336,10 @@ func (s *server) CalibrateRobot(ctx context.Context, request *infoserver.Calibra
 	})
 }
 
-func (s *server) GetCalibration(ctx context.Context, request *infoserver.RobotQuery) (*infoserver.CalibrationParameters, error) {
+func (s *server) GetCalibration(
+	ctx context.Context,
+	request *infoserver.RobotQuery,
+) (*infoserver.CalibrationParameters, error) {
 	robot, err := s.GetRobot(ctx, &infoserver.RobotQuery{
 		Id:     request.Id,
 		UserId: request.UserId,
@@ -319,7 +351,7 @@ func (s *server) GetCalibration(ctx context.Context, request *infoserver.RobotQu
 	parameters := &infoserver.CalibrationParameters{}
 
 	switch robot.RobotType {
-	case "switch":
+	case robotTypeSwitch:
 		switchRobot, err := s.SwitchClient.GetSwitch(context.Background(), &switchserver.SwitchQuery{
 			Id: robot.Id,
 		})
@@ -413,9 +445,13 @@ func main() {
 		ThermostatClient: thermostatClient,
 	}
 	infoserver.RegisterInfoServerServer(grpcServer, infoServer)
-	lis, err := net.Listen("tcp", ":80")
+	lis, err := net.Listen("tcp", "127.0.0.1:80")
 	if err != nil {
 		log.Fatalf("Failed to listen: %v", err)
 	}
-	grpcServer.Serve(lis)
+
+	err = grpcServer.Serve(lis)
+	if err != nil {
+		log.Fatalf("failed to serve GRPC server: %v", err)
+	}
 }

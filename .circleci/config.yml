@@ -137,33 +137,8 @@ jobs:
           name: Install golangci-lint
           command: go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
       - run:
-          name: Lint account-app
-          command: golangci-lint run
-          working_directory: services/account-app
-      - run:
-          name: Lint clientserver
-          command: golangci-lint run
-          working_directory: services/clientserver
-      - run:
-          name: Lint infoserver
-          command: golangci-lint run
-          working_directory: services/infoserver
-      - run:
-          name: Lint robotserver
-          command: golangci-lint run
-          working_directory: services/robotserver
-      - run:
-          name: Lint switchserver
-          command: golangci-lint run
-          working_directory: services/switchserver
-      - run:
-          name: Lint termostatserver
-          command: golangci-lint run
-          working_directory: services/termostatserver
-      - run:
-          name: Lint userserver
-          command: golangci-lint run
-          working_directory: services/userserver
+          name: Lint services
+          command: make lint-services
 
   build-reports:
     docker:
@@ -193,11 +168,6 @@ jobs:
       - run:
           name: Compile technical-report report
           working_directory: reports/technical-report
-          command: |
-            pdflatex document.tex
-      - run:
-          name: Compile user-guide report
-          working_directory: reports/user-guide
           command: |
             pdflatex document.tex
 

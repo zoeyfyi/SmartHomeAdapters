@@ -107,10 +107,13 @@ func TestSuccessfullRegistration(t *testing.T) {
 func TestRegisterDuplicateEmails(t *testing.T) {
 	clearDatabase(t)
 
-	testServer.Register(context.Background(), &userserver.RegisterRequest{
+	_, err := testServer.Register(context.Background(), &userserver.RegisterRequest{
 		Email:    "foo@email.com",
 		Password: "password",
 	})
+	if err != nil {
+		t.Fatalf("failed to register test user: %v", err)
+	}
 
 	user, err := testServer.Register(context.Background(), &userserver.RegisterRequest{
 		Email:    "foo@email.com",
@@ -135,10 +138,13 @@ func TestRegisterDuplicateEmails(t *testing.T) {
 func TestSuccessfullLogin(t *testing.T) {
 	clearDatabase(t)
 
-	testServer.Register(context.Background(), &userserver.RegisterRequest{
+	_, err := testServer.Register(context.Background(), &userserver.RegisterRequest{
 		Email:    "foo@email.com",
 		Password: "password",
 	})
+	if err != nil {
+		t.Fatalf("failed to register test user: %v", err)
+	}
 
 	token, err := testServer.Login(context.Background(), &userserver.LoginRequest{
 		Email:    "foo@email.com",
@@ -161,10 +167,13 @@ func TestSuccessfullLogin(t *testing.T) {
 func TestLoginFailure(t *testing.T) {
 	clearDatabase(t)
 
-	testServer.Register(context.Background(), &userserver.RegisterRequest{
+	_, err := testServer.Register(context.Background(), &userserver.RegisterRequest{
 		Email:    "foo@email.com",
 		Password: "password",
 	})
+	if err != nil {
+		t.Fatalf("failed to register test user: %v", err)
+	}
 
 	cases := []struct {
 		request       *userserver.LoginRequest
@@ -208,10 +217,13 @@ func TestSuccessfullAuthorization(t *testing.T) {
 
 	ctx := context.Background()
 
-	testServer.Register(ctx, &userserver.RegisterRequest{
+	_, err := testServer.Register(ctx, &userserver.RegisterRequest{
 		Email:    "foo@email.com",
 		Password: "password",
 	})
+	if err != nil {
+		t.Fatalf("failed to register test user: %v", err)
+	}
 
 	token, _ := testServer.Login(ctx, &userserver.LoginRequest{
 		Email:    "foo@email.com",
