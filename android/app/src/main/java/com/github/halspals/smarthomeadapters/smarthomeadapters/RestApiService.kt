@@ -63,10 +63,10 @@ interface RestApiService {
     fun getAllUseCases(@Header("token") token: String): Call<List<UseCase>>
 
     @PUT("robot/{robotId}/calibration")
-    fun setConfigParameters(
+    fun setConfigParameter(
             @Path("robotId") robotId: String,
             @Header("token") token: String,
-            @Body params: List<ConfigResult>
+            @Body params: ConfigResult
     ): Call<ResponseBody>
 
     @GET("robot/{robotId}/calibration")

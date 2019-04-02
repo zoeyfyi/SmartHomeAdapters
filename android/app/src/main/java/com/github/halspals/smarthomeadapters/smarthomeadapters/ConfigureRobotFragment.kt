@@ -30,6 +30,11 @@ class ConfigureRobotFragment : Fragment() {
 
     private val parent by lazy { activity as RegisterRobotActivity }
 
+    private var numAcksExpected = -1
+    private var numAcksReceived = 0
+    private var numRejectsReceived = 0
+
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -46,7 +51,7 @@ class ConfigureRobotFragment : Fragment() {
             finish_button.setText(R.string.reconfigure_button_text)
         }
 
-        finish_button.setOnClickListener { _ -> setConfigParametersAndFinish() }
+        finish_button.setOnClickListener { _ -> setConfigParameters() }
 
         cancel_button.setOnClickListener { _ -> parent.finish() }
 
@@ -80,7 +85,6 @@ class ConfigureRobotFragment : Fragment() {
                                     response: Response<List<ConfigParameter>>) {
 
                                 progress_bar.visibility = View.GONE
-                                finish_button.isEnabled = true
 
                                 val params = response.body()
 
@@ -89,9 +93,10 @@ class ConfigureRobotFragment : Fragment() {
                                     // Set up the grid's adapter to display the configuration
                                     // parameters requested
                                     parameter_recycler_view.adapter = ParameterAdapter(params)
+                                    finish_button.isEnabled = true
                                 } else {
                                     val error = RestApiService.extractErrorFromResponse(response)
-                                    Log.e(fTag, "[setConfigParameters] got unsuccessful "
+                                    Log.e(fTag, "[getConfigParameters] got unsuccessful "
                                             + "response or null body; body $params, error: $error")
                                     if (error != null) {
                                         parent.snackbar_layout.snackbar(error)
@@ -119,11 +124,11 @@ class ConfigureRobotFragment : Fragment() {
     /**
      * Sets the configuration parameters in the web server and finishes the registration wizard.
      */
-    private fun setConfigParametersAndFinish() {
+    private fun setConfigParameters() {
 
-        val config = (parameter_recycler_view.adapter as ParameterAdapter).getConfigResultsSnapshot()
+        val configs = (parameter_recycler_view.adapter as ParameterAdapter).getConfigResultsSnapshot()
 
-        Log.v(fTag, "[setConfigParametersAndFinish] got config $config")
+        Log.v(fTag, "[setConfigParameters] got configs $configs")
 
         progress_bar.visibility = View.VISIBLE
         finish_button.isEnabled = false
@@ -131,46 +136,50 @@ class ConfigureRobotFragment : Fragment() {
         parent.authState.performActionWithFreshTokens(parent.authService)
         { accessToken: String?, _: String?, ex: AuthorizationException? ->
             if (accessToken == null) {
-                Log.e(fTag, "[setConfigParametersAndFinish] got null access token, ex: $ex")
+                Log.e(fTag, "[setConfigParameters] got null access token, ex: $ex")
             } else {
-                parent.restApiService
-                        .setConfigParameters(parent.robotId, accessToken, config)
-                        .enqueue(object: Callback<ResponseBody> {
+                numAcksExpected = configs.size
+                for (config in configs) {
+                    parent.restApiService
+                            .setConfigParameter(parent.robotId, accessToken, config)
+                            .enqueue(object : Callback<ResponseBody> {
 
-                            override fun onResponse(
-                                    call: Call<ResponseBody>,
-                                    response: Response<ResponseBody>) {
+                                override fun onResponse(
+                                        call: Call<ResponseBody>,
+                                        response: Response<ResponseBody>) {
 
-                                progress_bar.visibility = View.GONE
-                                finish_button.isEnabled = true
+                                    progress_bar.visibility = View.GONE
+                                    finish_button.isEnabled = true
 
-                                if (response.isSuccessful) {
-                                    Log.v(fTag, "[setConfigParameters] Success")
-                                    parent.toast("Saved successfully")
-                                    parent.finish()
-                                } else {
-                                    val error = RestApiService.extractErrorFromResponse(response)
-                                    Log.e(fTag, "[setConfigParameters] got unsuccessful "
-                                            + "response, error: $error")
-                                    if (error != null) {
-                                        parent.snackbar_layout.snackbar(error)
+                                    if (response.isSuccessful) {
+                                        Log.v(fTag, "[setConfigParameter] Success")
+                                        numAcksReceived++
+                                        finishIfAllDone()
+                                    } else {
+                                        val error = RestApiService.extractErrorFromResponse(response)
+                                        Log.e(fTag, "[setConfigParameters] got unsuccessful "
+                                                + "response, error: $error")
+                                        numRejectsReceived++
                                     }
                                 }
-                            }
 
-                            override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-
-                                progress_bar.visibility = View.GONE
-                                finish_button.isEnabled = true
-
-                                val error = t.message
-                                Log.e(fTag, "[setConfigParameters] FAILED, error: $error")
-                                if (error != null) {
-                                    parent.snackbar_layout.snackbar(error)
+                                override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                                    progress_bar.visibility = View.GONE
+                                    finish_button.isEnabled = true
+                                    val error = t.message
+                                    Log.e(fTag, "[setConfigParameters] FAILED, error: $error")
+                                    numRejectsReceived++
                                 }
-                            }
-                        })
+                            })
+                }
             }
+        }
+    }
+
+    private fun finishIfAllDone() {
+        if (numAcksExpected == numAcksReceived + numRejectsReceived) {
+            parent.toast("Successfully set $numAcksReceived out of $numAcksExpected parameters")
+            parent.finish()
         }
     }
 }
