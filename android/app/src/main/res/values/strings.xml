@@ -46,4 +46,7 @@
     <string name="log_out_text">Log out</string>
     <string name="welcome_text_no_name">Welcome Home</string>
 
+    <!-- Strings related to view_config_card -->
+    <string name="config_position_placeholder" translatable="false">%d/%d</string>
+
 </resources>

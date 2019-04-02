@@ -1,5 +1,6 @@
 package com.github.halspals.smarthomeadapters.smarthomeadapters
 
+import android.content.Context
 import android.support.design.card.MaterialCardView
 import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
@@ -26,7 +27,7 @@ class ParameterAdapter(
         // Otherwise inflate the appropriate card and set up its fields
         val cardView = LayoutInflater.from(parent.context)
                 .inflate(R.layout.view_config_card, parent, false)
-        return ParameterAdapterViewHolder(cardView as MaterialCardView)
+        return ParameterAdapterViewHolder(cardView as MaterialCardView, parent.context)
 
     }
 
@@ -80,12 +81,17 @@ class ParameterAdapter(
             }
         }
 
-        // Regardless of the type of card, set up the name and description fields
+        // Regardless of the type of card, set up the name, description and position fields
         cardView.findViewById<TextView>(R.id.config_name_text_view).text = parameter.name
         cardView.findViewById<TextView>(R.id.config_explanation_text_view).text = parameter.description
+        cardView.findViewById<TextView>(R.id.position_text_view).text =
+                viewHolder.context.getString(
+                        R.string.config_position_placeholder,
+                        position+1,
+                        parameters.size)
     }
 
-    class ParameterAdapterViewHolder(internal val cardView: MaterialCardView) : RecyclerView.ViewHolder(cardView)
+    class ParameterAdapterViewHolder(internal val cardView: MaterialCardView, internal val context: Context) : RecyclerView.ViewHolder(cardView)
 
     internal fun getConfigResultsSnapshot(): List<ConfigResult> {
         return parameters.map { ConfigResult(it.id, it.type, it.details.current.toString()) }
