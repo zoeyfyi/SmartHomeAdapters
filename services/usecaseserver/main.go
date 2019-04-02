@@ -255,7 +255,7 @@ func (s *UsecaseServer) GetStatus(ctx context.Context, request *usercaseserver.G
 		}, nil
 
 	case RangeUsecaseType:
-		row := s.db.QueryRow("SELECT value FROM rangestatus WHERE robotId = $2", request.Robot.Id)
+		row := s.db.QueryRow("SELECT value FROM rangestatus WHERE robotId = $1", request.Robot.Id)
 		var value int
 		err := row.Scan(&value)
 		if err != nil {
