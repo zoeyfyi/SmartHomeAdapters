@@ -38,7 +38,7 @@ var thermostatParameters = map[string]Parameter{
 type Thermostat struct{}
 
 func (s *Thermostat) Name() string {
-	return "Thermostat"
+	return "thermostat"
 }
 
 func (s *Thermostat) Type() UsecaseType {
