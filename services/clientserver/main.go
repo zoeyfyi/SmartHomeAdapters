@@ -539,8 +539,10 @@ func getCalibrationHandler(w http.ResponseWriter, r *http.Request, ps httprouter
 		switch value := p.Value.(type) {
 		case *infoserver.CalibrationParameter_BoolValue:
 			param.Value = fmt.Sprintf("%t", value.BoolValue)
+			param.Type = "bool"
 		case *infoserver.CalibrationParameter_IntValue:
 			param.Value = fmt.Sprintf("%d", value.IntValue)
+			param.Type = "int"
 		}
 
 		parameters = append(parameters, param)
