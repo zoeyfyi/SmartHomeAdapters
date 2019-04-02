@@ -1,7 +1,5 @@
 # Smart Home Adapters
 
-[![Build Status](https://travis-ci.com/mrbenshef/SmartHomeAdapters.svg?token=xzYnEDernngLJ99poRHs&branch=master)](https://travis-ci.com/mrbenshef/SmartHomeAdapters)
-
 ## Git
 
 ### Commit messages

@@ -9,7 +9,6 @@ import (
 	"os"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/mrbenshef/SmartHomeAdapters/microservice/robotserver"
 
@@ -29,7 +28,7 @@ type testServer struct {
 	URL     string
 }
 
-func newServer(t *testing.T) *testServer {
+func newServer() *testServer {
 	var server testServer
 	server.Handler = createRouter()
 	server.Server = httptest.NewServer(server.Handler)
@@ -53,12 +52,12 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func bufDialer(string, time.Duration) (net.Conn, error) {
+func bufDialer(context.Context, string) (net.Conn, error) {
 	return lis.Dial()
 }
 
 func TestConnectToWebSocket(t *testing.T) {
-	s := newServer(t)
+	s := newServer()
 	defer s.Server.Close()
 
 	_, _, err := websocket.DefaultDialer.Dial(s.URL+"/connect/testrobot", nil)
@@ -76,14 +75,14 @@ func TestSendLEDCommand(t *testing.T) {
 		{&robotserver.LEDRequest{RobotId: "testrobot", On: false}, "led off"},
 	}
 
-	s := newServer(t)
+	s := newServer()
 	defer s.Server.Close()
 
 	ws, _, _ := websocket.DefaultDialer.Dial(s.URL+"/connect/testrobot", nil)
 
 	for _, r := range requests {
 		ctx := context.Background()
-		conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithDialer(bufDialer), grpc.WithInsecure())
+		conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
 		if err != nil {
 			t.Fatalf("Failed to dial bufnet: %v", err)
 		}
@@ -110,7 +109,7 @@ func TestSendLEDCommand(t *testing.T) {
 
 func TestUnavailableWhenRobotNotConnected(t *testing.T) {
 	ctx := context.Background()
-	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithDialer(bufDialer), grpc.WithInsecure())
+	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
 	if err != nil {
 		t.Fatalf("Failed to dial bufnet: %v", err)
 	}
@@ -145,14 +144,14 @@ func TestSendServoCommand(t *testing.T) {
 		{&robotserver.ServoRequest{RobotId: "testrobot", Angle: 180}, "servo 180"},
 	}
 
-	s := newServer(t)
+	s := newServer()
 	defer s.Server.Close()
 
 	ws, _, _ := websocket.DefaultDialer.Dial(s.URL+"/connect/testrobot", nil)
 
 	for _, r := range requests {
 		ctx := context.Background()
-		conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithDialer(bufDialer), grpc.WithInsecure())
+		conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
 		if err != nil {
 			t.Fatalf("Failed to dial bufnet: %v", err)
 		}
@@ -192,12 +191,12 @@ func TestSendInvalidServoCommand(t *testing.T) {
 		},
 	}
 
-	s := newServer(t)
+	s := newServer()
 	defer s.Server.Close()
 
 	for _, r := range requests {
 		ctx := context.Background()
-		conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithDialer(bufDialer), grpc.WithInsecure())
+		conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
 		if err != nil {
 			t.Fatalf("Failed to dial bufnet: %v", err)
 		}
