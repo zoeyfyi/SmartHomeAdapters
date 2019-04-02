@@ -26,7 +26,7 @@ var boltlockParameters = map[string]Parameter{
 type Boltlock struct{}
 
 func (s *Boltlock) Name() string {
-	return "Boltlock"
+	return "boltlock"
 }
 
 func (s *Boltlock) Description() string {
