@@ -416,54 +416,57 @@ func setCalibrationHandler(w http.ResponseWriter, r *http.Request, ps httprouter
 	robotID := ps.ByName("id")
 
 	// decode json request
-	var setParameter setParameterRequest
-	err := json.NewDecoder(r.Body).Decode(&setParameter)
+	var setParameters []setParameterRequest
+	err := json.NewDecoder(r.Body).Decode(&setParameters)
 	if err != nil {
 		log.Printf("Invalid calibration JSON: %v", err)
 		HTTPError(w, errInvalidJSON)
 		return
 	}
 
-	// build infoserver calibration request
-	request := &infoserver.CalibrationRequest{
-		Id:      setParameter.ID,
-		RobotId: robotID,
-		UserId:  r.Context().Value(userIDKey).(string),
-	}
-	log.Printf("calibration request: %+v", request)
+	// build & send infoserver calibration requests for each parameter
+	for _, setParameter := range setParameters {
+		request := &infoserver.CalibrationRequest{
+			Id:      setParameter.ID,
+			RobotId: robotID,
+			UserId:  r.Context().Value(userIDKey).(string),
+		}
+		log.Printf("calibration request: %+v", request)
 
-	switch setParameter.Type {
-	case "bool":
-		value, err := strconv.ParseBool(setParameter.Value)
-		if err != nil {
-			HTTPError(w, fmt.Errorf("value should be either \"true\" or \"false\""))
+		switch setParameter.Type {
+		case "bool":
+			value, err := strconv.ParseBool(setParameter.Value)
+			if err != nil {
+				HTTPError(w, fmt.Errorf("value should be either \"true\" or \"false\""))
+				return
+			}
+			log.Printf("value: %t", value)
+			request.Value = &infoserver.CalibrationRequest_BoolValue{
+				BoolValue: value,
+			}
+		case "int":
+			value, err := strconv.ParseInt(setParameter.Value, 10, 64)
+			if err != nil {
+				HTTPError(w, fmt.Errorf("value must be an integer"))
+				return
+			}
+			log.Printf("value: %d", value)
+			request.Value = &infoserver.CalibrationRequest_IntValue{
+				IntValue: value,
+			}
+		default:
+			HTTPError(w, fmt.Errorf("\"%s\" is not a recognized parameter type", setParameter.Type))
 			return
 		}
-		log.Printf("value: %t", value)
-		request.Value = &infoserver.CalibrationRequest_BoolValue{
-			BoolValue: value,
-		}
-	case "int":
-		value, err := strconv.ParseInt(setParameter.Value, 10, 64)
+
+		// send request
+		rbt, err := infoserverClient.CalibrateRobot(context.Background(), request)
 		if err != nil {
-			HTTPError(w, fmt.Errorf("value must be an integer"))
+			HTTPError(w, err)
 			return
 		}
-		log.Printf("value: %d", value)
-		request.Value = &infoserver.CalibrationRequest_IntValue{
-			IntValue: value,
-		}
-	default:
-		HTTPError(w, fmt.Errorf("\"%s\" is not a recognized parameter type", setParameter.Type))
-		return
 	}
 
-	// send request
-	rbt, err := infoserverClient.CalibrateRobot(context.Background(), request)
-	if err != nil {
-		HTTPError(w, err)
-		return
-	}
 
 	// convert robot status
 	var status robotStatus
