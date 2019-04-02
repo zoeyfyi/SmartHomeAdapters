@@ -3,6 +3,7 @@ package com.github.halspals.smarthomeadapters.smarthomeadapters
 import android.content.Context
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.BaseAdapter
@@ -47,6 +48,7 @@ class RobotAdapter (
             getRealRobotView(position, convertView, parent)
     }
 
+    @SuppressWarnings("ClickableViewAccessibility")
     /**
      * Inflates and sets up the view corresponding to a non-dummy [Robot] register to the user.
      */
@@ -62,17 +64,17 @@ class RobotAdapter (
         val robotNickname = view.findViewById<TextView>(R.id.robot_nickname_text_view)
         val robotCircle = view.findViewById<ImageView>(R.id.robot_circle_drawable)
         val robotIcon = view.findViewById<ImageView>(R.id.robot_image_view)
+        val robotRangeText = view.findViewById<TextView>(R.id.robot_range_text_view)
 
-        updateRobotDisplay(robot, robotCircle, robotIcon)
+        updateRobotDisplay(robot, robotCircle, robotIcon, robotRangeText)
 
         // configure interactions with the robot
         when (robot.robotInterfaceType) {
             Robot.INTERFACE_TYPE_TOGGLE -> {
                 robotCircle.setOnClickListener { _ ->
                     if (parent.isInEditMode) {
-                        val editFrag = EditRobotFragment()
                         parent.robotToEdit = robot
-                        parent.startFragment(editFrag)
+                        parent.startFragment(EditRobotFragment())
                     } else {
                         onToggle(robot, robotCircle, robotIcon)
                     }
@@ -80,12 +82,25 @@ class RobotAdapter (
             }
 
             Robot.INTERFACE_TYPE_RANGE -> {
-                robotCircle.setOnDragListener { _, dragEvent ->
-                    if (!parent.isInEditMode) {
-                        TODO("NOT IMPLEMENTED")
+                robotCircle.setOnTouchListener { _, motionEvent ->
+                    if (parent.isInEditMode) {
+                        parent.robotToEdit = robot
+                        parent.startFragment(EditRobotFragment())
                     } else {
-                        false
+                        if (motionEvent.action == MotionEvent.ACTION_UP) {
+                            onSeek(robot)
+                        } else {
+                            if (motionEvent.y > robotCircle.y) {
+                                robot.robotStatus.current++
+                                Log.v(tag, "Increases current value of $robot")
+                            } else {
+                                robot.robotStatus.current--
+                            }
+                            Log.v(tag, "Decreases current calue of $robot")
+                            updateRobotDisplay(robot = robot, robotRangeText = robotRangeText)
+                        }
                     }
+                        true
                 }
             }
         }
@@ -119,10 +134,15 @@ class RobotAdapter (
 
     override fun getCount(): Int = robots.size
 
-    private fun updateRobotDisplay(robot: Robot, robotCircle: ImageView, robotIcon: ImageView) {
+    private fun updateRobotDisplay(
+            robot: Robot,
+            robotCircle: ImageView? = null,
+            robotIcon: ImageView? = null,
+            robotRangeText: TextView? = null)
+    {
         when (robot.robotInterfaceType) {
             Robot.INTERFACE_TYPE_TOGGLE -> {
-                robotCircle.setColorFilter(
+                robotCircle?.setColorFilter(
                         if (robot.robotStatus.value) {
                             parent.getColor(R.color.colorToggleOn)
                         } else {
@@ -131,17 +151,16 @@ class RobotAdapter (
                 )
             }
 
-            Robot.INTERFACE_TYPE_RANGE -> {/* TODO */}
+            Robot.INTERFACE_TYPE_RANGE -> {
+                robotRangeText?.text = robot.robotStatus.current.toString()
+            }
 
             else -> TODO("NO OTHER ROBOT INTERFACE TYPE EXPECTED")
         }
 
         when (robot.robotType) {
-            /*
-                TODO set different icons depending on the state etc
-             */
             Robot.ROBOT_TYPE_SWITCH -> {
-                robotIcon.setImageResource(
+                robotIcon?.setImageResource(
                         if (robot.robotStatus.value) {
                             R.drawable.ic_light_on
                         } else {
@@ -151,7 +170,7 @@ class RobotAdapter (
             }
 
             Robot.ROBOT_TYPE_THERMOSTAT -> {
-                robotIcon.setImageResource(R.drawable.basic_accelerator)
+                // Do nothing
             }
 
             else -> TODO("NO OTHER ROBOT TYPE EXPECTED")
@@ -186,7 +205,10 @@ class RobotAdapter (
                                     Log.d(tag, "[onToggle] Server accepted setting" +
                                             "toggle to ${!robot.robotStatus.value}")
                                     robot.robotStatus.value = !robot.robotStatus.value
-                                    updateRobotDisplay(robot, robotCircle, robotIcon)
+                                    updateRobotDisplay(
+                                            robot = robot,
+                                            robotCircle = robotCircle,
+                                            robotIcon = robotIcon)
 
                                 } else {
                                     val error = RestApiService.extractErrorFromResponse(response)
@@ -201,6 +223,53 @@ class RobotAdapter (
                             override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
                                 val error = t.message
                                 Log.e(tag, "[onToggle] FAILED, error: $error")
+                                if (error != null) {
+                                    parent.snackbar_layout.snackbar(error)
+                                }
+                            }
+                        })
+            }
+        }
+    }
+
+    /**
+     * onSeek is called whenever a range-type robot wants to make an API call to change state
+     *
+     * @param robot the range-type robot which is being acted on
+     */
+    private fun onSeek(robot: Robot) {
+        Log.d(tag, "onSeek(${robot.robotStatus.current})")
+
+        parent.authState.performActionWithFreshTokens(parent.authService)
+        { accessToken: String?, _: String?, ex: AuthorizationException? ->
+            if (accessToken == null) {
+                Log.e(tag, "[onSeek] got null access token, exception: $ex")
+            } else {
+                // TODO make more elegant solution than just going K->C by removing 273
+                parent.restApiService
+                        .robotRange(robot.id, robot.robotStatus.current-273, accessToken, mapOf())
+                        .enqueue(object : Callback<ResponseBody> {
+
+                            override fun onResponse(
+                                    call: Call<ResponseBody>,
+                                    response: Response<ResponseBody>) {
+
+                                if (response.isSuccessful) {
+                                    parent.toast("Success")
+                                    Log.d(tag, "Server accepted setting range to ${robot.robotStatus.current}")
+                                } else {
+                                    val error = RestApiService.extractErrorFromResponse(response)
+                                    Log.e(tag, "Setting the range was unsuccessful, "
+                                            + "error: $error")
+                                    if (error != null) {
+                                        parent.snackbar_layout.snackbar(error)
+                                    }
+                                }
+                            }
+
+                            override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                                val error = t.message
+                                Log.e(tag, "onSeek(${robot.robotStatus.current}) FAILED, error: $error")
                                 if (error != null) {
                                     parent.snackbar_layout.snackbar(error)
                                 }
