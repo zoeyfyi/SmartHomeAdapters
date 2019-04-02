@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Intelligentes Haus Adapter</string>
+    <string name="authorize_button">Anmelden oder registrieren</string>
+    <string name="cancel_button_text">EINSTELLUNG CANCELN</string>
+    <string name="finish_button_text">BEFERTIGEN</string>
+    <string name="crf_title_text">Ihr Gerät kalibrieren</string>
+    <string name="reconfigure_button_text">Umgestalten</string>
+    <string name="rename_button_text">Umbenennen</string>
+    <string name="delete_button_text">Löschen</string>
+    <string name="erf_title_text">Bearbeiten %s</string>
+    <string name="confirm_delete_title">Ihr Gerät permanent löschen</string>
+    <string name="confirm_delete_body">Sind Sie sicher, dass Sie %s permanent löschen möchten? Dieser Gerät wird entgüldig von dein konto gelöscht.</string>
+    <string name="mef_title_text">Robotercodehandeingabe</string>
+    <string name="registration_code_placeholder">Registrierungscode</string>
+    <string name="back_button_text">Zum Scanner zurückkehren</string>
+    <string name="nf_title_text">Ihr Gerät benennen</string>
+    <string name="device_name_placeholder">Gerätname</string>
+    <string name="next_button_text">Weiterführen</string>
+    <string name="update_name_button_text">Umbneennen</string>
+    <string name="qrf_title_text">QR-Code scannen</string>
+    <string name="camera_button_text">Drücken Sie hier, um die Kamera zu starten</string>
+    <string name="manual_entry_button_text">Handeingabe</string>
+    <string name="saf_title_text">Anhang auswählen</string>
+    <string name="register_button_text">Registrieren</string>
+    <string name="welcome_text">Wilkommen, %s</string>
+    <string name="log_out_text">Abmelden</string>
+    <string name="welcome_text_no_name">Wilkommen</string>
+</resources>

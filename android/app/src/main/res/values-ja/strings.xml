@@ -19,8 +19,11 @@
     <string name="saf_title_text">添付ファイルを選択</string>
     <string name="register_button_text">登録</string>
     <string name="next_button_text">続ける</string>
-    <string name="welcome_text">ようこそ，%s</string>
+    <string name="welcome_text">ようこそ、%s</string>
     <string name="update_name_button_text">リネーム</string>
     <string name="log_out_text">ログアウト</string>
     <string name="welcome_text_no_name">ようこそ</string>
+    <string name="crf_title_text">デバイスを調整する</string>
+    <string name="confirm_delete_title">デバイスを完全に削除します</string>
+    <string name="confirm_delete_body">%s削除してもよろしいですか？ これにより、アカウントからデバイスが完全に削除されます。</string>
 </resources>
