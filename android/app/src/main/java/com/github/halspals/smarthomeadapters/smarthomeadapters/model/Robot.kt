@@ -1,6 +1,7 @@
 package com.github.halspals.smarthomeadapters.smarthomeadapters.model
 
 import android.content.Context
+import android.os.Handler
 import android.util.Log
 import android.view.MotionEvent
 import android.widget.ImageView
@@ -130,6 +131,7 @@ data class Robot(
         // configure interactions with the robot
         when (robotInterfaceType) {
             Robot.INTERFACE_TYPE_TOGGLE -> {
+                // Set an onClick listener to handle boolean click events
                 robotCircle?.setOnClickListener { _ ->
                     if (parent.isInEditMode) {
                         parent.robotToEdit = this
@@ -141,22 +143,55 @@ data class Robot(
             }
 
             Robot.INTERFACE_TYPE_RANGE -> {
+                // Set up the necessary objects to handle touch events
+                val circleLocation = IntArray(2)
+                val handler = Handler()
+                val touchRunnableIncrease = object : Runnable {
+                    override fun run() {
+                        robotStatus.current++
+                        if (robotStatus.current < robotStatus.max) {
+                            robotStatus.current = robotStatus.max
+                        }
+                        Log.d(tag, "Increasing current value of $this")
+                        updateViews(context = parent, robotRangeText = robotRangeText)
+                        handler.postDelayed(this, 500)
+                    }
+                }
+                val touchRunnableDecrease = object : Runnable {
+                    override fun run() {
+                        robotStatus.current--
+                        if (robotStatus.current < robotStatus.min) {
+                            robotStatus.current = robotStatus.min
+                        }
+                        Log.d(tag, "Increasing current value of $this")
+                        updateViews(context = parent, robotRangeText = robotRangeText)
+                        handler.postDelayed(this, 500)
+                    }
+                }
+
+                // Set up touch events using these objects
                 robotCircle?.setOnTouchListener { _, motionEvent ->
                     if (parent.isInEditMode) {
                         parent.robotToEdit = this
                         parent.startFragment(EditRobotFragment())
                     } else {
-                        if (motionEvent.action == MotionEvent.ACTION_UP) {
-                            onSeek(parent)
-                        } else {
-                            if (motionEvent.y > robotCircle.y) {
-                                robotStatus.current++
-                                Log.d(tag, "Increasing current value of $this")
-                            } else {
-                                robotStatus.current--
+                        when (motionEvent.action) {
+                            MotionEvent.ACTION_DOWN -> {
+                                robotCircle.getLocationOnScreen(circleLocation)
+                                if (motionEvent.rawY < circleLocation[1] + (robotCircle.height / 2)) {
+                                    handler.post(touchRunnableIncrease)
+                                } else {
+                                    handler.post(touchRunnableDecrease)
+                                }
                             }
-                            Log.d(tag, "Decreasing current calue of $this")
-                            updateViews(context = parent, robotRangeText = robotRangeText)
+
+                            MotionEvent.ACTION_UP -> {
+                                handler.removeCallbacks(touchRunnableIncrease)
+                                handler.removeCallbacks(touchRunnableDecrease)
+                                onSeek(parent)
+                            }
+
+                            else -> {}
                         }
                     }
                     true
