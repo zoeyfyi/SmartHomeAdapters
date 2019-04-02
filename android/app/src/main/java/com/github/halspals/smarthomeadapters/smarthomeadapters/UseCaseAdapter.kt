@@ -18,7 +18,7 @@ class UseCaseAdapter(context: Context, private val useCases: List<UseCase>)
     override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
         val inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
         val view = convertView ?: inflater.inflate(R.layout.attachment_list_item, parent, false)
-        view.findViewById<TextView>(R.id.list_item_header).text = useCases[position].name
+        view.findViewById<TextView>(R.id.list_item_header).text = useCases[position].name.capitalize()
         view.findViewById<TextView>(R.id.list_item_description).text = useCases[position].description
 
         val checkBox = view.findViewById<RadioButton>(R.id.radio)
