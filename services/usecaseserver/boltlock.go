@@ -30,7 +30,7 @@ func (s *Boltlock) Name() string {
 }
 
 func (s *Boltlock) Description() string {
-	return "TODO: boltlock description"
+	return "Boltlock robot for controlling your locks."
 }
 
 func (s *Boltlock) Type() UsecaseType {

@@ -30,7 +30,7 @@ func (s *Switch) Name() string {
 }
 
 func (s *Switch) Description() string {
-	return "TODO: switch description"
+	return "Switch robot for controlling your lights."
 }
 
 func (s *Switch) Type() UsecaseType {
