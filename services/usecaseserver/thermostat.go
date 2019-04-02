@@ -25,13 +25,17 @@ var thermostatParameters = map[string]Parameter{
 		ID:          "LowTemperature",
 		Name:        "Low Temperature",
 		Description: "This is the lowest temperature marked on your thermostat",
-		Default:     273,
+		Min:         273,
+		Default:     300,
+		Max:         373,
 	},
 	"HighTemperature": IntParameter{
 		ID:          "HighTemperature",
 		Name:        "High Temperature",
 		Description: "This is the highest temperature marked on your thermostat",
-		Default:     373,
+		Min:         273,
+		Default:     300,
+		Max:         373,
 	},
 }
 
