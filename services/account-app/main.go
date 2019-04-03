@@ -52,6 +52,7 @@ type consentTemplateData struct {
 type registerTemplateData struct {
 	Error   error
 	Success bool
+	Challenge string
 }
 
 type LoginRequest struct {
@@ -206,7 +207,7 @@ func getLoginHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params
 	}
 
 	// render login form
-	err = loginTemplate.Execute(w, loginTemplateData{})
+	err = loginTemplate.Execute(w, loginTemplateData{Challenge:challenge})
 	if err != nil {
 		log.Printf("Error rendering template: %v", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -225,6 +226,7 @@ func registerError(w http.ResponseWriter, err error) {
 
 func postRegisterHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	// parse post form
+	challenge := r.URL.Query().Get("login_challenge")
 	err := r.ParseForm()
 	if err != nil {
 		registerError(w, errors.New("internal error"))
@@ -256,6 +258,7 @@ func postRegisterHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 	// return success
 	err = registerTemplate.Execute(w, registerTemplateData{
 		Success: true,
+		Challenge: challenge,
 	})
 	if err != nil {
 		log.Printf("error rendering template: %v", err)
@@ -264,7 +267,8 @@ func postRegisterHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 }
 
 func getRegisterHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	err := registerTemplate.Execute(w, registerTemplateData{})
+	challenge := r.URL.Query().Get("login_challenge")
+	err := registerTemplate.Execute(w, registerTemplateData{Challenge:challenge})
 	if err != nil {
 		log.Printf("Error rendering template: %v", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
