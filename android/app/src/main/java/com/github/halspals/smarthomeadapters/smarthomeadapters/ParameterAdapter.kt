@@ -25,15 +25,15 @@ import retrofit2.Response
  * @property parameters the configuration parameters to list
  */
 class ParameterAdapter(
-        private val fragment: ConfigureRobotFragment,
-        private val parameters: List<ConfigParameter>
-):  RecyclerView.Adapter<ParameterAdapter.ParameterAdapterViewHolder>() {
+    private val fragment: ConfigureRobotFragment,
+    private val parameters: List<ConfigParameter>
+) : RecyclerView.Adapter<ParameterAdapter.ParameterAdapterViewHolder>() {
 
     private val tag = "ParameterAdapter"
 
     class ParameterAdapterViewHolder(
-            internal val cardView: MaterialCardView,
-            internal val context: Context
+        internal val cardView: MaterialCardView,
+        internal val context: Context
     ) : RecyclerView.ViewHolder(cardView)
 
     override fun getItemCount(): Int = parameters.size
@@ -41,7 +41,7 @@ class ParameterAdapter(
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ParameterAdapterViewHolder {
         // Otherwise inflate the appropriate card and set up its fields
         val cardView = LayoutInflater.from(parent.context)
-                .inflate(R.layout.view_config_card, parent, false)
+            .inflate(R.layout.view_config_card, parent, false)
         return ParameterAdapterViewHolder(cardView as MaterialCardView, parent.context)
 
     }
@@ -61,7 +61,17 @@ class ParameterAdapter(
                 seekBarValueTextView.visibility = View.GONE
                 switch.isChecked = parameter.details.current != 0
                 switch.setOnCheckedChangeListener { _, b ->
-                  parameter.details.current = if (b) { 1 } else { 0 }
+                    parameter.details.current = if (b) {
+                        1
+                    } else {
+                        0
+                    }
+
+                    // send update to server
+                    val value = parameter.details.current == 1
+                    val configResult = ConfigResult(parameter.id, parameter.type, value.toString())
+                    Log.v(tag, "sending config result: $configResult")
+                    sendConfigResultToServer(configResult)
                 }
             }
 
@@ -87,6 +97,12 @@ class ParameterAdapter(
                         val newValue = progress + min
                         seekBarValueTextView.text = newValue.toString()
                         parameter.details.current = newValue
+
+                        // send update to server
+                        val configResult =
+                            ConfigResult(parameter.id, parameter.type, parameter.details.current.toString())
+                        Log.v(tag, "sending config result: $configResult")
+                        sendConfigResultToServer(configResult)
                     }
                 })
             }
@@ -101,9 +117,10 @@ class ParameterAdapter(
         cardView.findViewById<TextView>(R.id.config_explanation_text_view).text = parameter.description
         cardView.findViewById<TextView>(R.id.position_text_view).text =
                 viewHolder.context.getString(
-                        R.string.config_position_placeholder,
-                        position+1,
-                        parameters.size)
+                    R.string.config_position_placeholder,
+                    position + 1,
+                    parameters.size
+                )
     }
 
     private fun sendConfigResultToServer(configResult: ConfigResult) {
@@ -116,32 +133,35 @@ class ParameterAdapter(
                 Log.e(tag, "[setConfigParameters] got null access token, ex: $ex")
             } else {
                 fragment.numAcksExpected++
-                    fragment.parent.restApiService
-                            .setConfigParameter(fragment.parent.robotId, accessToken, configResult)
-                            .enqueue(object : Callback<ResponseBody> {
+                fragment.parent.restApiService
+                    .setConfigParameter(fragment.parent.robotId, accessToken, configResult)
+                    .enqueue(object : Callback<ResponseBody> {
 
-                                override fun onResponse(
-                                        call: Call<ResponseBody>,
-                                        response: Response<ResponseBody>) {
+                        override fun onResponse(
+                            call: Call<ResponseBody>,
+                            response: Response<ResponseBody>
+                        ) {
 
-                                    if (response.isSuccessful) {
-                                        Log.v(tag, "[setConfigParameter] Success")
-                                        fragment.numAcksReceived++
-                                        fragment.allowFinishIfAllDone()
-                                    } else {
-                                        val error = RestApiService.extractErrorFromResponse(response)
-                                        Log.e(tag, "[setConfigParameters] got unsuccessful "
-                                                + "response, error: $error")
-                                        fragment.numRejectsReceived++
-                                    }
-                                }
+                            if (response.isSuccessful) {
+                                Log.v(tag, "[setConfigParameter] Success")
+                                fragment.numAcksReceived++
+                                fragment.allowFinishIfAllDone()
+                            } else {
+                                val error = RestApiService.extractErrorFromResponse(response)
+                                Log.e(
+                                    tag, "[setConfigParameters] got unsuccessful "
+                                            + "response, error: $error"
+                                )
+                                fragment.numRejectsReceived++
+                            }
+                        }
 
-                                override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                                    val error = t.message
-                                    Log.e(tag, "[setConfigParameters] FAILED, error: $error")
-                                    fragment.numRejectsReceived++
-                                }
-                            })
+                        override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                            val error = t.message
+                            Log.e(tag, "[setConfigParameters] FAILED, error: $error")
+                            fragment.numRejectsReceived++
+                        }
+                    })
             }
         }
     }
