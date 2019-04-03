@@ -120,7 +120,7 @@ func (s *Thermostat) Range(value int64, parameters []Parameter, controller Robot
 
 	// calculate the angle required to give the desired temperature
 	temperatureRatio := float64(value-lowTemp) / float64(highTemp-lowTemp)
-	angle = float64(lowAngle) + float64(highAngle-lowAngle)*temperatureRatio
+	angle = float64(highAngle) + float64(lowAngle-highAngle)*temperatureRatio
 
 	log.Printf("angle = %f, temperature ratio = %f", angle, temperatureRatio)
 
