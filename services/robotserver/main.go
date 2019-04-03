@@ -66,6 +66,12 @@ func connectHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params
 			if msgType == websocket.TextMessage {
 				msg := string(msg)
 				log.Printf("got text message: %s", msg)
+
+				if msg == "left" {
+					log.Println("left")
+				} else if msg == "right" {
+					log.Println("right")
+				}
 			}
 		}
 	})()
