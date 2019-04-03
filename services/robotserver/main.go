@@ -15,6 +15,7 @@ import (
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/gorilla/websocket"
 	"github.com/julienschmidt/httprouter"
+	"github.com/mrbenshef/SmartHomeAdapters/microservice/infoserver"
 	"github.com/mrbenshef/SmartHomeAdapters/microservice/robotserver"
 	"google.golang.org/grpc"
 )
@@ -29,6 +30,8 @@ var upgrader = websocket.Upgrader{
 // sockets to send messages to
 var sockets = make(map[string]*websocket.Conn)
 var socketMutex = &sync.Mutex{}
+
+var infoClient infoserver.InfoServerClient
 
 type server struct{}
 
@@ -51,6 +54,34 @@ func connectHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params
 		log.Println("Failed to upgrade: ", err)
 		return
 	}
+
+	go (func() {
+		log.Printf("robot %s is listening for messages", id)
+
+		for {
+			log.Printf("robot %s blocking", id)
+			msgType, msg, err := newSocket.ReadMessage()
+			log.Printf("got message, msgType: %v, msg: %v, err: %v", msgType, msg, err)
+
+			if err != nil {
+				log.Println("close")
+				break
+			}
+
+			if msgType == websocket.TextMessage {
+				msg := string(msg)
+				log.Printf("got text message: %s", msg)
+
+				_, err := infoClient.ButtonPress(context.Background(), &infoserver.ButtonPressEvent{
+					Button:  msg,
+					RobotId: id,
+				})
+				if err != nil {
+					log.Printf("err sending button press: %v", err)
+				}
+			}
+		}
+	})()
 
 	log.Println("Socket opened")
 	socketMutex.Lock()
@@ -123,6 +154,21 @@ func createRouter() *httprouter.Router {
 }
 
 func main() {
+	// connect to infoserver
+	infoserverConn, err := grpc.Dial("infoserver:80", grpc.WithInsecure())
+	if err != nil {
+		panic(err)
+	}
+
+	defer func() {
+		closeErr := infoserverConn.Close()
+		if closeErr != nil {
+			log.Fatalf("failed to close infoserver connection: %v", closeErr)
+		}
+	}()
+
+	infoClient = infoserver.NewInfoServerClient(infoserverConn)
+
 	// start grpc server
 	grpcServer := grpc.NewServer()
 	robotServer := &server{}

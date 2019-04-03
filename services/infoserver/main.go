@@ -22,6 +22,34 @@ type server struct {
 	UsecaseClient usecaseserver.UsecaseServerClient
 }
 
+type robot struct {
+	serial           string
+	nickname         string
+	robotType        string
+	registeredUserID string
+}
+
+func getRobotByID(s *server, id string) (*robot, error) {
+	log.Printf("getRobotByID(%s)", id)
+
+	rbt := &robot{}
+
+	row := s.DB.QueryRow(
+		"SELECT serial, nickname, robotType, registeredUserId FROM robots WHERE serial = $1",
+		id,
+	)
+
+	err := row.Scan(&rbt.serial, &rbt.nickname, &rbt.robotType, &rbt.registeredUserID)
+	if err == sql.ErrNoRows {
+		return nil, status.Newf(codes.NotFound, "Robot \"%s\" does not exist", id).Err()
+	} else if err != nil {
+		log.Printf("Failed to retrive robot %s: %v", id, err)
+		return nil, err
+	}
+
+	return rbt, nil
+}
+
 func (s *server) GetRobot(ctx context.Context, query *infoserver.RobotQuery) (*infoserver.Robot, error) {
 	var (
 		serial    string
@@ -466,6 +494,28 @@ func (s *server) GetUsecases(_ *empty.Empty, stream infoserver.InfoServer_GetUse
 	}
 
 	return nil
+}
+
+func (s *server) ButtonPress(ctx context.Context, event *infoserver.ButtonPressEvent) (*empty.Empty, error) {
+	// get the robot
+	rbt, err := getRobotByID(s, event.RobotId)
+	if err != nil {
+		return nil, err
+	}
+
+	// try to toggle the robot
+	_, err = s.UsecaseClient.Toggle(ctx, &usecaseserver.ToggleRequest{
+		NewValue: event.Button == "right",
+		Robot: &usecaseserver.Robot{
+			Id: rbt.serial,
+		},
+		Usecase: rbt.robotType,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &empty.Empty{}, nil
 }
 
 func main() {
