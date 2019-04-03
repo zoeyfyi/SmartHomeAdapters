@@ -45,8 +45,19 @@ class QRFragment : Fragment() {
             parent.startActivity(parent.intentFor<MainActivity>().clearTask())
         }
 
-        captureManager.initializeFromIntent(parent.intent, savedInstanceState)
-        captureManager.decode()
+        barcode_view.initializeFromIntent(parent.intent)
+        barcode_view.decodeSingle(object : BarcodeCallback {
+            override fun barcodeResult(result: BarcodeResult?) {
+                if (result != null) {
+                    parent.robotId = result.text
+                    parent.startFragment(NicknameFragment())
+                }
+            }
+
+            override fun possibleResultPoints(resultPoints: MutableList<ResultPoint>?) {}
+        })
+        //captureManager.initializeFromIntent(parent.intent, savedInstanceState)
+        //captureManager.decode()
     }
 
     override fun onResume() {
@@ -62,6 +73,7 @@ class QRFragment : Fragment() {
     override fun onDestroy() {
         super.onDestroy()
         captureManager.onDestroy()
+       // barcode_view
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
