@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Okos Otthoni Adapter</string>
+    <string name="authorize_button">Bejelentkezés vagy regisztrálás</string>
+    <string name="cancel_button_text">Beállítások törlése</string>
+    <string name="reconfigure_button_text">Átkonfigurálás</string>
+    <string name="rename_button_text">Átnevezés</string>
+    <string name="delete_button_text">Törlés</string>
+    <string name="erf_title_text">Szerkesztés %s</string>
+    <string name="mef_title_text">Robotkód beírása kézzel</string>
+    <string name="registration_code_placeholder">Regisztrációs kód</string>
+    <string name="back_button_text">Vissza a szkennerhez</string>
+    <string name="nf_title_text">Eszköz elnevezése</string>
+    <string name="device_name_placeholder">Eszköz neve</string>
+    <string name="qrf_title_text">QR kód szkennelése</string>
+    <string name="camera_button_text">Nyomja meg a gombot a kamera elindításához</string>
+    <string name="manual_entry_button_text">Kézi belépés</string>
+    <string name="saf_title_text">Melléklet kiválasztása</string>
+    <string name="register_button_text">Regisztráció</string>
+    <string name="welcome_text">"Isten Hozott, %s "</string>
+    <string name="log_out_text">Kijelentkezés</string>
+    <string name="next_button_text">Tovább</string>
+    <string name="welcome_text_no_name">Isten Hozott</string>
+    <string name="confirm_delete_title">Az eszköz végleges törlése</string>
+    <string name="confirm_delete_body">Biztosan törölni akarja %s ot? Ez véglegesen eltávolítja az eszközt  a fiókjáról.</string>
+    <string name="crf_title_text">Az eszköz kalibrálása</string>
+    <string name="finish_button_text">Vége</string>
+</resources>
