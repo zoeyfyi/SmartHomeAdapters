@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Handler
 import android.support.v4.app.Fragment
 import android.support.v4.app.FragmentManager
 import android.util.Log
@@ -175,14 +176,13 @@ class RegisterRobotActivity : AppCompatActivity(), RestApiActivity {
         if (robotId != null) {
             Log.d(tag, "[onActivityResult] Scanned robotId $robotId")
             this.robotId = robotId
-            startFragment(NicknameFragment())
+
+            // use Handler to start fragment on main thread
+            val h = Handler()
+            h.post { startFragment(NicknameFragment()) }
 
         } else {
             Log.d(tag, "User quit QR scanner early")
         }
-    }
-
-    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
-        return barcode_view.onKeyDown(keyCode, event) || super.onKeyDown(keyCode, event)
     }
 }

@@ -15,7 +15,10 @@ import com.github.halspals.smarthomeadapters.smarthomeadapters.model.ConfigParam
 import com.github.halspals.smarthomeadapters.smarthomeadapters.model.Robot
 import kotlinx.android.synthetic.main.activity_register_robot.*
 import kotlinx.android.synthetic.main.fragment_configure_robot.*
+import org.jetbrains.anko.clearTask
 import org.jetbrains.anko.design.snackbar
+import org.jetbrains.anko.intentFor
+import org.jetbrains.anko.newTask
 import org.jetbrains.anko.toast
 import retrofit2.Call
 import retrofit2.Callback
@@ -58,7 +61,7 @@ class ConfigureRobotFragment : Fragment() {
 
         finish_button.setOnClickListener { _ ->
             parent.toast("Finished configuration")
-            parent.finish()
+            parent.startActivity(parent.intentFor<MainActivity>().clearTask().newTask())
         }
 
         cancel_button.setOnClickListener { _ -> parent.finish() }

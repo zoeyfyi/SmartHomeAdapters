@@ -7,6 +7,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.google.zxing.ResultPoint
+import com.google.zxing.integration.android.IntentIntegrator
 import com.journeyapps.barcodescanner.BarcodeCallback
 import com.journeyapps.barcodescanner.BarcodeResult
 import com.journeyapps.barcodescanner.CaptureManager
@@ -23,8 +24,6 @@ class QRFragment : Fragment() {
     private val fTag = "QRFragment"
 
     private val parent by lazy { activity as RegisterRobotActivity }
-
-    private val captureManager by lazy { CaptureManager(parent, barcode_view) }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -45,39 +44,13 @@ class QRFragment : Fragment() {
             parent.startActivity(parent.intentFor<MainActivity>().clearTask())
         }
 
-        barcode_view.initializeFromIntent(parent.intent)
-        barcode_view.decodeSingle(object : BarcodeCallback {
-            override fun barcodeResult(result: BarcodeResult?) {
-                if (result != null) {
-                    parent.robotId = result.text
-                    parent.startFragment(NicknameFragment())
-                }
-            }
+        camera_button.setOnClickListener { _ ->
+            // Start a QR scan from the parent using ZXING
+            IntentIntegrator(activity)
+                    .setDesiredBarcodeFormats(IntentIntegrator.QR_CODE)
+                    .setPrompt("Scan robot QR code")
+                    .initiateScan()
 
-            override fun possibleResultPoints(resultPoints: MutableList<ResultPoint>?) {}
-        })
-        //captureManager.initializeFromIntent(parent.intent, savedInstanceState)
-        //captureManager.decode()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        captureManager.onResume()
-    }
-
-    override fun onPause() {
-        super.onPause()
-        captureManager.onPause()
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        captureManager.onDestroy()
-       // barcode_view
-    }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        captureManager.onSaveInstanceState(outState)
+        }
     }
 }

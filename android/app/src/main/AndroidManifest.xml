@@ -37,8 +37,7 @@
         <activity
                 android:name=".RegisterRobotActivity"
                 android:label="Registration Wizard"
-                android:theme="@style/AppTheme"
-                android:noHistory="true"/>
+                android:theme="@style/AppTheme"/>
         <activity
                 android:name="com.journeyapps.barcodescanner.CaptureActivity"
                 android:screenOrientation="portrait"
