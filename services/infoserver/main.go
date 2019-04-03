@@ -30,7 +30,7 @@ type robot struct {
 }
 
 func getRobotByID(s *server, id string) (*robot, error) {
-	log.Println("getRobotByID(%s)", id)
+	log.Printf("getRobotByID(%s)", id)
 
 	rbt := &robot{}
 
