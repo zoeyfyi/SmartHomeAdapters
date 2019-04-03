@@ -168,11 +168,11 @@
 	\\ \hline
 	\vtop to 95mm{
 		We did not achieve our goals related to low battery detection / sending push notifications, and also failed to get
-		battery power working in time for this demo. There were two main causes:
+		battery power working in time for this demo. There were three main causes:
 		\begin{enumerate}
 			\item Designing the PCB has proven a much bigger challenge than expected 
-			\item Some of our deliveries were unfortunately delayed, meaning we had to redesign the PCB to work with replacement parts
-			\item We are still waiting on an inductor (needed to power the PCB with a battery) which we ordered too late due to misunderstandings regarding which parts we had in stock.
+			\item Some of our deliveries were unfortunately delayed, meaning we had to redesign the PCB to work with replacement ICs
+			\item We are still waiting on an inductor (needed to power the PCB with a battery) which we ordered too late as Spencer thought we already had one in stock
 		\end{enumerate}
 
 		While Spencer has worked tirelessly on getting the PCB ready for demonstration, we now realize
@@ -200,7 +200,6 @@
 	\cellcolor{blue!25}\large
 	\textbf{Include any quantitative data you have collected (this can be a graph/table with a few words)}
 	\\ \hline
-	\vtop to 135mm{
 
 	\textbf{PCB power consumption analysis}. These tests confirm our suspicions that a 1000mAh battery will not be enough for smooth usage unless
 	we are able to change the way the devices are woken up from sleep mode so that they can be put into deep sleep.
@@ -257,7 +256,6 @@
 
 	In testing, the server was able to handle 6.1 requests per second concurrently.
 
-  }
   \\
   \hline
 \end{tabular}
