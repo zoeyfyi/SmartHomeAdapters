@@ -15,8 +15,8 @@ import (
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/gorilla/websocket"
 	"github.com/julienschmidt/httprouter"
+	"github.com/mrbenshef/SmartHomeAdapters/microservice/infoserver"
 	"github.com/mrbenshef/SmartHomeAdapters/microservice/robotserver"
-	"github.com/mrbenshef/SmartHomeAdapters/microservice/usecaseserver"
 	"google.golang.org/grpc"
 )
 
@@ -31,9 +31,9 @@ var upgrader = websocket.Upgrader{
 var sockets = make(map[string]*websocket.Conn)
 var socketMutex = &sync.Mutex{}
 
-type server struct {
-	UsecaseClient usecaseserver.UsecaseServerClient
-}
+var infoClient infoserver.InfoServerClient
+
+type server struct{}
 
 // connectHandler establishes the WebSocket with the client
 func connectHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -67,10 +67,12 @@ func connectHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params
 				msg := string(msg)
 				log.Printf("got text message: %s", msg)
 
-				if msg == "left" {
-					log.Println("left")
-				} else if msg == "right" {
-					log.Println("right")
+				_, err := infoClient.ButtonPress(context.Background(), &infoserver.ButtonPressEvent{
+					Button:  msg,
+					RobotId: id,
+				})
+				if err != nil {
+					log.Printf("err sending button press: %v", err)
 				}
 			}
 		}
@@ -147,19 +149,24 @@ func createRouter() *httprouter.Router {
 }
 
 func main() {
-	// connect to usecaseserver
-	usecaseserverConn, err := grpc.Dial("usecaseserver:80", grpc.WithInsecure())
+	// connect to infoserver
+	infoserverConn, err := grpc.Dial("infoserver:80", grpc.WithInsecure())
 	if err != nil {
 		panic(err)
 	}
-	defer usecaseserverConn.Close()
-	usecaseClient := usecaseserver.NewUsecaseServerClient(usecaseserverConn)
+
+	defer func() {
+		closeErr := infoserverConn.Close()
+		if closeErr != nil {
+			log.Fatalf("failed to close infoserver connection: %v", closeErr)
+		}
+	}()
+
+	infoClient = infoserver.NewInfoServerClient(infoserverConn)
 
 	// start grpc server
 	grpcServer := grpc.NewServer()
-	robotServer := &server{
-		UsecaseClient: usecaseClient,
-	}
+	robotServer := &server{}
 	robotserver.RegisterRobotServerServer(grpcServer, robotServer)
 
 	lis, err := net.Listen("tcp", "robotserver:8080")
