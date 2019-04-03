@@ -37,7 +37,7 @@ type hydraLoginAccept struct {
 }
 
 type loginTemplateData struct {
-	Error error
+	Error     error
 	Challenge string
 }
 
@@ -50,8 +50,8 @@ type consentTemplateData struct {
 }
 
 type registerTemplateData struct {
-	Error   error
-	Success bool
+	Error     error
+	Success   bool
 	Challenge string
 }
 
@@ -64,8 +64,8 @@ func loginError(w http.ResponseWriter, err error, challenge string) {
 	// need to change this so that it redirects and provides login challenge
 	// and then write
 	err = loginTemplate.Execute(w, loginTemplateData{
-		Error: err,
-		Challenge:challenge,
+		Error:     err,
+		Challenge: challenge,
 	})
 	if err != nil {
 		log.Printf("error rendering template: %v", err)
@@ -207,7 +207,7 @@ func getLoginHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params
 	}
 
 	// render login form
-	err = loginTemplate.Execute(w, loginTemplateData{Challenge:challenge})
+	err = loginTemplate.Execute(w, loginTemplateData{Challenge: challenge})
 	if err != nil {
 		log.Printf("Error rendering template: %v", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -257,7 +257,7 @@ func postRegisterHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 
 	// return success
 	err = registerTemplate.Execute(w, registerTemplateData{
-		Success: true,
+		Success:   true,
 		Challenge: challenge,
 	})
 	if err != nil {
@@ -268,7 +268,7 @@ func postRegisterHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 
 func getRegisterHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	challenge := r.URL.Query().Get("login_challenge")
-	err := registerTemplate.Execute(w, registerTemplateData{Challenge:challenge})
+	err := registerTemplate.Execute(w, registerTemplateData{Challenge: challenge})
 	if err != nil {
 		log.Printf("Error rendering template: %v", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
