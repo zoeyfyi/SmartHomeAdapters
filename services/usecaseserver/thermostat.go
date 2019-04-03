@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 )
 
@@ -26,7 +27,7 @@ var thermostatParameters = map[string]Parameter{
 		Name:        "Low Temperature",
 		Description: "This is the lowest temperature marked on your thermostat",
 		Min:         273,
-		Default:     300,
+		Default:     293,
 		Max:         373,
 	},
 	"HighTemperature": IntParameter{
@@ -34,7 +35,7 @@ var thermostatParameters = map[string]Parameter{
 		Name:        "High Temperature",
 		Description: "This is the highest temperature marked on your thermostat",
 		Min:         273,
-		Default:     300,
+		Default:     323,
 		Max:         373,
 	},
 }
@@ -86,6 +87,7 @@ func (s *Thermostat) Toggle(value bool, parameters []Parameter, controller Robot
 }
 
 func (s *Thermostat) Range(value int64, parameters []Parameter, controller RobotController) error {
+	log.Printf("value = %d", value)
 
 	// need to convert value to an angle
 	var angle float64
@@ -111,12 +113,21 @@ func (s *Thermostat) Range(value int64, parameters []Parameter, controller Robot
 		}
 	}
 
+	log.Printf(
+		"angle = %f, lowAngle = %d, lowTemp = %d, highAngle = %d, highTemp = %d",
+		angle, lowAngle, lowTemp, highAngle, highTemp,
+	)
+
 	// calculate the angle required to give the desired temperature
-	temperatureRatio := float64(value-lowTemp) /
-		float64(highTemp-lowTemp)
+	temperatureRatio := float64(value-lowTemp) / float64(highTemp-lowTemp)
 	angle = float64(lowAngle) + float64(highAngle-lowAngle)*temperatureRatio
 
-	log.Printf("turning thermostat to angle %t, value: %t", angle, value)
+	log.Printf("angle = %f, temperature ratio = %f", angle, temperatureRatio)
+
+	if angle < 0 || angle > 180 {
+		log.Printf("angle invalid!")
+		return fmt.Errorf("problem with parameters")
+	}
 
 	return controller.SetServo(int64(angle))
 

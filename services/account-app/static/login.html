@@ -21,7 +21,7 @@
             <input name="email" type="email" placeholder="john@email.com" />
             <input name="password" type="password" placeholder="password" />
             <button type="submit">Login</button>
-            <a href="/register">Dont have an account?</a>
+            <a href="/register?login_challenge={{ .Challenge }}">Dont have an account?</a>
         </form>
     {{ if .Challenge }}
         <input id="relogin_challenge" name = "relogin_challenge" value="{{ .Challenge }}" type="hidden">
