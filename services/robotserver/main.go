@@ -52,6 +52,18 @@ func connectHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params
 		return
 	}
 
+	go (func() {
+		for {
+			msgType, msg, err := newSocket.ReadMessage()
+			log.Printf("got message, msgType: %v, msg: %v, err: %v", msgType, msg, err)
+
+			if msgType == websocket.TextMessage {
+				msg := string(msg)
+				log.Printf("got text message: %s", msg)
+			}
+		}
+	})()
+
 	log.Println("Socket opened")
 	socketMutex.Lock()
 	sockets[id] = newSocket
