@@ -63,6 +63,11 @@ func connectHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params
 			msgType, msg, err := newSocket.ReadMessage()
 			log.Printf("got message, msgType: %v, msg: %v, err: %v", msgType, msg, err)
 
+			if err != nil {
+				log.Println("close")
+				break
+			}
+
 			if msgType == websocket.TextMessage {
 				msg := string(msg)
 				log.Printf("got text message: %s", msg)
