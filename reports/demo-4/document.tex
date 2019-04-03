@@ -24,7 +24,6 @@
 	\cellcolor{blue!25}\large
 	\textbf{What were your goals?}
 	\\ \hline
-	\vtop to 60mm{
 	
 		For this demo, we focused our goals around polishing our existing systems.
 		The following is a complete breakdown of what aspects we aimed at improving:
@@ -50,10 +49,10 @@
 					\item Move to single-main-page architecture
 					\item Interact with robots directly from the main page
 					\item New Robot Registration Wizard UI
+					\item New Configuration Process \& UI as a response to last demo's usability testing
 					\item New Login/Registration activity UI
-					\item Horizontal list for configuration parameters
 				\end{itemize}
-				\item Automatically deploy signed APKS to GitHub Releases when a commit is pushed into the master branch
+				\item Automatically deploy signed APKs to GitHub Releases when a commit is pushed into the master branch
 				\item Add support for some non-English languages/locales
 				\begin{itemize}
 					\item Chinese
@@ -62,6 +61,7 @@
 					\item German
 					\item Hungarian
 					\item Polish
+					\item Portuguese
 				\end{itemize}
 			\end{itemize}
 			\item Robot:
@@ -74,7 +74,6 @@
 				\item Final power consumption analysis
 			\end{itemize}
 		\end{itemize}
-  }
   \\
   \hline
 \end{tabular}
@@ -88,7 +87,7 @@
 	\textbf{Summarise how your group organised the workload to achieve your goals.}
 	\\ \hline
 	\vtop to 120mm{
-		As before, we largely allocated tasks according to the following structure:
+		Similarly to before, we largely allocated tasks according to the following structure:
 		\begin{itemize}
 			\item Web server:
 			\begin{itemize}
@@ -107,6 +106,7 @@
 			\begin{itemize}
 				\item \textit{Prepare set-up for final demonstration}: Han
 				\item \textit{3D-printing}: Luke
+				\item \textit{Thermostat PAL}: Han
 				\item \textit{Complete PCB design}: Spencer
 				\item \textit{Light sleep for the ESP, to reduce power draw}: Xiaobin, Spencer
 				\item \textit{Final power consumption analysis}: Spencer, Xiaobin
@@ -114,8 +114,7 @@
 		\end{itemize}
 
 		We've also continued to make heavy use of our Slack channel and GitHub Projects to keep track of
-		everyone's progress. However, for this demo we made an increased effort to work together on-site in
-		Appleton Tower. We have thus spent a lot more hours than usual working side-by-side, which we felt was
+		everyone's progress. However, for this demo we made an increased effort to work side-by-side on site, which we felt was
 		necessary as we near the end of the project.
   }
   \\
@@ -131,6 +130,9 @@
 	\textbf{What were your main achievements?}
 	\\ \hline
 	\vtop to 95mm{
+		We managed to achieve all of our goals for the web server and the Android app.
+		This means that we now provide a much more elegant and professional user experience,
+		largely supporting 8 different languages.
 
   }
   \\
@@ -165,11 +167,45 @@
 	\textbf{Include any quantitative data you have collected (this can be a graph/table with a few words)}
 	\\ \hline
 	\vtop to 135mm{
-%  some text some text some text some text
-%  some text some text some text some text
 
-%  some text some text some text some text
-%  some text some text some text some text 
+	\textbf{PCB power consumption analysis}. These tests confirm our suspisions that a 1000mAh battery will not be enough for smooth usage unless
+	we are able to change the way the devices are woken up from sleep mode so that they can be put into deep sleep.
+
+	\vspace{3mm}
+
+	\begin{tabular}{| c | c |} \hline
+		Average power draw over 10 minutes & 12mA \\
+		Expected lifetime with 1000mAh battery & 3.5 days \\
+		Expected lifetime with 3000mAh batter & 10.5 days \\ \hline
+	\end{tabular}
+
+	\vspace{3mm}
+
+	\textbf{Penetration testing of the webserver}.
+	Smart home and Internet of Things (IoT) device security is of utmost importance as users' personal lives,
+	privacy and homes may be at risk. As such, testing focused on identifying actual risks and vulnerabilities
+	which may impact the users of our services.
+
+	\vspace{3mm}
+
+	\begin{tabular}{| c | c | c |} \hline
+		\textbf{Identified issue} & \textbf{Risks involved} & \textbf{Severity} \\ \hline
+		Unlock another user's boltlock & Burglary or worse & High \\
+		Control another user's thermostat & Annoyance and wasted energy/money & Medium \\
+		Control another user's light system & Annoyance and dissatisfied customers & Medium \\ \hline
+	\end{tabular}
+
+	\vspace{3mm}
+
+	In short, the penetration testing exposed a vulnerability that allowed the attacker to impersonate
+	any user, gaining them complete control over all of their registered devices. The consultant recommended
+	the following to improve the security of our systems:
+
+	\begin{itemize}
+		\item Keep a record of which services and ports are accessible from outside networks
+		\item Limit access to internal services; any service which does not need to be accessible from outside networks should not be
+		\item In the longer term, consider a protection such as 2-factor authentication
+	\end{itemize}
   }
   \\
   \hline
