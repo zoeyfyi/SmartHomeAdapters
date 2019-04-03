@@ -30,6 +30,7 @@
 		\begin{itemize}
 			\item Web server:
 			\begin{itemize}
+				\item Send push notifications to app when robot says it is low on battery
 				\item New UI for OAuth web page
 				\item Finish Alexa support
 				\item Refactor existing systems to make them more easily extendable
@@ -45,6 +46,7 @@
 			\end{itemize}
 			\item Android app:
 			\begin{itemize}
+				\item Receive push notifications from the server
 				\item Implement new UI
 				\begin{itemize}
 					\item Move to single-main-page architecture
@@ -67,6 +69,7 @@
 			\end{itemize}
 			\item Robot:
 			\begin{itemize}
+				\item Send request to server when battery is low
 				\item Prepare set-up for final demonstration
 				\item 3D-printed HAL design
 				\item Final 3D-printed mechanisms for Switch, Thermostat, and Boltlock PALs
@@ -132,7 +135,7 @@
 	\textbf{What were your main achievements?}
 	\\ \hline
 	\vtop to 95mm{
-		We managed to achieve all of our goals for the web server and the Android app.
+		We managed to achieve almost all (see next section) of our goals for the web server and the Android app.
 		This means that we now provide a much more elegant and professional user experience,
 		largely supporting 8 different languages.
 
@@ -150,11 +153,10 @@
 	\textbf{What did you not achieve? Briefly explain why.}
 	\\ \hline
 	\vtop to 95mm{
-%  some text some text some text some text
-%  some text some text some text some text
-
-%  some text some text some text some text
-%  some text some text some text some text 
+		We did not achieve our goals related to low battery detection / sending push notifications. This is because the PCB
+		was finished way later than we expected, partly due to it being a significant technical challenge and partly due to some
+		unfortunately delayed deliveries (looking at you Mouser). We don't feel this impacts our ability to show off our product
+		for this demo and are confident that we can get it working for the investor's fair on Friday.
   }
   \\
   \hline
@@ -224,6 +226,13 @@
 	\textbf{Say briefly what changes you will make to your plan for the next demo.}
 	\\ \hline
 	\vtop to 45mm{
+		Though this is the last demo of the course, we do still cards up our sleeve for Friday:
+
+		\begin{itemize}
+			\item Low battery detection \& push notification sending
+			\item Re-do power draw analysis one final time (due to a shortage of inductors we had to run the tests on serial-to-usb power instead of battery power)
+			\item Prepare flyers and posters
+		\end{itemize}
   }
   \\
   \hline
