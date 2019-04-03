@@ -28,7 +28,6 @@
     <string name="nf_title_text">Name Your Device</string>
     <string name="device_name_placeholder">Device name</string>
     <string name="next_button_text">CONTINUE</string>
-    <string name="update_name_button_text">RENAME</string>
 
     <!-- Strings related to QRFragment -->
     <string name="qrf_title_text">Scan QR</string>

@@ -17,7 +17,6 @@
     <string name="nf_title_text">Ihr Gerät benennen</string>
     <string name="device_name_placeholder">Gerätname</string>
     <string name="next_button_text">Weiterführen</string>
-    <string name="update_name_button_text">Umbneennen</string>
     <string name="qrf_title_text">QR-Code scannen</string>
     <string name="camera_button_text">Drücken Sie hier, um die Kamera zu starten</string>
     <string name="manual_entry_button_text">Handeingabe</string>
