@@ -111,12 +111,16 @@ func (s *Thermostat) Range(value int64, parameters []Parameter, controller Robot
 		}
 	}
 
+	log.Printf(
+		"angle = %f, lowAngle = %d, lowTemp = %d, highAngle = %d, highTemp = %d",
+		angle, lowAngle, lowTemp, highAngle, highTemp,
+	)
+
 	// calculate the angle required to give the desired temperature
-	temperatureRatio := float64(value-lowTemp) /
-		float64(highTemp-lowTemp)
+	temperatureRatio := float64(value-lowTemp) / float64(highTemp-lowTemp)
 	angle = float64(lowAngle) + float64(highAngle-lowAngle)*temperatureRatio
 
-	log.Printf("turning thermostat to angle %t, value: %t", angle, value)
+	log.Printf("turning thermostat to angle %f, value: %f", angle, value)
 
 	return controller.SetServo(int64(angle))
 
