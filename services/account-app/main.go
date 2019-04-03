@@ -37,7 +37,7 @@ type hydraLoginAccept struct {
 }
 
 type loginTemplateData struct {
-	Error error
+	Error     error
 	Challenge string
 }
 
@@ -50,8 +50,9 @@ type consentTemplateData struct {
 }
 
 type registerTemplateData struct {
-	Error   error
-	Success bool
+	Error     error
+	Success   bool
+	Challenge string
 }
 
 type LoginRequest struct {
@@ -63,8 +64,8 @@ func loginError(w http.ResponseWriter, err error, challenge string) {
 	// need to change this so that it redirects and provides login challenge
 	// and then write
 	err = loginTemplate.Execute(w, loginTemplateData{
-		Error: err,
-		Challenge:challenge,
+		Error:     err,
+		Challenge: challenge,
 	})
 	if err != nil {
 		log.Printf("error rendering template: %v", err)
@@ -206,16 +207,17 @@ func getLoginHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params
 	}
 
 	// render login form
-	err = loginTemplate.Execute(w, loginTemplateData{})
+	err = loginTemplate.Execute(w, loginTemplateData{Challenge: challenge})
 	if err != nil {
 		log.Printf("Error rendering template: %v", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
 }
 
-func registerError(w http.ResponseWriter, err error) {
+func registerError(w http.ResponseWriter, err error, challenge string) {
 	err = registerTemplate.Execute(w, registerTemplateData{
-		Error: err,
+		Error:     err,
+		Challenge: challenge,
 	})
 	if err != nil {
 		log.Printf("error rendering template: %v", err)
@@ -225,9 +227,10 @@ func registerError(w http.ResponseWriter, err error) {
 
 func postRegisterHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	// parse post form
+	challenge := r.URL.Query().Get("login_challenge")
 	err := r.ParseForm()
 	if err != nil {
-		registerError(w, errors.New("internal error"))
+		registerError(w, errors.New("internal error"), challenge)
 		return
 	}
 
@@ -238,7 +241,7 @@ func postRegisterHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 
 	// check passwords match
 	if password != confirmPassword {
-		registerError(w, errors.New("passwords do not match"))
+		registerError(w, errors.New("passwords do not match"), challenge)
 		return
 	}
 
@@ -249,13 +252,14 @@ func postRegisterHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 		Password: password,
 	})
 	if err != nil {
-		registerError(w, err)
+		registerError(w, err, challenge)
 		return
 	}
 
 	// return success
 	err = registerTemplate.Execute(w, registerTemplateData{
-		Success: true,
+		Success:   true,
+		Challenge: challenge,
 	})
 	if err != nil {
 		log.Printf("error rendering template: %v", err)
@@ -264,7 +268,8 @@ func postRegisterHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 }
 
 func getRegisterHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	err := registerTemplate.Execute(w, registerTemplateData{})
+	challenge := r.URL.Query().Get("login_challenge")
+	err := registerTemplate.Execute(w, registerTemplateData{Challenge: challenge})
 	if err != nil {
 		log.Printf("Error rendering template: %v", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)

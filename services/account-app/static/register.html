@@ -18,16 +18,16 @@
         {{ end }}
 
         {{ if .Success }}
-        <p class="success">Successfully registers, you can now <a href="https://account.halspals.co.uk/login">log in</a></p>
+        <p class="success">Successfully registers, you can now <a href="https://account.halspals.co.uk/login?login_challenge={{ .Challenge }}">log in</a></p>
         {{ end }}
 
-        <form action="https://account.halspals.co.uk/register" method="POST">
+        <form action="https://account.halspals.co.uk/register?login_challenge={{ .Challenge }}" method="POST">
             <input name="name" type="text" placeholder="John Doe" />
             <input name="email" type="email" placeholder="john@email.com" />
             <input name="password" type="password" placeholder="password" />
             <input name="password_confirm" type="password" placeholder="confirm password" />
             <button type="submit">Register</button>
-            <a href="/login">Already have an account?</a>
+            <a href="/login?login_challenge={{ .Challenge }}">Already have an account?</a>
         </form>
 
     </div>
