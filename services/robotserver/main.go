@@ -16,6 +16,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/julienschmidt/httprouter"
 	"github.com/mrbenshef/SmartHomeAdapters/microservice/robotserver"
+	"github.com/mrbenshef/SmartHomeAdapters/microservice/usecaseserver"
 	"google.golang.org/grpc"
 )
 
@@ -30,7 +31,9 @@ var upgrader = websocket.Upgrader{
 var sockets = make(map[string]*websocket.Conn)
 var socketMutex = &sync.Mutex{}
 
-type server struct{}
+type server struct {
+	UsecaseClient usecaseserver.UsecaseServerClient
+}
 
 // connectHandler establishes the WebSocket with the client
 func connectHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -53,7 +56,10 @@ func connectHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params
 	}
 
 	go (func() {
+		log.Printf("robot %s is listening for messages", id)
+
 		for {
+			log.Printf("robot %s blocking", id)
 			msgType, msg, err := newSocket.ReadMessage()
 			log.Printf("got message, msgType: %v, msg: %v, err: %v", msgType, msg, err)
 
@@ -135,9 +141,19 @@ func createRouter() *httprouter.Router {
 }
 
 func main() {
+	// connect to usecaseserver
+	usecaseserverConn, err := grpc.Dial("usecaseserver:80", grpc.WithInsecure())
+	if err != nil {
+		panic(err)
+	}
+	defer usecaseserverConn.Close()
+	usecaseClient := usecaseserver.NewUsecaseServerClient(usecaseserverConn)
+
 	// start grpc server
 	grpcServer := grpc.NewServer()
-	robotServer := &server{}
+	robotServer := &server{
+		UsecaseClient: usecaseClient,
+	}
 	robotserver.RegisterRobotServerServer(grpcServer, robotServer)
 
 	lis, err := net.Listen("tcp", "robotserver:8080")
