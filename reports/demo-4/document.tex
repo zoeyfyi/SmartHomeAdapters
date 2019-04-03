@@ -137,7 +137,21 @@
 	\vtop to 95mm{
 		We managed to achieve almost all (see next section) of our goals for the web server and the Android app.
 		This means that we now provide a much more elegant and professional user experience,
-		largely supporting 8 different languages.
+		also supporting 8 different languages with hand-written translations by native speakers.
+
+		\vspace{3mm}
+
+		We also managed to get light sleep working with the ESP, and got all of the testing done.
+
+		\vspace{3mm}
+		
+		Finally, we got almost all of the PCB functionality working (see next section), including button control,
+		servo control, etc.
+
+
+
+
+
 
   }
   \\
@@ -153,11 +167,27 @@
 	\textbf{What did you not achieve? Briefly explain why.}
 	\\ \hline
 	\vtop to 95mm{
-		We did not achieve our goals related to low battery detection / sending push notifications. This is because the PCB
-		was finished way later than we expected, partly due to it being a significant technical challenge and partly due to some
-		unfortunately delayed deliveries (looking at you Mouser). We don't feel this impacts our ability to show off our product
-		for this demo and are confident that we can get it working for the investor's fair on Friday.
-  }
+		We did not achieve our goals related to low battery detection / sending push notifications, and also failed to get
+		battery power working in time for this demo. There were two main causes:
+		\begin{enumerate}
+			\item Designing the PCB has proven a much bigger challenge than expected 
+			\item Some of our deliveries were unfortunately delayed, meaning we had to redesign the PCB to work with replacement parts
+			\item We are still waiting on an inductor (needed to power the PCB with a battery) which we ordered too late due to misunderstandings regarding which parts we had in stock.
+		\end{enumerate}
+
+		While Spencer has worked tirelessly on getting the PCB ready for demonstration, we now realize
+		that we should have allocated more resources to this task; unfortunately, Spencer is the only
+		active member of the group who has enough knowledge of electronics to carry out such work.
+
+		\vspace{3mm}
+
+		We also failed to produce a 3D-printed bolt lock PAL. Simply put, 3D-printing takes a very long time, and we
+		prioritized having 3D-printed HAL cases.
+
+		\vspace{3mm}
+
+		We are confident that we will achieve all of these goals by Friday.
+	}
   \\
   \hline
 \end{tabular}
@@ -172,7 +202,7 @@
 	\\ \hline
 	\vtop to 135mm{
 
-	\textbf{PCB power consumption analysis}. These tests confirm our suspisions that a 1000mAh battery will not be enough for smooth usage unless
+	\textbf{PCB power consumption analysis}. These tests confirm our suspicions that a 1000mAh battery will not be enough for smooth usage unless
 	we are able to change the way the devices are woken up from sleep mode so that they can be put into deep sleep.
 
 	\vspace{3mm}
@@ -195,11 +225,9 @@
 	\begin{tabular}{| c | c | c |} \hline
 		\textbf{Identified issue} & \textbf{Risks involved} & \textbf{Severity} \\ \hline
 		Unlock another user's boltlock & Burglary or worse & High \\
-		Control another user's thermostat & Wasted energy/money and dissatisfied customers & Medium \\
-		Control another user's light system & Wasted energy/money and dissatisfied customers & Medium \\ \hline
+		Control another user's thermostat & Wasted energy/money, upset customers & Medium \\
+		Control another user's light system & Wasted energy/money, upset customers & Medium \\ \hline
 	\end{tabular}
-
-	\vspace{3mm}
 
 	In short, the penetration testing exposed a vulnerability that allowed the attacker to impersonate
 	any user, gaining them complete control over all of their registered devices. The consultant recommended
@@ -211,7 +239,22 @@
 		\item In the longer term, consider a protection such as 2-factor authentication
 	\end{itemize}
 
-	The full report can be found attached to the back of this handout.
+	The full report will be handed out during the presentation.
+
+	\vspace{3mm}
+
+	\textbf{Server testing}. Data gathered over 5 minutes per task using Apache JMeter.
+
+	\vspace{3mm}
+
+	\begin{tabular}{| c | c |} \hline
+		\textbf{Task} & \textbf{Average response time (ms)} \\ \hline
+		Registering a HAL & 128 \\
+		Setting calibration parameters & 58 \\
+		Toggle requests & 62 \\
+		Deleting a HAL & 45 \\ \hline
+	\end{tabular}
+
   }
   \\
   \hline
@@ -226,10 +269,12 @@
 	\textbf{Say briefly what changes you will make to your plan for the next demo.}
 	\\ \hline
 	\vtop to 45mm{
-		Though this is the last demo of the course, we do still cards up our sleeve for Friday:
+		Though this is the last demo of the course, we do still have some cards up our sleeve for Friday:
 
 		\begin{itemize}
 			\item Low battery detection \& push notification sending
+			\item 3D-print bolt lock PAL
+			\item Battery powered PCB
 			\item Re-do power draw analysis one final time (due to a shortage of inductors we had to run the tests on serial-to-usb power instead of battery power)
 			\item Prepare flyers and posters
 		\end{itemize}
