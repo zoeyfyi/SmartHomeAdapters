@@ -7,11 +7,13 @@ import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.support.v4.app.FragmentManager
 import android.util.Log
+import android.view.KeyEvent
 import android.widget.LinearLayout
 import com.github.halspals.smarthomeadapters.smarthomeadapters.model.Robot
 import com.google.zxing.integration.android.IntentIntegrator
 import com.google.zxing.integration.android.IntentResult
 import kotlinx.android.synthetic.main.activity_register_robot.*
+import kotlinx.android.synthetic.main.fragment_qr.*
 import net.openid.appauth.AuthorizationService
 import org.jetbrains.anko.toast
 
@@ -178,5 +180,9 @@ class RegisterRobotActivity : AppCompatActivity(), RestApiActivity {
         } else {
             Log.d(tag, "User quit QR scanner early")
         }
+    }
+
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        return barcode_view.onKeyDown(keyCode, event) || super.onKeyDown(keyCode, event)
     }
 }

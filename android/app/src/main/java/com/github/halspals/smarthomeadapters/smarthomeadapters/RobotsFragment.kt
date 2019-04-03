@@ -123,6 +123,15 @@ class RobotsFragment : Fragment() {
                             listOf()
                         }
 
+                        // TODO REMOVE THE BELOW WHEN SERVER FIXED
+                        for (robot in robotsToList) {
+                            if (robot.robotType == Robot.ROBOT_TYPE_THERMOSTAT) {
+                                robot.robotStatus.min = 273
+                                robot.robotStatus.max = 373
+                                robot.robotStatus.current = 293
+                            }
+                        }
+
                         displayRobots(view, robotsToList)
                     }
                 })

@@ -93,6 +93,12 @@ class ConfigureRobotFragment : Fragment() {
 
                         if (response.isSuccessful && robot != null) {
                             Log.d(fTag, "Successfully retrieved $robot")
+                            // TODO REMVOE THE BELOW WHEN SERVER FIXED
+                            if (robot.robotType == Robot.ROBOT_TYPE_THERMOSTAT) {
+                                robot.robotStatus.min = 273
+                                robot.robotStatus.max = 373
+                                robot.robotStatus.current = 293
+                            }
                             setRobotView(robot)
                         } else {
                             val error = RestApiService.extractErrorFromResponse(response)

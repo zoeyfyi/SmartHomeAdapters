@@ -21,9 +21,9 @@ data class RobotStatus(
         @SerializedName("current")
         var current: Int,
         @SerializedName("min")
-        val min: Int,
+        var min: Int,
         @SerializedName("max")
-        val max: Int
+        var max: Int
 )
 
 /**
