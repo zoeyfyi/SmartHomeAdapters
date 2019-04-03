@@ -216,7 +216,7 @@ func getLoginHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params
 
 func registerError(w http.ResponseWriter, err error, challenge string) {
 	err = registerTemplate.Execute(w, registerTemplateData{
-		Error: err,
+		Error:     err,
 		Challenge: challenge,
 	})
 	if err != nil {
@@ -230,7 +230,7 @@ func postRegisterHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 	challenge := r.URL.Query().Get("login_challenge")
 	err := r.ParseForm()
 	if err != nil {
-		registerError(w, errors.New("internal error"),challenge)
+		registerError(w, errors.New("internal error"), challenge)
 		return
 	}
 
