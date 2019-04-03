@@ -38,6 +38,7 @@ type hydraLoginAccept struct {
 
 type loginTemplateData struct {
 	Error error
+	Challenge string
 }
 
 type hydraConsentAccept struct {
@@ -58,9 +59,12 @@ type LoginRequest struct {
 	Subject  string `json:"subject"`
 }
 
-func loginError(w http.ResponseWriter, err error) {
+func loginError(w http.ResponseWriter, err error, challenge string) {
+	// need to change this so that it redirects and provides login challenge
+	// and then write
 	err = loginTemplate.Execute(w, loginTemplateData{
 		Error: err,
+		Challenge:challenge,
 	})
 	if err != nil {
 		log.Printf("error rendering template: %v", err)
@@ -75,7 +79,7 @@ func acceptLogin(w http.ResponseWriter, r *http.Request, email string, password 
 	err := r.ParseForm()
 	if err != nil {
 		log.Printf("failed to parse form: %v", err)
-		loginError(w, errors.New("internal error"))
+		loginError(w, errors.New("internal error"), challenge)
 		return
 	}
 
@@ -87,7 +91,7 @@ func acceptLogin(w http.ResponseWriter, r *http.Request, email string, password 
 
 	if err != nil {
 		log.Printf("bad login: %v", err)
-		loginError(w, err)
+		loginError(w, err, challenge)
 		return
 	}
 
@@ -97,14 +101,14 @@ func acceptLogin(w http.ResponseWriter, r *http.Request, email string, password 
 	err = json.NewEncoder(buf).Encode(jsonData)
 	if err != nil {
 		log.Printf("failed to encode hydra responce: %v", err)
-		loginError(w, errors.New("internal error"))
+		loginError(w, errors.New("internal error"), challenge)
 		return
 	}
 
 	req, err := http.NewRequest("PUT", acceptLoginURL, buf)
 	if err != nil {
 		log.Printf("error making hydra request: %v", err)
-		loginError(w, errors.New("internal error"))
+		loginError(w, errors.New("internal error"), challenge)
 		return
 	}
 
@@ -112,13 +116,13 @@ func acceptLogin(w http.ResponseWriter, r *http.Request, email string, password 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		log.Printf("error doing hydra request: %v", err)
-		loginError(w, errors.New("internal error"))
+		loginError(w, errors.New("internal error"), challenge)
 		return
 	}
 
 	if resp.Body == nil {
 		log.Println("received nil responce body from hydra")
-		loginError(w, errors.New("internal error"))
+		loginError(w, errors.New("internal error"), challenge)
 		return
 	}
 
@@ -126,7 +130,7 @@ func acceptLogin(w http.ResponseWriter, r *http.Request, email string, password 
 	err = json.NewDecoder(resp.Body).Decode(&loginAccept)
 	if err != nil {
 		log.Printf("error reading hydra login accept body: %v", err)
-		loginError(w, errors.New("internal error"))
+		loginError(w, errors.New("internal error"), challenge)
 		return
 	}
 
@@ -156,7 +160,7 @@ func getLoginHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params
 	challenge := r.URL.Query().Get("login_challenge")
 	if challenge == "" {
 		log.Println("no login challenge")
-		loginError(w, errors.New("bad OAuth client"))
+		loginError(w, errors.New("bad OAuth client"), challenge)
 		return
 	}
 
@@ -166,14 +170,14 @@ func getLoginHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params
 	if err != nil {
 		// problem with hydra, fallback to login form
 		log.Printf("error doing hydra request: %v", err)
-		loginError(w, errors.New("internal error"))
+		loginError(w, errors.New("internal error"), challenge)
 		return
 	}
 
 	// check responce is valid
 	if resp.StatusCode != 200 || resp.Body == nil {
 		log.Printf("invalid responce from hydra (%d)", resp.StatusCode)
-		loginError(w, errors.New("internal error"))
+		loginError(w, errors.New("internal error"), challenge)
 		return
 	}
 
@@ -195,7 +199,7 @@ func getLoginHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params
 	// hydra recognizes user, skip login
 	if loginRequest.Skip {
 		log.Println("skipping login")
-		loginError(w, errors.New("login skip is unimplemented"))
+		loginError(w, errors.New("login skip is unimplemented"), challenge)
 		// TODO: need to get info from userserver without password
 		// acceptLogin(w, r, challenge, "", "")
 		return

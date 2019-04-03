@@ -14,7 +14,8 @@
         {{ if .Error }}
         <p class="error">{{ .Error }}</p>
         {{ end }}
-        
+
+
         <form action="https://account.halspals.co.uk/login" method="POST">
             <input id="challenge" name="challenge" type="hidden" />
             <input name="email" type="email" placeholder="john@email.com" />
@@ -22,12 +23,17 @@
             <button type="submit">Login</button>
             <a href="/register">Dont have an account?</a>
         </form>
+    {{ if .Challenge }}
+        <input id="relogin_challenge" name = "relogin_challenge" value="{{ .Challenge }}" type="hidden">
+        <script>document.getElementById("challenge").setAttribute("value",document.getElementById("relogin_challenge").value)</script>
+    {{ else }}
+        <script>
+            var urlParams = new URLSearchParams(window.location.search);
+            var challenge = urlParams.get("login_challenge");
+            document.getElementById("challenge").setAttribute("value", challenge)
+        </script>
+    {{ end }}
     </div>
 
-    <script>
-        var urlParams = new URLSearchParams(window.location.search);
-        var challenge = urlParams.get("login_challenge");
-        document.getElementById("challenge").setAttribute("value", challenge)
-    </script>
 </body>
 </html>
