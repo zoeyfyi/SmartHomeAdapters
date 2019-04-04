@@ -180,7 +180,7 @@ data class Robot(
                                 }
                             }
 
-                            MotionEvent.ACTION_UP -> {
+                            MotionEvent.ACTION_UP or MotionEvent.ACTION_CANCEL -> {
                                 handler.removeCallbacks(touchRunnableIncrease)
                                 handler.removeCallbacks(touchRunnableDecrease)
                                 onSeek(parent)
