@@ -170,8 +170,8 @@ data class Robot(
                         parent.robotToEdit = this
                         parent.startFragment(EditRobotFragment())
                     } else {
-                        when (motionEvent.action) {
-                            MotionEvent.ACTION_DOWN -> {
+                        when {
+                            motionEvent.action == MotionEvent.ACTION_DOWN -> {
                                 robotCircle.getLocationOnScreen(circleLocation)
                                 if (motionEvent.rawY < circleLocation[1] + (robotCircle.height / 2)) {
                                     handler.post(touchRunnableIncrease)
@@ -180,7 +180,7 @@ data class Robot(
                                 }
                             }
 
-                            MotionEvent.ACTION_UP or MotionEvent.ACTION_CANCEL -> {
+                            motionEvent.action == MotionEvent.ACTION_UP || motionEvent.action == MotionEvent.ACTION_CANCEL -> {
                                 handler.removeCallbacks(touchRunnableIncrease)
                                 handler.removeCallbacks(touchRunnableDecrease)
                                 onSeek(parent)
