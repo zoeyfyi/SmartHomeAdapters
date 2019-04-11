@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Adaptador Intelligente da Casa</string>
+    <string name="authorize_button">Entrar ou registre-se</string>
+    <string name="cancel_button_text">Cancelar a configuração</string>
+    <string name="reconfigure_button_text">Reconfigurar</string>
+    <string name="rename_button_text">Alterar o nome</string>
+    <string name="delete_button_text">Eliminar</string>
+    <string name="erf_title_text">Editar %s</string>
+    <string name="mef_title_text">Entrada manual de código de robot</string>
+    <string name="registration_code_placeholder">Código de registo</string>
+    <string name="back_button_text">Volta ao scanner</string>
+    <string name="nf_title_text">Nomeie o seu dispositivo</string>
+    <string name="device_name_placeholder">Nome do dispositivo</string>
+    <string name="qrf_title_text">Leia o código QR</string>
+    <string name="camera_button_text">Pressione para iniciar câmera</string>
+    <string name="manual_entry_button_text">Entrada manual</string>
+    <string name="saf_title_text">Selecione o anexo</string>
+    <string name="register_button_text">Registre-se</string>
+    <string name="welcome_text">Bemvindo, %s</string>
+    <string name="log_out_text">Terminar Sessão</string>
+    <string name="welcome_text_no_name">Bemvindo</string>
+    <string name="next_button_text">Avançar</string>
+    <string name="confirm_delete_title">Excluir permanentemente o dispositivo</string>
+    <string name="confirm_delete_body">Certifique-se de que quer excluir %s? Isso excluirá permanentemente o dispositivo de sua conta.</string>
+    <string name="crf_title_text">Calibre o seu dispositivo</string>
+    <string name="finish_button_text">Concluir</string>
+</resources>

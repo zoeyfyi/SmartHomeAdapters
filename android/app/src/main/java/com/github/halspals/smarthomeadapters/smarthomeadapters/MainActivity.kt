@@ -1,55 +1,63 @@
 package com.github.halspals.smarthomeadapters.smarthomeadapters
 
+import android.content.Context
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
-import android.support.design.widget.BottomNavigationView
 import android.support.v4.app.Fragment
 import android.support.v4.app.FragmentManager
 import android.util.Log
-import android.view.MenuItem
+import android.widget.LinearLayout
+import com.github.halspals.smarthomeadapters.smarthomeadapters.model.Robot
 import kotlinx.android.synthetic.main.activity_main.*
+import net.openid.appauth.AuthState
 import net.openid.appauth.AuthorizationService
+import org.jetbrains.anko.clearTask
+import org.jetbrains.anko.intentFor
+import org.jetbrains.anko.newTask
+import org.jetbrains.anko.toast
 
-class MainActivity :
-        AppCompatActivity(),
-        BottomNavigationView.OnNavigationItemSelectedListener
-{
+/**
+ * The activity encompassing the app's main [Fragment]s.
+ */
+class MainActivity : AppCompatActivity(), RestApiActivity {
 
-    internal val restApiService by lazy {
+    override val restApiService by lazy {
         RestApiService.new()
     }
 
-    internal val authState by lazy {
+    override val authState by lazy {
         readAuthState(this)
     }
 
-    internal val authService by lazy {
+    override val authService by lazy {
         AuthorizationService(this)
     }
+
+    override fun makeToast(charSequence: CharSequence) {
+        // TODO rewrite this using function referencing
+        this.toast(charSequence)
+    }
+
+    override val context: Context
+        get() = this
+
+    override val snackbarLayout: LinearLayout
+        get() = this.snackbar_layout
+
+    override var isInEditMode = false
+    override lateinit var robotToEdit: Robot
 
     private val tag = "MainActivity"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
-        bottom_nav_bar.setOnNavigationItemSelectedListener(this)
-
-        // Start the robots fragment by default
-        startFragment(RobotsFragment())
     }
 
-    override fun onNavigationItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
-            R.id.robots_nav -> startFragment(RobotsFragment())
-            R.id.triggers_nav -> startFragment(TriggersFragment())
-            R.id.settings_nav -> startFragment(SettingsFragment())
-            else -> {
-                Log.e(tag, "[onNavigationItemSelected] id ${item.itemId} not recognized.")
-                return false
-            }
-        }
-        return true
+    override fun onStart() {
+        super.onStart()
+        // Start the robots fragment by default
+        startFragment(RobotsFragment())
     }
 
     /**
@@ -59,7 +67,7 @@ class MainActivity :
      * @param addToBackstack if true, fragment will be added to the backstack,
      * otherwise backstack will be dropped
      */
-    fun startFragment(fragment: Fragment, addToBackstack: Boolean = false) {
+    override fun startFragment(fragment: Fragment, addToBackstack: Boolean, args: Bundle?) {
         Log.d(tag, "[startFragment] Invoked")
 
         val fManager = supportFragmentManager
@@ -79,5 +87,11 @@ class MainActivity :
         }
 
         Log.d(tag, "[startFragment] Committed transaction to fragment")
+    }
+
+    internal fun signOut() {
+        Log.v(tag, "[signOut] Invoked")
+        writeAuthState(this, AuthState())
+        startActivity(intentFor<AuthenticationActivity>().clearTask().newTask())
     }
 }

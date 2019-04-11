@@ -4,32 +4,48 @@
     <!-- Strings related to the Authentication Activity -->
     <string name="authorize_button">Sign in or register</string>
 
-    <!-- Strings related to MainActivity -->
-    <string name="nav_bar_robots">Robots</string>
-    <string name="nav_bar_triggers">Triggers</string>
-    <string name="nav_bar_settings">Settings</string>
-
-    <!-- Strings related to TriggersFragment -->
-    <string name="blank_trigger_placeholder">Triggered</string> <!-- TODO remove/replace -->
-
-    <!-- Strings related to SettingsFragment -->
-    <string name="logout_button_text">Sign out</string>
-
-    <!-- Strings related to QRFragment -->
-    <string name="scan_qr_text">Scan QR code</string>
-    <string name="input_id_default">000000</string>
-    <string name="manual_submit_button_text">Submit Robot ID</string>
-    <string name="nickname_input_placeholder">Robot nickname</string>
-    <string name="next_button_text">Next</string>
-
-    <!-- Strings related to SelectUseCaseFragment -->
-    <string name="select_from_spinner_text">Choose a use case for your robot!</string>
-    <string name="loading_spinner_text">Loading use cases&#8230;</string>
-    <string name="failed_spinner_text">Could not fetch use cases.</string>
-    <string name="register_button">Register</string>
+    <!-- Strings related to all screens in the Registration Wizard (RobotRegistrationActivity) -->
+    <string name="cancel_button_text">CANCEL SETUP</string>
 
     <!-- Strings related to ConfigureRobotFragment -->
-    <string name="finish_button_text">Save Configuration</string>
+    <string name="finish_button_text">Finish</string>
+    <string name="crf_title_text">Calibrate Your Device</string>
 
+    <!-- Strings related to EditRobotFragment -->
+    <string name="reconfigure_button_text">Reconfigure</string>
+    <string name="rename_button_text">Rename</string>
+    <string name="delete_button_text">Delete</string>
+    <string name="erf_title_text">Edit %s</string>
+    <string name="confirm_delete_title">Permanently delete the device</string>
+    <string name="confirm_delete_body">Are you sure you want to delete %s? This will permanently remove the device from your account.</string>
+
+    <!-- Strings related to ManualEntryFragment -->
+    <string name="mef_title_text">Manual Robot Code Entry</string>
+    <string name="registration_code_placeholder">Registration code</string>
+    <string name="back_button_text">GO BACK TO SCANNER</string>
+
+    <!-- Strings related to NicknameFragment -->
+    <string name="nf_title_text">Name Your Device</string>
+    <string name="device_name_placeholder">Device name</string>
+    <string name="next_button_text">CONTINUE</string>
+
+    <!-- Strings related to QRFragment -->
+    <string name="qrf_title_text">Scan QR</string>
+    <string name="camera_button_text">Press to start camera</string>
+    <string name="manual_entry_button_text">MANUAL ENTRY</string>
+
+    <!-- Strings related to SelectAttachFragment -->
+    <string name="saf_title_text">Select Attachment</string>
+    <string name="register_button_text">Register</string>
+
+    <!-- Strings related to RobotsFragment -->
+    <string name="welcome_text">Welcome Home, %s</string>
+
+    <!-- Strings related to settings_menu -->
+    <string name="log_out_text">Log out</string>
+    <string name="welcome_text_no_name">Welcome Home</string>
+
+    <!-- Strings related to view_config_card -->
+    <string name="config_position_placeholder" translatable="false">%d/%d</string>
 
 </resources>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Adaptery do Inteligentnego Domu</string>
+    <string name="authorize_button">Zaloguj się albo załóż konto</string>
+    <string name="cancel_button_text">Anuluj Kalibracje</string>
+    <string name="reconfigure_button_text">Powtórz Kalibracje</string>
+    <string name="rename_button_text">Zmień nazwe</string>
+    <string name="delete_button_text">Usuń</string>
+    <string name="erf_title_text">Edytuj %s</string>
+    <string name="mef_title_text">Manualny wpis kodu robota</string>
+    <string name="registration_code_placeholder">Kod rejestracyjny</string>
+    <string name="back_button_text">Wróć do skanera</string>
+    <string name="nf_title_text">Nazwij twoje urządzenie</string>
+    <string name="device_name_placeholder">Nazwa urządzenia</string>
+    <string name="qrf_title_text">Zeskanuj kod QR</string>
+    <string name="camera_button_text">Naciśnij, aby włączyć aparat</string>
+    <string name="manual_entry_button_text">Manualne ustawienia</string>
+    <string name="saf_title_text">Wybierz załącznik</string>
+    <string name="register_button_text">Zarejestruj</string>
+    <string name="welcome_text">Witam w Domu, %s</string>
+    <string name="log_out_text">Wyloguj sie</string>
+    <string name="welcome_text_no_name">Witam w Domu</string>
+    <string name="next_button_text">Przejdz dalej</string>
+    <string name="confirm_delete_title">Usuń urządzenie</string>
+    <string name="confirm_delete_body">Czy na pewno chcesz usunąć %s? Usunięcie urządzenia jest nieodwracalne.</string>
+    <string name="crf_title_text">Kalibracja urządzenia</string>
+    <string name="finish_button_text">Zakończ</string>
+</resources>

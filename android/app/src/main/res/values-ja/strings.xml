@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">スマートホームアダプター</string>
+    <string name="authorize_button">ログインまたは登録</string>
+    <string name="cancel_button_text">設定をキャンセル</string>
+    <string name="finish_button_text">完成</string>
+    <string name="reconfigure_button_text">再設定</string>
+    <string name="rename_button_text">名前を変更</string>
+    <string name="delete_button_text">削除</string>
+    <string name="erf_title_text">編集する%s</string>
+    <string name="mef_title_text">ロボットコードを手動で入力する</string>
+    <string name="registration_code_placeholder">登録コード</string>
+    <string name="back_button_text">スキャナーに戻る</string>
+    <string name="nf_title_text">デバイスに名前を付ける</string>
+    <string name="device_name_placeholder">デバイス名</string>
+    <string name="qrf_title_text">QRコードをスキャン</string>
+    <string name="camera_button_text">カメラを起動</string>
+    <string name="manual_entry_button_text">手動入力</string>
+    <string name="saf_title_text">添付ファイルを選択</string>
+    <string name="register_button_text">登録</string>
+    <string name="next_button_text">続ける</string>
+    <string name="welcome_text">ようこそ，%s</string>
+    <string name="log_out_text">ログアウト</string>
+    <string name="welcome_text_no_name">ようこそ</string>
+    <string name="crf_title_text">デバイスを調整する</string>
+    <string name="confirm_delete_title">デバイスを完全に削除します</string>
+    <string name="confirm_delete_body">%s削除してもよろしいですか？これにより、アカウントからデバイスが完全に削除されます。</string>
+</resources>
