@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>HalsPals Login</title>
+    <link rel="stylesheet" href="static/style.css" />
+</head>
+
+<body>
+    <div class="form">
+        <img class="logo" src="static/halspals.png" alt="HalsPals" />
+
+        {{ if .Error }}
+        <p class="error">{{ .Error }}</p>
+        {{ end }}
+
+        {{ if .Success }}
+        <p class="success">Successfully registers, you can now <a href="https://account.halspals.co.uk/login?login_challenge={{ .Challenge }}">log in</a></p>
+        {{ end }}
+
+        <form action="https://account.halspals.co.uk/register?login_challenge={{ .Challenge }}" method="POST">
+            <input name="name" type="text" placeholder="John Doe" />
+            <input name="email" type="email" placeholder="john@email.com" />
+            <input name="password" type="password" placeholder="password" />
+            <input name="password_confirm" type="password" placeholder="confirm password" />
+            <button type="submit">Register</button>
+            <a href="/login?login_challenge={{ .Challenge }}">Already have an account?</a>
+        </form>
+
+    </div>
+</body>
+
+</html>

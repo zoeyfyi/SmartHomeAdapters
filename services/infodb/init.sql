@@ -5,5 +5,5 @@ CREATE TABLE robots (
     registeredUserId text
 );
 
-INSERT INTO robots (serial, nickname, robotType, registeredUserId) VALUES ('123abc', 'testLightbot', 'switch', '1');
-INSERT INTO robots (serial, nickname, robotType, registeredUserId) VALUES ('qwerty', 'testThermoBot', 'thermostat', '1');
+INSERT INTO robots (serial) VALUES ('123abc');
+INSERT INTO robots (serial) VALUES ('qwerty');

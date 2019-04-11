@@ -46,6 +46,7 @@ func TestRegisterFieldValidation(t *testing.T) {
 	}{
 		{
 			&userserver.RegisterRequest{
+				Name:     "foobar",
 				Email:    "",
 				Password: "password",
 			},
@@ -53,6 +54,7 @@ func TestRegisterFieldValidation(t *testing.T) {
 		},
 		{
 			&userserver.RegisterRequest{
+				Name:     "foobar",
 				Email:    "foo",
 				Password: "password",
 			},
@@ -60,6 +62,7 @@ func TestRegisterFieldValidation(t *testing.T) {
 		},
 		{
 			&userserver.RegisterRequest{
+				Name:     "foobar",
 				Email:    "foo@bar.com",
 				Password: "",
 			},
@@ -67,6 +70,7 @@ func TestRegisterFieldValidation(t *testing.T) {
 		},
 		{
 			&userserver.RegisterRequest{
+				Name:     "foobar",
 				Email:    "foo@bar.com",
 				Password: "pass",
 			},
@@ -91,6 +95,7 @@ func TestSuccessfullRegistration(t *testing.T) {
 	clearDatabase(t)
 
 	user, err := testServer.Register(context.Background(), &userserver.RegisterRequest{
+		Name:     "foobar",
 		Email:    "foo@email.com",
 		Password: "password",
 	})
@@ -108,6 +113,7 @@ func TestRegisterDuplicateEmails(t *testing.T) {
 	clearDatabase(t)
 
 	_, err := testServer.Register(context.Background(), &userserver.RegisterRequest{
+		Name:     "foobar",
 		Email:    "foo@email.com",
 		Password: "password",
 	})
@@ -116,11 +122,12 @@ func TestRegisterDuplicateEmails(t *testing.T) {
 	}
 
 	user, err := testServer.Register(context.Background(), &userserver.RegisterRequest{
+		Name:     "foobar",
 		Email:    "foo@email.com",
 		Password: "password",
 	})
 
-	expectedError := "rpc error: code = AlreadyExists desc = A user with email \"foo@email.com\" already exists"
+	expectedError := "rpc error: code = AlreadyExists desc = a user with email \"foo@email.com\" already exists"
 
 	if err == nil {
 		t.Fatal("Expected non-nil error")
@@ -135,10 +142,11 @@ func TestRegisterDuplicateEmails(t *testing.T) {
 	}
 }
 
-func TestSuccessfullLogin(t *testing.T) {
+func TestSuccessfullCheckCredentials(t *testing.T) {
 	clearDatabase(t)
 
 	_, err := testServer.Register(context.Background(), &userserver.RegisterRequest{
+		Name:     "foobar",
 		Email:    "foo@email.com",
 		Password: "password",
 	})
@@ -146,7 +154,7 @@ func TestSuccessfullLogin(t *testing.T) {
 		t.Fatalf("failed to register test user: %v", err)
 	}
 
-	token, err := testServer.Login(context.Background(), &userserver.LoginRequest{
+	user, err := testServer.CheckCredentials(context.Background(), &userserver.Credentials{
 		Email:    "foo@email.com",
 		Password: "password",
 	})
@@ -155,19 +163,16 @@ func TestSuccessfullLogin(t *testing.T) {
 		t.Errorf("Error login in user: %v", err)
 	}
 
-	if token == nil {
+	if user == nil {
 		t.Errorf("Expected user to be non-nil")
-	}
-
-	if token.Token == "" {
-		t.Errorf("Expected non-empty token")
 	}
 }
 
-func TestLoginFailure(t *testing.T) {
+func TestCheckCredentialsFailure(t *testing.T) {
 	clearDatabase(t)
 
 	_, err := testServer.Register(context.Background(), &userserver.RegisterRequest{
+		Name:     "foobar",
 		Email:    "foo@email.com",
 		Password: "password",
 	})
@@ -176,27 +181,27 @@ func TestLoginFailure(t *testing.T) {
 	}
 
 	cases := []struct {
-		request       *userserver.LoginRequest
+		request       *userserver.Credentials
 		expectedError string
 	}{
 		{
-			&userserver.LoginRequest{
+			&userserver.Credentials{
 				Email:    "wrong email",
 				Password: "password",
 			},
-			"rpc error: code = NotFound desc = User with email \"wrong email\" does not exist",
+			"rpc error: code = NotFound desc = user with email \"wrong email\" does not exist",
 		},
 		{
-			&userserver.LoginRequest{
+			&userserver.Credentials{
 				Email:    "foo@bar.com",
 				Password: "wrong password",
 			},
-			"rpc error: code = NotFound desc = User with email \"foo@bar.com\" does not exist",
+			"rpc error: code = NotFound desc = user with email \"foo@bar.com\" does not exist",
 		},
 	}
 
 	for _, c := range cases {
-		user, err := testServer.Login(context.Background(), c.request)
+		user, err := testServer.CheckCredentials(context.Background(), c.request)
 
 		if err == nil {
 			t.Fatal("Expected non-nil error")
@@ -212,12 +217,13 @@ func TestLoginFailure(t *testing.T) {
 	}
 }
 
-func TestSuccessfullAuthorization(t *testing.T) {
+func TestSuccessfullGetUserID(t *testing.T) {
 	clearDatabase(t)
 
 	ctx := context.Background()
 
 	_, err := testServer.Register(ctx, &userserver.RegisterRequest{
+		Name:     "foobar",
 		Email:    "foo@email.com",
 		Password: "password",
 	})
@@ -225,13 +231,8 @@ func TestSuccessfullAuthorization(t *testing.T) {
 		t.Fatalf("failed to register test user: %v", err)
 	}
 
-	token, _ := testServer.Login(ctx, &userserver.LoginRequest{
-		Email:    "foo@email.com",
-		Password: "password",
-	})
-
-	user, err := testServer.Authorize(ctx, &userserver.Token{
-		Token: token.Token,
+	user, err := testServer.GetUserID(ctx, &userserver.Email{
+		Email: "foo@email.com",
 	})
 
 	if err != nil {
