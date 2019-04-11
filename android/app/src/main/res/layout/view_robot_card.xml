@@ -1,10 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.design.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
-                                              xmlns:app="http://schemas.android.com/apk/res-auto"
-                                              android:layout_width="match_parent"
-                                              android:layout_height="match_parent" android:padding="16dp"
-                                              android:clickable="true"
-                                              android:focusable="true"
+<android.support.design.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    android:clickable="false"
+    android:focusable="false"
+    app:cardElevation="0dp"
+    app:cardBackgroundColor="@android:color/transparent"
+
 >
 
     <android.support.constraint.ConstraintLayout
@@ -15,21 +21,49 @@
             android:paddingBottom="16dp"
     >
 
-        <ImageView
-                android:layout_width="32dp"
-                android:layout_height="32dp"
-                android:id="@+id/robot_icon_image_view" app:layout_constraintEnd_toEndOf="parent"
-                android:layout_marginEnd="8dp" app:layout_constraintStart_toStartOf="parent"
-                android:layout_marginStart="8dp" android:layout_marginBottom="8dp"
-                app:layout_constraintBottom_toTopOf="@+id/robot_nickname_text_view" android:layout_marginTop="8dp"
-                app:layout_constraintVertical_chainStyle="packed"
-                app:layout_constraintTop_toTopOf="parent"/>
-        <TextView
+        <FrameLayout
+            android:id="@+id/image_view_layout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <ImageView
+                android:id="@+id/robot_circle_drawable"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content" android:id="@+id/robot_nickname_text_view"
-                app:layout_constraintEnd_toEndOf="parent" android:layout_marginEnd="8dp"
-                app:layout_constraintStart_toStartOf="parent" android:layout_marginStart="8dp"
-                android:layout_marginBottom="8dp" app:layout_constraintBottom_toBottomOf="parent"
-                 app:layout_constraintTop_toBottomOf="@+id/robot_icon_image_view"/>
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                app:srcCompat="@drawable/robot_background_shape"/>
+
+            <ImageView
+                android:id="@+id/robot_image_view"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:layout_gravity="center"/>
+
+            <TextView
+                android:id="@+id/robot_range_text_view"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                />
+
+        </FrameLayout>
+
+
+        <TextView
+            android:id="@+id/robot_nickname_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="8dp"
+            android:textColor="@color/colorOffBlack"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/image_view_layout" />
+
     </android.support.constraint.ConstraintLayout>
 </android.support.design.card.MaterialCardView>

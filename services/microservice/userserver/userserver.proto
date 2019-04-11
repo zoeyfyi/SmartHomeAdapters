@@ -4,16 +4,18 @@ import "google/protobuf/empty.proto";
 
 service UserServer {
     rpc Register(RegisterRequest) returns (google.protobuf.Empty) {}
-    rpc Login(LoginRequest) returns (Token) {}
-    rpc Authorize(Token) returns (User) {}
+    rpc CheckCredentials(Credentials) returns (User) {}
+    rpc GetUserID(Email) returns (User) {}
+    rpc GetUserByID(UserId) returns (User) {}
 }
 
 message RegisterRequest {
+    string name = 3;
     string email = 1;
     string password = 2;
 }
 
-message LoginRequest {
+message Credentials {
     string email = 1;
     string password = 2;
 }
@@ -23,5 +25,14 @@ message Token {
 }
 
 message User {
+    string id = 1;
+    string name = 2;
+}
+
+message Email {
+    string email = 1;
+}
+
+message UserId {
     string id = 1;
 }

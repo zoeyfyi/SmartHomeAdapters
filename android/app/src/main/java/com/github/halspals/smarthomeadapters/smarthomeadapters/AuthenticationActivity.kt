@@ -9,54 +9,63 @@ import kotlinx.android.synthetic.main.activity_authentication.*
 import net.openid.appauth.*
 import org.jetbrains.anko.*
 
+/**
+ * A screen which interacts with the OAuth server to provide authorization of the user.
+ */
 class AuthenticationActivity : AppCompatActivity() {
 
     private val tag = "AuthenticationActivity"
 
     private val authRequestCode = 42
 
-    private val authRequest: AuthorizationRequest by lazy {
-        val authServiceConfig = AuthorizationServiceConfiguration(
-                Uri.parse("https://oauth.halspals.co.uk/oauth2/auth"),
-                Uri.parse("https://oauth.halspals.co.uk/oauth2/token")
-        )
-        AuthorizationRequest.Builder(
-                authServiceConfig,
-                "65a0a8b8-9175-4f12-a270-461cb2e8fd85",
-                ResponseTypeValues.CODE,
-                Uri.parse("https://callback.halspals.co.uk")
-        ).setScope("openid").build()
-    }
-
-    private val authService: AuthorizationService by lazy {
-        AuthorizationService(this)
-    }
-
-    private val authState: AuthState by lazy {
-        readAuthState(this)
-    }
+    private lateinit var authRequest: AuthorizationRequest
+    private lateinit var authService: AuthorizationService
+    private lateinit var authState: AuthState
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_authentication)
 
+        auth_button.setOnClickListener { _ ->
+            startOAuthView()
+        }
+
+        val authServiceConfig = AuthorizationServiceConfiguration(
+                Uri.parse("https://oauth.halspals.co.uk/oauth2/auth"),
+                Uri.parse("https://oauth.halspals.co.uk/oauth2/token")
+        )
+        authRequest = AuthorizationRequest.Builder(
+                authServiceConfig,
+                "refresh_test4",
+                ResponseTypeValues.CODE,
+                Uri.parse("https://callback.halspals.co.uk")
+        ).setScope("offline").build()
+
+        authService = AuthorizationService(this)
+    }
+
+    override fun onStart() {
+        super.onStart()
+
+        authState = readAuthState(this)
         // Check if there is already an active auth session
         if (authState.isAuthorized) {
             startActivity<MainActivity>()
         }
-
-        auth_button.setOnClickListener { _ ->
-            startOAuthLogin()
-        }
     }
 
-    private fun startOAuthLogin() {
-        // Start the authorization webview
+    /**
+     * Starts the authorization web view, allowing the user to login or register.
+     */
+    private fun startOAuthView() {
         Log.d(tag, "Starting Oauth2 call")
         val authIntent = authService.getAuthorizationRequestIntent(authRequest)
         startActivityForResult(authIntent, authRequestCode)
     }
 
+    /**
+     * Listens for the result of the OAuth web view.
+     */
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
 
         if (requestCode == authRequestCode) {
@@ -82,6 +91,12 @@ class AuthenticationActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Starts an [TokenRequest] to exchange an authorization code for authorization tokens.
+     * Updates the [AuthState] on the device.
+     *
+     * @param response the [AuthorizationResponse] with the received auth code
+     */
     private fun exchangeCodeForTokens(response: AuthorizationResponse) {
         Log.d(tag, "[exchangeCodeForTokens] Starting code-for-tokens exchange")
         authService.performTokenRequest(response.createTokenExchangeRequest())
@@ -90,7 +105,7 @@ class AuthenticationActivity : AppCompatActivity() {
             writeAuthState(this, authState)
             if (tokenResponse != null) {
                 Log.d(tag, "[exchangeCodeForTokens] Exchange successful, moving to main")
-                startActivity<MainActivity>()
+                startActivity(intentFor<MainActivity>().clearTask().newTask())
             } else {
                 Log.e(tag, "[exchangeCodeForTokens] Failed, exception $ex")
                 // TODO make the user try again etc

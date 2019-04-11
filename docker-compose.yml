@@ -70,52 +70,6 @@ services:
       - DB_PASSWORD=password
       - DB_DATABASE=postgres
       - DB_URL=infodb
-  switchdb:
-    image: smarthomeadapters/switchdb
-    build: 
-      context: ./services/switchdb
-    restart: always
-    environment:
-      - POSTGRES_PASSWORD=password
-    volumes:
-      - switchdb_data:/var/lib/postgresql/data
-  switchserver:
-    image: smarthomeadapters/switchserver
-    build:
-      context: ./services/switchserver
-    depends_on:
-      - switchdb
-    restart: always
-    ports:
-      - 8082:80
-    environment:
-      - DB_USERNAME=postgres
-      - DB_PASSWORD=password
-      - DB_DATABASE=postgres
-      - DB_URL=switchdb
-  thermodb:
-    image: smarthomeadapters/thermodb
-    build:
-      context: ./services/thermodb
-    restart: always
-    environment:
-      - POSTGRES_PASSWORD=password
-    volumes:
-      - thermodb_data:/var/lib/postgresql/data
-  thermostatserver:
-    image: smarthomeadapters/thermostatserver
-    build:
-      context: ./services/infoserver
-    depends_on:
-      - thermodb
-    restart: always
-    ports:
-      - 8084:80
-    environment:
-      - DB_USERNAME=postgres
-      - DB_PASSWORD=password
-      - DB_DATABASE=postgres
-      - DB_URL=thermodb
   robotserver:
     image: smarthomeadapters/robotserver
     build:
@@ -123,6 +77,28 @@ services:
     restart: always
     ports:
       - 8083:80
+  usecasedb:
+    image: smarthomeadapters/usecasedb
+    build:
+      context: ./services/usecasedb
+    restart: always
+    environment:
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - usecasedb_data:/var/lib/postgresql/data
+  usecaseserver:
+    image: smarthomeadapters/usecaseserver
+    build:
+      context: ./services/usecaseserver
+    restart: always
+    depends_on:
+      - usecasedb
+      - robotserver
+    environment:
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=password
+      - DB_DATABASE=postgres
+      - DB_URL=usecasedb
   account-app:
     image: smarthomeadapters/account-app
     build:
@@ -134,5 +110,5 @@ volumes:
   portainer_data:
   userdb_data:
   infodb_data:
-  switchdb_data:
-  thermodb_data:
+  usecasedb_data:
+  

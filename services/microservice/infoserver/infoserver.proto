@@ -6,11 +6,20 @@ service InfoServer {
     rpc GetRobot (RobotQuery) returns (Robot) {}
     rpc GetRobots (RobotsQuery) returns (stream Robot) {}
     rpc RegisterRobot (RegisterRobotQuery) returns (google.protobuf.Empty) {}
+    rpc UnregisterRobot (UnregisterRobotQuery) returns (google.protobuf.Empty) {}
     rpc ToggleRobot (ToggleRequest) returns (google.protobuf.Empty) {}
     rpc CalibrateRobot (CalibrationRequest) returns (Robot) {}
     rpc GetCalibration(RobotQuery) returns (CalibrationParameters) {}
     rpc SetUsecase(SetUsecaseRequest) returns (Robot) {}
     rpc RangeRobot(RangeRequest) returns (google.protobuf.Empty) {}
+    rpc RenameRobot(RenameRobotRequest) returns (google.protobuf.Empty) {}
+    rpc GetUsecases(google.protobuf.Empty) returns (stream Usecase) {} 
+    rpc ButtonPress(ButtonPressEvent) returns (google.protobuf.Empty) {}
+}
+
+message ButtonPressEvent {
+    string robotId = 1;
+    string button = 2;
 }
 
 message RobotsQuery {
@@ -27,6 +36,11 @@ message RegisterRobotQuery {
     string userId = 2;
     string nickname = 3;
     string robotType = 4;
+}
+
+message UnregisterRobotQuery {
+    string id = 1;
+    string userId = 2;
 }
 
 message ToggleRequest {
@@ -66,13 +80,35 @@ message RangeStatus {
 
 message CalibrationRequest {
     string id = 1;
+    string robotId = 5;
     string userId = 3;
-    repeated CalibrationParameter parameters = 2;
+    oneof value {
+        bool boolValue = 2;
+        int64 intValue = 4;
+    }
+}
+
+message IntDetails {
+    int64 min = 1;
+    int64 max = 2;
+    int64 current = 3;
+    int64 default = 4;
+}
+
+message BoolDetails {
+    bool current = 3;
+    bool default = 4;
 }
 
 message CalibrationParameter {
-    string name = 1;
-    string value = 2;
+    string id = 1;
+    string name = 4;
+    string type = 5;
+    string description = 6;
+    oneof details {
+        IntDetails intDetails = 2;
+        BoolDetails boolDetails = 3;
+    }
 }
 
 message CalibrationParameters {
@@ -83,4 +119,16 @@ message SetUsecaseRequest {
     string id = 1;
     string userId = 3;
     string usecase = 2;
+}
+
+message RenameRobotRequest {
+    string id = 1;
+    string userId = 2;
+    string newNickname = 3;
+}
+
+message Usecase {
+    string id = 1;
+    string name = 2;
+    string description = 3;
 }

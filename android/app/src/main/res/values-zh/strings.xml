@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">智能家居适配器</string>
+    <string name="authorize_button">登录 或者 注册</string>
+    <string name="cancel_button_text">取消设置</string>
+    <string name="finish_button_text">完成</string>
+    <string name="reconfigure_button_text">重新配置</string>
+    <string name="rename_button_text">重命名</string>
+    <string name="delete_button_text">删除</string>
+    <string name="erf_title_text">编辑%s</string>
+    <string name="mef_title_text">手动输入机器人编码</string>
+    <string name="registration_code_placeholder">注册码</string>
+    <string name="back_button_text">返回到扫描器</string>
+    <string name="nf_title_text">命名您的设备</string>
+    <string name="device_name_placeholder">设备名称</string>
+    <string name="qrf_title_text">扫描二维码</string>
+    <string name="camera_button_text">打开相机</string>
+    <string name="manual_entry_button_text">手动输入</string>
+    <string name="saf_title_text">选择附件</string>
+    <string name="register_button_text">注册</string>
+    <string name="next_button_text">继续</string>
+    <string name="welcome_text">欢迎, %s</string>
+    <string name="log_out_text">登出</string>
+    <string name="welcome_text_no_name">欢迎</string>
+    <string name="crf_title_text">校准您的设备</string>
+    <string name="confirm_delete_title">永久删除该设备</string>
+    <string name="confirm_delete_body">确定删除%s？这会从您的帐户中永久删除该设备。</string>
+</resources>

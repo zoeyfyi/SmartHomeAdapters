@@ -7,14 +7,19 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.GridView
+import android.widget.PopupMenu
 import com.github.halspals.smarthomeadapters.smarthomeadapters.model.Robot
+import com.github.halspals.smarthomeadapters.smarthomeadapters.model.User
+import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.fragment_robots.*
 import org.jetbrains.anko.design.snackbar
-import org.jetbrains.anko.startActivity
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
+/**
+ * The main screen of the app, presenting the user with their robots and allowing interaction thereof.
+ */
 class RobotsFragment : Fragment() {
 
     private val fTag = "RobotsFragment"
@@ -34,10 +39,6 @@ class RobotsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        add_robot_button.setOnClickListener { _ ->
-            parent.startActivity<RegisterRobotActivity>()
-        }
-
         parent.authState.performActionWithFreshTokens(parent.authService)
         { accessToken, _, ex ->
             if (accessToken == null) {
@@ -45,10 +46,50 @@ class RobotsFragment : Fragment() {
                         + "exception: $ex")
             } else {
                 fetchRobots(accessToken, view)
+                getUserName(accessToken)
+            }
+        }
+
+        edit_mode_image_view.setOnClickListener { _ ->
+            parent.isInEditMode = true
+            edit_mode_image_view.visibility = View.INVISIBLE
+            more_options_image_view.visibility = View.INVISIBLE
+            finish_edit_image_view.visibility = View.VISIBLE
+        }
+
+        finish_edit_image_view.setOnClickListener { _ ->
+            parent.isInEditMode = false
+            edit_mode_image_view.visibility = View.VISIBLE
+            more_options_image_view.visibility = View.VISIBLE
+            finish_edit_image_view.visibility = View.INVISIBLE
+        }
+
+        more_options_image_view.setOnClickListener { _ ->
+            Log.v(fTag, "Inflating settings_menu")
+            PopupMenu(more_options_image_view.context, more_options_image_view).run {
+                menuInflater.inflate(R.menu.settings_menu, menu)
+                setOnMenuItemClickListener { menuItem ->
+                    when (menuItem.itemId) {
+                        R.id.log_out_item -> {
+                            Log.v(fTag, "Logging out the user")
+                            parent.signOut()
+                            true
+                        }
+                        else -> {
+                            Log.e(fTag, "Unexpected menu click on item " +
+                                    "with ID ${menuItem.itemId}")
+                            false
+                        }
+                    }
+                }
+                show()
             }
         }
     }
 
+    /**
+     * Fetches all the robots associated with the user and invokes [displayRobots].
+     */
     private fun fetchRobots(token: String, view: View) {
         parent.restApiService
                 .getRobots(token)
@@ -56,10 +97,12 @@ class RobotsFragment : Fragment() {
 
                     override fun onFailure(call: Call<List<Robot>>, t: Throwable) {
                         val errorMsg = t.message
-                        Log.e(fTag, "getRobots FAILED, got error: $errorMsg")
+                        Log.e(fTag, "[getRobots] FAILED, got error: $errorMsg")
                         if (errorMsg != null) {
-                            snackbar_layout.snackbar(errorMsg)
+                            parent.snackbar_layout.snackbar(errorMsg)
                         }
+
+                        displayRobots(view, listOf())
                     }
 
                     override fun onResponse(
@@ -67,33 +110,68 @@ class RobotsFragment : Fragment() {
                             response: Response<List<Robot>>) {
 
                         val robots = response.body()
-                        if (response.isSuccessful && robots != null) {
-                            displayRobots(view, robots)
+                        val robotsToList = if (response.isSuccessful && robots != null) {
+                            Log.v(fTag, "[getRobots] got robots: $robots")
+                            robots
                         } else {
                             val error = RestApiService.extractErrorFromResponse(response)
-
-                            Log.e(fTag, "getRobots got unsuccessful response, error: $error")
+                            Log.e(fTag, "[getRobots] got unsuccessful response, error: $error")
                             if (error != null) {
-                                snackbar_layout.snackbar(error)
+                                parent.snackbar_layout.snackbar(error)
+                            }
+
+                            listOf()
+                        }
+
+                        // TODO REMOVE THE BELOW WHEN SERVER FIXED
+                        for (robot in robotsToList) {
+                            if (robot.robotType == Robot.ROBOT_TYPE_THERMOSTAT) {
+                                robot.robotStatus.min = 273
+                                robot.robotStatus.max = 373
+                                robot.robotStatus.current = 293
                             }
                         }
+
+                        displayRobots(view, robotsToList)
                     }
                 })
     }
 
+    /**
+     * Sets up the [robotGrid] with the robots associated with the user.
+     */
     private fun displayRobots(view: View, robots: List<Robot>) {
         robotGrid = view.findViewById(R.id.RobotGrid)
-        robotGrid.adapter = RobotAdapter(view.context, robots) { robot ->
-            Log.d(fTag, "Clicked robot: \"${robot.nickname}\"")
-
-            // create fragment with robot ID
-            val robotFragment = RobotFragment()
-            val bundle = Bundle()
-            bundle.putString("robotId", robot.id)
-            bundle.putString("robotType", robot.robotType)
-            robotFragment.arguments = bundle
-
-            parent.startFragment(robotFragment, true)
-        }
+        robotGrid.adapter = RobotAdapter(parent, robots.toMutableList())
     }
+
+    private fun getUserName(token: String) {
+        parent.restApiService
+                .getUserName(token)
+                .enqueue(object : Callback<User> {
+                    override fun onResponse(call: Call<User>, response: Response<User>) {
+                        val user = response.body()
+
+                        if (response.isSuccessful && user != null) {
+                            Log.d(fTag, "[getUserName] got User w/ real name ${user.realName}")
+                            welcome_text_view.text = getString(R.string.welcome_text, user.realName)
+                        } else {
+                            val error = RestApiService.extractErrorFromResponse(response)
+                            Log.e(fTag, "[getUserName] unsuccessful response or null user; " +
+                                    "user was $user, error was $error")
+                        }
+
+                    }
+
+                    override fun onFailure(call: Call<User>, t: Throwable) {
+                        val errorMsg = t.message
+                        Log.e(fTag, "[getUserName] FAILED, got error: $errorMsg")
+                        if (errorMsg != null) {
+                            parent.snackbar_layout.snackbar(errorMsg)
+                        }
+                    }
+
+                })
+    }
+
 }
