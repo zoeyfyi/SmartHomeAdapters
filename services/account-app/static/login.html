@@ -5,25 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>HalsPals Login</title>
+    <link rel="stylesheet" href="static/style.css" />
 </head>
 <body>
-    <h1>HalsPals</h1>
-    
-    {{ if .Error }}
-    <p>{{ .Error }}</p>
-    {{ end }}
-    
-    <form action="https://account.halspals.co.uk/login" method="POST">
-        <input id="challenge" name="challenge" type="hidden" />
-        <input name="email" placeholder="john@email.com" />
-        <input name="password" placeholder="password" />
-        <button type="submit">Login</button>
-    </form>
+    <div class="form">
+        <img class="logo" src="static/halspals.png" alt="HALS PALS" />
+        
+        {{ if .Error }}
+        <p class="error">{{ .Error }}</p>
+        {{ end }}
 
-    <script>
-        var urlParams = new URLSearchParams(window.location.search);
-        var challenge = urlParams.get("login_challenge");
-        document.getElementById("challenge").setAttribute("value", challenge)
-    </script>
+
+        <form action="https://account.halspals.co.uk/login" method="POST">
+            <input id="challenge" name="challenge" type="hidden" />
+            <input name="email" type="email" placeholder="john@email.com" />
+            <input name="password" type="password" placeholder="password" />
+            <button type="submit">Login</button>
+            <a href="/register?login_challenge={{ .Challenge }}">Dont have an account?</a>
+        </form>
+    {{ if .Challenge }}
+        <input id="relogin_challenge" name = "relogin_challenge" value="{{ .Challenge }}" type="hidden">
+        <script>document.getElementById("challenge").setAttribute("value",document.getElementById("relogin_challenge").value)</script>
+    {{ else }}
+        <script>
+            var urlParams = new URLSearchParams(window.location.search);
+            var challenge = urlParams.get("login_challenge");
+            document.getElementById("challenge").setAttribute("value", challenge)
+        </script>
+    {{ end }}
+    </div>
+
 </body>
 </html>

@@ -77,12 +77,6 @@ jobs:
           name: Initialize infodb
           command: PGPASSWORD=password psql -h infodb -p 5432 -U temp -d infodb < services/infodb/init.sql
       - run:
-          name: Initialize switchdb
-          command: PGPASSWORD=password psql -h switchdb -p 5432 -U temp -d switchdb < services/switchdb/init.sql
-      - run:
-          name: Initialize thermodb
-          command: PGPASSWORD=password psql -h thermodb -p 5432 -U temp -d thermodb < services/thermodb/init.sql
-      - run:
           name: Initialize userdb
           command: PGPASSWORD=password psql -h userdb -p 5432 -U temp -d userdb < services/userdb/init.sql
       - run:
@@ -93,37 +87,19 @@ jobs:
           name: Test clientserver
           command: go test
           working_directory: services/clientserver
-      - run:
-          name: Test infoserver
-          environment:
-            DB_USERNAME: temp 
-            DB_DATABASE: infodb
-            DB_PASSWORD: password 
-            DB_URL: infodb
-          command:  go test
-          working_directory: services/infoserver
+      # - run:
+      #     name: Test infoserver
+      #     environment:
+      #       DB_USERNAME: temp 
+      #       DB_DATABASE: infodb
+      #       DB_PASSWORD: password 
+      #       DB_URL: infodb
+      #     command:  go test
+      #     working_directory: services/infoserver
       - run:
           name: Test robotserver
           command: go test
           working_directory: services/robotserver
-      - run:
-          name: Test switchserver
-          command: go test
-          environment:
-            DB_USERNAME: temp 
-            DB_DATABASE: switchdb
-            DB_PASSWORD: password 
-            DB_URL: switchdb
-          working_directory: services/switchserver
-      - run:
-          name: Test termostatserver
-          command: go test
-          environment:
-            DB_USERNAME: temp 
-            DB_DATABASE: thermodb
-            DB_PASSWORD: password 
-            DB_URL: thermodb
-          working_directory: services/thermostatserver
       - run:
           name: Test userserver
           command: go test
@@ -168,11 +144,6 @@ jobs:
       - run:
           name: Compile technical-report report
           working_directory: reports/technical-report
-          command: |
-            pdflatex document.tex
-      - run:
-          name: Compile user-guide report
-          working_directory: reports/user-guide
           command: |
             pdflatex document.tex
 

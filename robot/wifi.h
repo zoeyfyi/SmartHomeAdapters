@@ -1,3 +1,6 @@
-// The SSID and password of the network it should connect to
-#define ssid "YOUR_SSID"  
-#define password "YOUR_PASSWORD"
+// eduroam connection details
+#define SSID      "eduroam"
+#define PASSWORD  ""
+#define EDUROAM_USERNAME "s0000000@ed.ac.uk"
+#define EDUROAM_IDENTITY EDUROAM_USERNAME
+#define EDUROAM_PASSWORD "password"
